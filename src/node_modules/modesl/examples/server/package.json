@@ -1,0 +1,19 @@
+{
+    "name": "esl-server",
+    "preferGlobal": "true",
+    "version": "0.0.1",
+    "author": "Lucas Fontes <lxfontes@gmail.com>",
+    "description": "ESL demo server.",
+    "homepage": "https://github.com/englercj/node-esl",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/englercj/node-esl.git"
+    },
+    "dependencies": {
+        "modesl": "git+https://github.com/englercj/node-esl.git"
+    },
+    "engines": {
+        "node": ">=0.8"
+    },
+    "private": true
+}
