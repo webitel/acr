@@ -8,13 +8,11 @@ var cluster = require('cluster'),
 // Code to run if we're in the master process
 if (cluster.isMaster) {
 
-    // Count the machine's CPUs
     var debug = process.execArgv.indexOf('--debug') !== -1;
     cluster.setupMaster({
         execArgv: process.execArgv.filter(function(s) { return s !== '--debug' })
     });
 
-    // Create a worker for each CPU
     for (var i = 0; i < ports.length; i ++) {
         var new_worker_env = {};
         new_worker_env["WORKER_PORT"] = ports[i];
