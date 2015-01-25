@@ -13,7 +13,7 @@ var data = {
                 "name": "e1",
                 "if": // ::condition
                 {
-                    "expression": "2 == 1 || 1 != 2",
+                    "expression": "${FreeSWITCH-Switchname} == 'webitel' && ${Core-UUID}.match(/^8918dd3d/)",
                     "then": [
                         {
                             "app": "answer"
@@ -31,13 +31,17 @@ var data = {
                                 "then": [
                                     {
                                         "app": "set",
-                                        "data": "hello node app"
+                                        "data": "hello=node app"
                                     }
                                 ]
                             }
                         }
                     ],
-                    "else": []
+                    "else": [
+                        {
+                            "app": "hangup"
+                        }
+                    ]
                 }
             }
         ]
