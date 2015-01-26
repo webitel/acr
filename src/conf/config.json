@@ -8,6 +8,10 @@
       10028
     ]
   },
+  "mongodb": {
+    "uri": "mongodb://localhost:27017/webitel",
+    "collectionDialplan": "dialplan"
+  },
   "application": {
     "loglevel": "trace",
     "logstash": {

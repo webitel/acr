@@ -1,54 +1,11 @@
 var esl = require('modesl'),
     log = require('./lib/log')(module),
     conf = require('./conf'),
-    CallRouter = require('./lib/callRouter');
-
-var data = {
-    "destination_number": "111",
-    "domain": "",
-    "context": "",
-    "extension":
-        [
-            {
-                "name": "e1",
-                "if": // ::condition
-                {
-                    "callflow": "${FreeSWITCH-Switchname} == 'webitel'",
-                    "then": [
-                        {
-                            "app": "answer"
-                        },
-                        {
-                            "app": "echo"
-                        },
-                        {
-                            "app": "info",
-                            "data": "HELLO NODE ROUTER"
-                        },
-                        {
-                            "if": {
-                                "expression": "2==2",
-                                "then": [
-                                    {
-                                        "app": "set",
-                                        "data": "hello=node app"
-                                    }
-                                ]
-                            }
-                        }
-                    ],
-                    "else": [
-                        {
-                            "app": "hangup"
-                        }
-                    ]
-                }
-            }
-        ]
-};
+    CallRouter = require('./lib/callRouter'),
+    dilplan = require('./middleware/dialplan');
 
 var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10025,
-    myevents:false}, function(){
+        myevents: false }, function() {
     log.info("ESL server is up port " + this.port);
 });
 
@@ -57,24 +14,26 @@ esl_server.on('connection::ready', function(conn, id) {
         log.error(error.message);
     });
 
-    var extension = data['extension'];
-    var _router = new CallRouter(conn);
-    _router.doExec(extension);
+    dilplan.findActualDialplan(conn.channelData.getHeader('Channel-Destination-Number'), function (err, result) {
+        if (err) {
+            // TODO
+            conn.execute('hangup', 'NO_ROUTE_TRANSIT_NET');
+            return
+        };
 
-/*
-    log.trace('new call ' + id);
-    conn.call_start = new Date().getTime();
-    //log.log(conn.channelData.serialize('plain'));
-    conn.execute('log', "hello node pid: " + process.pid);
-    conn.execute('answer');
-    conn.execute('echo', function(){
-        log.trace('echoing');
+        if (result.length == 0) {
+            // TODO
+            conn.execute('hangup', 'NO_ROUTE_TRANSIT_NET');
+            return
+        };
+        conn.execute("set", "domain_name=" + result[0]['domain']);
+        var callflow = result[0]['callflow'];
+        var _router = new CallRouter(conn);
+        _router.doExec(callflow);
     });
-*/
+    //console.log(conn.channelData.getHeader('Channel-Destination-Number'));
     conn.on('esl::end', function(evt, body) {
-        //this.call_end = new Date().getTime();
-        //var delta = (this.call_end - this.call_start) / 1000;
-        //log.trace("Call duration " + delta + " seconds");
+        log.trace("Call end");
     });
 });
 
