@@ -13,7 +13,7 @@ var data = {
                 "name": "e1",
                 "if": // ::condition
                 {
-                    "expression": "${FreeSWITCH-Switchname} == 'webitel' && ${Core-UUID}.match(/^8918dd3d/)",
+                    "callflow": "${FreeSWITCH-Switchname} == 'webitel'",
                     "then": [
                         {
                             "app": "answer"
@@ -47,13 +47,14 @@ var data = {
         ]
 };
 
-var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10025, myevents:false}, function(){
+var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10025,
+    myevents:false}, function(){
     log.info("ESL server is up port " + this.port);
 });
 
 esl_server.on('connection::ready', function(conn, id) {
     conn.on('error', function (error) {
-        log.error(error);
+        log.error(error.message);
     });
 
     var extension = data['extension'];

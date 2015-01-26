@@ -18,8 +18,8 @@ var CallRouter = module.exports = function (connection) {
     this.connection = connection;
 };
 
-CallRouter.prototype.read = function (expression) {
-    return expression.replace(/\$\{([\s\S]*?)\}/g, function (v) {
+CallRouter.prototype.read = function (callflow) {
+    return callflow.replace(/\$\{([\s\S]*?)\}/g, function (v) {
         return '_chnData.getHeader("' + v.substring(2, v.length - 1) + '")'
     });
 };
@@ -29,16 +29,16 @@ CallRouter.prototype.execIf = function (condition) {
         _resultCondition: false,
         _chnData: this.connection.channelData
     };
-    if (condition['expression']) {
-        var expression = this.read(condition['expression']);
+    if (condition['callflow']) {
+        var callflow = this.read(condition['callflow']);
 
         try {
-            var script = vm.createScript('_resultCondition = (' + expression + ')');
+            var script = vm.createScript('_resultCondition = (' + callflow + ')');
             script.runInNewContext(sandbox);
         } catch (e) {
             log.error(e.message);
         }
-        log.trace('Condition %s : %s', condition['expression'], sandbox._resultCondition
+        log.trace('Condition %s : %s', condition['callflow'], sandbox._resultCondition
             ? true
             : false);
         if (sandbox._resultCondition) {
