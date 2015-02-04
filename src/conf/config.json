@@ -9,8 +9,10 @@
     ]
   },
   "mongodb": {
-    "uri": "mongodb://localhost:27017/webitel",
-    "collectionDialplan": "dialplan"
+    "uri": "mongodb://10.10.10.160:27017/webitel",
+    "publicCollection": "public",
+    "defaultCollection": "default",
+    "globalCollection": "global"
   },
   "application": {
     "loglevel": "trace",

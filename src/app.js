@@ -35,7 +35,7 @@ if (cluster.isMaster) {
         // Replace the dead worker, we're not sentimental
         log.error('Worker ' + worker.id + ' died.');
         if (debug) cluster.settings.execArgv.push('--debug=' + (5859 + i));
-        cluster.fork(new_worker_env);
+        //cluster.fork(new_worker_env);
         if (debug) cluster.settings.execArgv.pop();
     });
 

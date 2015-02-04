@@ -3,15 +3,17 @@
  */
 
 var db = require('../../lib/mongoDrv'),
-    log = require('../../lib/log')(module);
+    log = require('../../lib/log')(module),
+    config = require('../../conf'),
+    publicCollection = config.get('mongodb:publicCollection');
 
 var dialplan = {
-    findActualDialplan: function (number, cb) {
+    findActualPublicDialplan: function (number, cb) {
         if (!number || number == '') {
             cb(new Error('destination_number is undefined'));
             return;
         }
-        var dialCollection = db.dialplanCollection;
+        var dialCollection = db.getCollection(publicCollection);
         dialCollection.find({"destination_number": number})
             .sort({"version": -1})
             .limit(1)

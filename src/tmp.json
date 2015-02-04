@@ -1,34 +1,40 @@
 {
-  "destination_number": "111",
-  "domain": "",
-  "context": "",
-  "extension":
-  [
+  "destination_number" : [
+    "111"
+  ],
+  "domain" : "10.10.10.10",
+  "callflow" : [
     {
-      "name": "e1",
-      "if": // ::condition
-      {
-        "expression": "2 == 1 || 1 != 2",
+      "app" : "set",
+      "data" : "call_timeout=90"
+    },
+    {
+      "if": {
+        "expression": "&match(/(1)(2)(3)(4)(5)/, '12345')",
         "then": [
           {
-            "app": "hangup"
+            "app": "log",
+            "data": "hello &exp1.$1 $2$3"
+          },
+          {
+            "app": "answer"
           },
           {
             "app": "echo"
-          },
-          {
-            "if": {
-              "expression": "2==2",
-              "then": [
-                {
-                  "app": "set",
-                  "data": "hello node app"
-                }
-              ]
-            }
           }
-        ],
-        "else": []
+        ]
+      }
+    },
+
+    {
+      "if": {
+        "expression": "&match(/(a)(b)/g, 'ab')",
+        "then": [
+          {
+            "app": "log",
+            "data": "for test &reg1.$1"
+          }
+        ]
       }
     }
   ]
