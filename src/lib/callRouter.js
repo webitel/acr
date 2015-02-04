@@ -22,10 +22,11 @@ var COMMANDS = {
 
 var keywords = 'function|case|if|return|new|switch|var|this|typeof|for|while|break|do|continue';
 
-var CallRouter = module.exports = function (connection, globalVar, regCollection) {
+var CallRouter = module.exports = function (connection, globalVar, regCollection, timeOffset) {
     this.globalVar = globalVar || {};
     this.connection = connection;
     this.regCollection = regCollection || {};
+    this.timeOffset = timeOffset || 0;
 };
 
 CallRouter.prototype.destroyLocalRegExpValues = function () {
@@ -92,6 +93,7 @@ CallRouter.prototype.execIf = function (condition) {
                 return m + push(all, s) + '\0';
             })
             .replace(new RegExp('\\b(' + keywords + ')\\b', 'gi'), '')
+            // WEBITEL COMMANDS
             .replace(/\&match\(([\s\S]*?)\)/gi, function (f, param) {
                 var _params = param.split(',', 2),
                     _reg, _val;
@@ -106,12 +108,44 @@ CallRouter.prototype.execIf = function (condition) {
 
                 var _result = new RegExp(_reg[1], _reg[2]).exec(_val);
                 var _regOb = {};
+                // TODO оптимизировать
                 for (var key in _result) {
                     _regOb['$' + key] = _result[key];
                 };
                 scope.regCollection[COMMANDS.REGEXP + (Object.keys(scope.regCollection).length + 1)] = _regOb;
                 return _result ? true : false;
             })
+            // wday - The day of the current week. (Sunday = 1 through 7)
+            // TODO оптимизировать
+            .replace(/\&wday\(([\s\S]*?)\)/gi, function (f, param) {
+                var days = param.split(','),
+                    _curentDay = new Date().getDay() + 1,
+                    _tmp,
+                    _min, _max,
+                    result = false;
+                for (var i = 0; i < days.length; i++) {
+                    if (days[i].indexOf('-') == -1) {
+                        result = (_curentDay == parseInt(days[i]));
+                    } else {
+                        _tmp = days[i].split('-');
+                        _min = parseInt(_tmp[0]);
+                        _max = _tmp[1]
+                            ? parseInt(_tmp[1])
+                            : 7;
+                        if (_min > _max) {
+                            _tmp = _max;
+                            _max = _min;
+                            _min = _tmp;
+                        };
+                        result = (_curentDay >= _min && _curentDay <= _max);
+                    };
+                    if (result == true) {
+                        return result
+                    };
+                };
+                return result;
+            })
+            // END COMMANDS
             .replace(/\0B(\d+)\0/g, function(m, i) {
                 return all[i];
             });
