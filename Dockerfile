@@ -1,11 +1,12 @@
 FROM node:slim
-MAINTAINER Ihor Navrotskyi "support@webitel.com"
+MAINTAINER Vitaly Kovalyshyn "v.kovalyshyn@webitel.com"
+
+ENV VERSION 3.0.5021
 
 COPY src /acr
+COPY docker-entrypoint.sh /
 
 WORKDIR /acr
 RUN npm install && npm cache clear
 
-EXPOSE 10025 10026 10027 10028
-
-ENTRYPOINT ["node", "app.js"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

@@ -1,24 +1,25 @@
 {
   "server": {
     "host": "0.0.0.0",
-    "ports": [
-      10025,
-      10026,
-      10027,
-      10028
-    ]
+    "ports": 
+      [ 
+        10025, 
+        10026, 
+        10027, 
+        10028 
+      ]
   },
   "mongodb": {
-    "uri": "mongodb://10.10.10.160:27017/webitel",
+    "uri": "mongodb://MONGODB_HOST:27017/webitel",
     "publicCollection": "public",
     "defaultCollection": "default",
     "globalCollection": "global"
   },
   "application": {
-    "loglevel": "trace",
+    "loglevel": "LOGLEVEL",
     "logstash": {
-      "enabled": false,
-      "host": "it-sfera.com.ua",
+      "enabled": LOGSTASH_ENABLE,
+      "host": "LOGSTASH_HOST",
       "port": 28777,
       "node_name": "acr"
     }
