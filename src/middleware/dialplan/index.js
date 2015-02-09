@@ -5,7 +5,8 @@
 var db = require('../../lib/mongoDrv'),
     log = require('../../lib/log')(module),
     config = require('../../conf'),
-    publicCollection = config.get('mongodb:publicCollection');
+    publicCollection = config.get('mongodb:publicCollection'),
+    defaultCollection = config.get('mongodb:defaultCollection');
 
 var dialplan = {
     findActualPublicDialplan: function (number, cb) {
@@ -17,6 +18,17 @@ var dialplan = {
         dialCollection.find({"destination_number": number})
             .sort({"version": -1})
             .limit(1)
+            .toArray(cb);
+    },
+    
+    findActualDefaultDialplan: function (domainName, cb) {
+        if (!domainName || domainName == '') {
+            cb(new Error('domain is undefined'));
+            return;
+        }
+        var dialCollection = db.getCollection(defaultCollection);
+        dialCollection.find({"domain": domainName})
+            .sort({"order": 1})
             .toArray(cb);
     }
 };

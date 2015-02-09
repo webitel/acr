@@ -19,32 +19,33 @@ var COMMANDS = {
     REGEXP: "&reg"
 };
 
+var CallRouter = module.exports = function (connection, globalVar, desNumber, chnNumber, timeOffset) {
+    this.globalVar = globalVar || {};
+    this.connection = connection;
+    this.regCollection = {};
+    this.timeOffset = timeOffset || 0;
+    this.setDestinationNumber(desNumber, chnNumber);
+};
+
 function push(arr, e) {
     arr.push(e);
     return arr.length - 1;
 };
 
-function equalsRange (_curentDay, _tmp) {
+function equalsRange (_curentDay, _tmp, maxVal) {
     var _min, _max;
 
     _tmp = _tmp.split('-');
     _min = parseInt(_tmp[0]);
     _max = _tmp[1]
         ? parseInt(_tmp[1])
-        : 7;
+        : maxVal;
     if (_min > _max) {
         _tmp = _max;
         _max = _min;
         _min = _tmp;
     };
     return (_curentDay >= _min && _curentDay <= _max);
-};
-
-var CallRouter = module.exports = function (connection, globalVar, regCollection, timeOffset) {
-    this.globalVar = globalVar || {};
-    this.connection = connection;
-    this.regCollection = regCollection || {};
-    this.timeOffset = timeOffset || 0;
 };
 
 CallRouter.prototype.destroyLocalRegExpValues = function () {
@@ -74,21 +75,67 @@ CallRouter.prototype.getGlbVar = function (name) {
     }
 };
 
-CallRouter.prototype.wday = function (param) {
-    this._DateParser(param, (new Date().getDay() + 1));
+CallRouter.prototype.year = function (param) {
+    return this._DateParser(param || '', (new Date().getFullYear()), 9999);
 };
 
-CallRouter.prototype._DateParser = function (param, datetime) {
+CallRouter.prototype.yday = function (param) {
+    var now = new Date(),
+        start = new Date(now.getFullYear(), 0, 0),
+        diff = now - start,
+        oneDay = 1000*60*60*24;
+    return this._DateParser(param, (Math.floor(diff / oneDay)), 366);
+};
+
+CallRouter.prototype.mon = function (param) {
+    return this._DateParser(param, (new Date().getMonth() + 1), 12);
+};
+
+CallRouter.prototype.mday = function (param) {
+    return this._DateParser(param, new Date().getDate(), 31);
+};
+
+CallRouter.prototype.week = function (param) {
+    return this._DateParser(param, new Date()._getWeek(), 53);
+};
+
+CallRouter.prototype.mweek = function (param) {
+    return this._DateParser(param, (new Date()._getWeekOfMonth() + 1), 6);
+};
+
+CallRouter.prototype.wday = function (param) {
+    return this._DateParser(param, (new Date().getDay() + 1), 7);
+};
+
+CallRouter.prototype.hour = function (param) {
+    return this._DateParser(param, new Date().getHours(), 23);
+};
+
+CallRouter.prototype.minute = function (param) {
+    return this._DateParser(param, new Date().getMinutes(), 59);
+};
+
+CallRouter.prototype.minute_of_day = function (param) {
+    var now = new Date();
+    return this._DateParser(param, (now.getHours() * 60 + now.getMinutes()), 1440);
+};
+
+CallRouter.prototype.time_of_day = function (param) {
+    // TODO
+};
+
+
+CallRouter.prototype._DateParser = function (param, datetime, maxVal) {
     param = param || '';
     var datetimes = param.replace(/\s/g, '').split(','),
         result = false;
     if (datetimes[0] == "") {
-        throw Error("&wday bad parameters");
+        throw Error("bad parameters");
     };
     for (var i = 0; i < datetimes.length; i++) {
         result = (datetimes[i].indexOf('-') == -1)
             ? datetime == parseInt(datetimes[i])
-            : equalsRange(datetime, datetimes[i]);
+            : equalsRange(datetime, datetimes[i], maxVal);
 
         if (result == true) {
             return result
@@ -97,24 +144,23 @@ CallRouter.prototype._DateParser = function (param, datetime) {
     return result;
 };
 
-CallRouter.prototype.year = function (param) {
-    param = param || '';
-    var days = param.replace(/\s/g, '').split(','),
-        _curentDay = new Date().getYear(),
-        result = false;
-    if (days[0] == "") {
-        throw Error("&wday bad parameters");
-    };
-    for (var i = 0; i < days.length; i++) {
-        result = (days[i].indexOf('-') == -1)
-            ? _curentDay == parseInt(days[i])
-            : equalsRange(_curentDay, days[i]);
+Date.prototype._getWeek = function() {
+    var onejan = new Date(this.getFullYear(),0,1);
+    return Math.ceil((((this - onejan) / 86400000) + onejan.getDay()+1)/7);
+};
 
-        if (result == true) {
-            return result
-        };
-    };
-    return result;
+Date.prototype._getWeekOfMonth = function(exact) {
+    var month = this.getMonth()
+        , year = this.getFullYear()
+        , firstWeekday = new Date(year, month, 1).getDay()
+        , lastDateOfMonth = new Date(year, month + 1, 0).getDate()
+        , offsetDate = this.getDate() + firstWeekday - 1
+        , index = 1 // start index at 0 or 1, your choice
+        , weeksInMonth = index + Math.ceil((lastDateOfMonth + firstWeekday - 7) / 7)
+        , week = index + Math.floor(offsetDate / 7)
+        ;
+    if (exact || week < 2 + index) return week;
+    return week === weeksInMonth ? index + 5 : week;
 };
 
 CallRouter.prototype.match = function (reg, val) {
@@ -128,6 +174,18 @@ CallRouter.prototype.match = function (reg, val) {
     };
     this.regCollection[COMMANDS.REGEXP + (Object.keys(this.regCollection).length + 1)] = _regOb;
     return _result ? true : false;
+};
+
+CallRouter.prototype.setDestinationNumber = function (strReg, number) {
+    if ( !(strReg instanceof String) ) return;
+    var _tmp = strReg.match(new RegExp('^/(.*?)/([gimy]*)$')),
+        _reg = new RegExp(_tmp[1], _tmp[2]).exec(number);
+    var _regOb = {};
+    // TODO оптимизировать
+    for (var key in _reg) {
+        _regOb['$' + key] = _reg[key];
+    };
+    this.regCollection[COMMANDS.REGEXP + '0'] = _regOb;
 };
 
 CallRouter.prototype.execIf = function (condition) {
