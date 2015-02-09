@@ -166,6 +166,9 @@ Date.prototype._getWeekOfMonth = function(exact) {
 CallRouter.prototype.match = function (reg, val) {
     var _reg;
     _reg = reg.match(new RegExp('^/(.*?)/([gimy]*)$'));
+    if (!_reg) {
+        _reg = [null, reg];
+    };
     var _result = new RegExp(_reg[1], _reg[2]).exec(val);
     var _regOb = {};
     // TODO оптимизировать
@@ -178,8 +181,11 @@ CallRouter.prototype.match = function (reg, val) {
 
 CallRouter.prototype.setDestinationNumber = function (strReg, number) {
     if ( !(strReg instanceof String) ) return;
-    var _tmp = strReg.match(new RegExp('^/(.*?)/([gimy]*)$')),
-        _reg = new RegExp(_tmp[1], _tmp[2]).exec(number);
+    var _tmp = strReg.match(new RegExp('^/(.*?)/([gimy]*)$'));
+    if (_tmp) {
+        _tmp = [null, strReg];
+    };
+    var _reg = new RegExp(_tmp[1], _tmp[2]).exec(number);
     var _regOb = {};
     // TODO оптимизировать
     for (var key in _reg) {
