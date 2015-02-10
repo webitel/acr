@@ -1,41 +1,9 @@
 {
-  "destination_number" : [
-    "111"
-  ],
-  "domain" : "10.10.10.10",
-  "callflow" : [
-    {
-      "app" : "set",
-      "data" : "call_timeout=90"
-    },
-    {
-      "if": {
-        "expression": "&match(/(1)(2)(3)(4)(5)/, '12345')",
-        "then": [
-          {
-            "app": "log",
-            "data": "hello &exp1.$1 $2$3"
-          },
-          {
-            "app": "answer"
-          },
-          {
-            "app": "echo"
-          }
-        ]
-      }
-    },
-
-    {
-      "if": {
-        "expression": "&match(/(a)(b)/g, 'ab')",
-        "then": [
-          {
-            "app": "log",
-            "data": "for test &reg1.$1"
-          }
-        ]
-      }
-    }
+  "destination_number" : ["111"],
+  "domain" : "pre.webitel.com",
+  "callflow" : [            {
+                              "app": "log",
+                              "data": "hello from acr"
+                            },
   ]
 }

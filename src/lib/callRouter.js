@@ -25,7 +25,6 @@ var CallRouter = module.exports = function (connection, globalVar, desNumber, ch
     this.regCollection = {};
     this.offset = timeOffset || 0;
     this.setDestinationNumber(desNumber, chnNumber);
-    this.offsetDate = new time.Date();
 };
 
 function DateOffset(offset) {
