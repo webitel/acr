@@ -57,7 +57,7 @@ esl_server.on('connection::ready', function(conn, id) {
     try {
         var context = conn.channelData.getHeader('Channel-Context'),
             destinationNumber = conn.channelData.getHeader('Channel-Destination-Number');
-// TODO replace !==
+
         if (context == PUBLIC_CONTEXT) {
             dilplan.findActualPublicDialplan(destinationNumber, function (err, result) {
                 if (err) {
@@ -89,7 +89,8 @@ esl_server.on('connection::ready', function(conn, id) {
                     };
                     conn.execute('set', 'domain_name=' + result[0]['domain']);
                     var callflow = result[0]['callflow'];
-                    var _router = new CallRouter(conn, globalVariable, result[0]['destination_number'], destinationNumber);
+                    var _router = new CallRouter(conn, globalVariable, result[0]['destination_number'], destinationNumber,
+                        result[0]['timezone']);
                     try {
                         _router.start(callflow);
                     } catch (e) {
@@ -122,7 +123,7 @@ esl_server.on('connection::ready', function(conn, id) {
                     if (result instanceof Array) {
                         var _r, _reg;
                         for (var i = 0, len = result.length; i < len; i++) {
-                            if (result[i]['destination_number']) {
+                            if (result[i]['destination_number'] && typeof result[i]['destination_number'] === 'string') {
                                 _r = result[i]['destination_number'].match(new RegExp('^/(.*?)/([gimy]*)$'));
                                 // Bad destination reg exp value
                                 if (!_r) {
@@ -132,7 +133,8 @@ esl_server.on('connection::ready', function(conn, id) {
                                 _reg = new RegExp(_r[1], _r[2]).exec(destinationNumber);
                                 if (_reg) {
                                     var callflow = result[i]['callflow'];
-                                    var _router = new CallRouter(conn, globalVariable, result[i]['destination_number'], destinationNumber);
+                                    var _router = new CallRouter(conn, globalVariable, result[i]['destination_number'],
+                                        destinationNumber, result[i]['timezone']);
                                     try {
                                         _isNotRout = false;
                                         _router.start(callflow);
@@ -145,6 +147,8 @@ esl_server.on('connection::ready', function(conn, id) {
                                     };
                                 };
                                 log.trace('Break: %s', result[i]['destination_number']);
+                            } else {
+                                log.warn('Bad destination_number parameters');
                             };
                         };
                     };

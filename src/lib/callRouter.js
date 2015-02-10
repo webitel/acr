@@ -23,17 +23,8 @@ var CallRouter = module.exports = function (connection, globalVar, desNumber, ch
     this.globalVar = globalVar || {};
     this.connection = connection;
     this.regCollection = {};
-    this.offset = timeOffset || 0;
+    this.offset = timeOffset;
     this.setDestinationNumber(desNumber, chnNumber);
-};
-
-function DateOffset(offset) {
-    if (!offset) {
-        return new Date();
-    };
-    var d = new Date(),
-        utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-    return new Date(utc + (3600000*offset));
 };
 
 function push(arr, e) {
