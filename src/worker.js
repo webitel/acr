@@ -100,14 +100,15 @@ esl_server.on('connection::ready', function(conn, id) {
                 });
             });
         } else {
-            var domainName = conn.channelData.getHeader('variable_domain_name');
+            var domainName = conn.channelData.getHeader('variable_domain_name'),
+                _isNotRout = true;
             dilplan.findActualDefaultDialplan(domainName, function (err, result) {
-                if (err || result.length == 0) {
-                    // TODO
-                    var message = (err)
-                        ? err.message
-                        : "Not found route";
-                    log.error(message);
+                if (err) {
+                    log.error(err.message);
+                    throw  err.message;
+                };
+                if (result.length == 0) {
+                    log.warn("Not found route");
                 };
                 globalCollection.getGlobalVariables(conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
                     if (err) {
@@ -115,11 +116,10 @@ esl_server.on('connection::ready', function(conn, id) {
                         log.error(err.message);
                         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                         return
-                    }
-                    ;
+                    };
 
                     if (result instanceof Array) {
-                        var _r, _reg, _isNotRout = true;
+                        var _r, _reg;
                         for (var i = 0, len = result.length; i < len; i++) {
                             if (result[i]['destination_number']) {
                                 _r = result[i]['destination_number'].match(new RegExp('^/(.*?)/([gimy]*)$'));
@@ -146,9 +146,9 @@ esl_server.on('connection::ready', function(conn, id) {
                                 log.trace('Break: %s', result[i]['destination_number']);
                             };
                         };
-                        if (_isNotRout) {
-                            internalExtension(conn, destinationNumber, domainName);
-                        };
+                    };
+                    if (_isNotRout) {
+                        internalExtension(conn, destinationNumber, domainName);
                     };
                 });
             });
