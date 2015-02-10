@@ -58,7 +58,7 @@ esl_server.on('connection::ready', function(conn, id) {
 
         var context = conn.channelData.getHeader('Channel-Context'),
             destinationNumber = conn.channelData.getHeader('Channel-Destination-Number');
-
+// TODO replace !==
         if (context == PUBLIC_CONTEXT) {
             dilplan.findActualPublicDialplan(destinationNumber, function (err, result) {
                 if (err || result.length == 0) {
