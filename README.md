@@ -1,4 +1,4 @@
-ACR
+Advanced Call Router (ACR)
 ====
 
 Advanced Call Router - route calls that match configured rules.
