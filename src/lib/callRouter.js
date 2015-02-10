@@ -198,9 +198,9 @@ CallRouter.prototype.match = function (reg, val) {
 };
 
 CallRouter.prototype.setDestinationNumber = function (strReg, number) {
-    if ( !(strReg instanceof String) ) return;
+    if ( !(typeof strReg === 'string') ) return;
     var _tmp = strReg.match(new RegExp('^/(.*?)/([gimy]*)$'));
-    if (_tmp) {
+    if (!_tmp) {
         _tmp = [null, strReg];
     };
     var _reg = new RegExp(_tmp[1], _tmp[2]).exec(number);

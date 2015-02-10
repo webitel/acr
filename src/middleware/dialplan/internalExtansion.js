@@ -5,6 +5,7 @@ var log = require('../../lib/log')(module);
 
 var execSyncApp = function (conn, app, data) {
     conn.setEventLock(true);
+    conn.execute(app, data || '');
     log.trace('Execute app: %s, with data: %s', app, data || '');
 };
 
@@ -12,7 +13,7 @@ module.exports = function (conn, userId, domainName) {
     userId = userId || '';
     domainName = domainName || '';
 
-    conn.bgapi('user_exists id ' + userId + ' ' + domainName, function (res) {
+    conn.api('user_exists id ' + userId + ' ' + domainName, function (res) {
         if (res && res['body'] === "false") {
             execSyncApp(conn, "answer");
             execSyncApp(conn, "sleep", "1500");
@@ -23,6 +24,8 @@ module.exports = function (conn, userId, domainName) {
             execSyncApp(conn, "set", "hangup_after_bridge=true");
             execSyncApp(conn, "set", "effective_callee_id_number=${destination_number}");
             execSyncApp(conn, "set", "outbound_callee_id_number=${destination_number}");
+            execSyncApp(conn, "set", "ringback=${ru-ring}");
+            execSyncApp(conn, "set", "transfer_ringback=$${uk-ring}");
             execSyncApp(conn, "lua", "RecordSession.lua");
             execSyncApp(conn, "bridge", "user/${destination_number}@${domain_name}");
             execSyncApp(conn, "answer");

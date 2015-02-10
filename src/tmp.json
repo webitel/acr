@@ -1,9 +1,18 @@
 {
-  "destination_number" : ["111"],
-  "domain" : "pre.webitel.com",
-  "callflow" : [            {
-                              "app": "log",
-                              "data": "hello from acr"
-                            },
+  "destination_number" : "/^\+?3?8?(0(6|9)3\d{7})$/",
+  "domain" : "10.10.10.144",
+  "callflow" : [
+
+    {
+      "app": "log",
+      "data": "hello from &reg0.$1"
+    },
+    {
+      "app": "answer"
+    },
+    {
+      "app": "echo"
+    }
+
   ]
 }

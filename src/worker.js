@@ -60,15 +60,18 @@ esl_server.on('connection::ready', function(conn, id) {
 // TODO replace !==
         if (context == PUBLIC_CONTEXT) {
             dilplan.findActualPublicDialplan(destinationNumber, function (err, result) {
-                if (err || result.length == 0) {
+                if (err) {
                     // TODO
-                    var message = (err)
-                        ? err.message
-                        : "Not found route";
-                    log.error(message);
+                    log.error(err.message);
                     conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                     return
                 };
+
+                if (result.length == 0) {
+                    log.error("Not found route");
+                    conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
+                    return;
+                }
 
                 globalCollection.getGlobalVariables(conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
                     if (err) {
@@ -76,14 +79,13 @@ esl_server.on('connection::ready', function(conn, id) {
                         log.error(err.message);
                         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                         return
-                    }
-                    ;
+                    };
 
                     if (result.length == 0) {
                         // TODO
-                        log.error('Error: Not found the route.');
+                        log.error('Not found the route.');
                         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                        return
+                        return;
                     };
                     conn.execute('set', 'domain_name=' + result[0]['domain']);
                     var callflow = result[0]['callflow'];
@@ -104,7 +106,6 @@ esl_server.on('connection::ready', function(conn, id) {
                 _isNotRout = true;
             dilplan.findActualDefaultDialplan(domainName, function (err, result) {
                 if (err) {
-                    log.error(err.message);
                     throw  err.message;
                 };
                 if (result.length == 0) {
@@ -152,8 +153,7 @@ esl_server.on('connection::ready', function(conn, id) {
                     };
                 });
             });
-        }
-        ;
+        };
     } catch (e) {
         log.error(e.message);
         // TODO узнать что ответить на ошибку
