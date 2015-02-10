@@ -8,7 +8,7 @@ var esl = require('modesl'),
     Consul = require('consul');
     call = 0;
 
-var INBOUND_CONTEXT = 'default';
+var PUBLIC_CONTEXT = 'public';
 
 /*
 var consul = new Consul({
@@ -59,7 +59,7 @@ esl_server.on('connection::ready', function(conn, id) {
         var context = conn.channelData.getHeader('Channel-Context'),
             destinationNumber = conn.channelData.getHeader('Channel-Destination-Number');
 
-        if (context == INBOUND_CONTEXT) {
+        if (context == PUBLIC_CONTEXT) {
             dilplan.findActualPublicDialplan(destinationNumber, function (err, result) {
                 if (err) {
                     // TODO
@@ -83,9 +83,8 @@ esl_server.on('connection::ready', function(conn, id) {
                         log.error('Error: Not found the route.');
                         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                         return
-                    }
-                    ;
-
+                    };
+                    conn.execute('set', 'domain_name=' + result[0]['domain']);
                     var callflow = result[0]['callflow'];
                     var _router = new CallRouter(conn, globalVariable, result[0]['destination_number'], destinationNumber);
                     try {
@@ -106,8 +105,7 @@ esl_server.on('connection::ready', function(conn, id) {
                     log.error(err.message);
                     conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                     return
-                }
-                ;
+                };
                 globalCollection.getGlobalVariables(conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
                     if (err) {
                         // TODO

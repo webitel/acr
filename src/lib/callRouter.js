@@ -23,8 +23,17 @@ var CallRouter = module.exports = function (connection, globalVar, desNumber, ch
     this.globalVar = globalVar || {};
     this.connection = connection;
     this.regCollection = {};
-    this.timeOffset = timeOffset || 0;
+    this.offset = timeOffset || 0;
     this.setDestinationNumber(desNumber, chnNumber);
+};
+
+function DateOffset(offset) {
+    if (!offset) {
+        return new Date();
+    };
+    var d = new Date(),
+        utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+    return new Date(utc + (3600000*offset));
 };
 
 function push(arr, e) {
@@ -57,6 +66,15 @@ CallRouter.prototype.destroyLocalRegExpValues = function () {
     });
 };
 
+CallRouter.prototype.DateOffset = function() {
+    if (!this.offset) {
+        return new Date();
+    };
+    var d = new Date(),
+        utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+    return new Date(utc + (3600000 * this.offset));
+};
+
 CallRouter.prototype.getChnVar = function (name) {
     var _var = this.connection.channelData.getHeader('variable_' + name)
         || this.connection.channelData.getHeader(name)
@@ -76,11 +94,11 @@ CallRouter.prototype.getGlbVar = function (name) {
 };
 
 CallRouter.prototype.year = function (param) {
-    return this._DateParser(param || '', (new Date().getFullYear()), 9999);
+    return this._DateParser(param || '', (this.DateOffset().getFullYear()), 9999);
 };
 
 CallRouter.prototype.yday = function (param) {
-    var now = new Date(),
+    var now = new this.DateOffset(),
         start = new Date(now.getFullYear(), 0, 0),
         diff = now - start,
         oneDay = 1000*60*60*24;
@@ -88,35 +106,35 @@ CallRouter.prototype.yday = function (param) {
 };
 
 CallRouter.prototype.mon = function (param) {
-    return this._DateParser(param, (new Date().getMonth() + 1), 12);
+    return this._DateParser(param, (this.DateOffset().getMonth() + 1), 12);
 };
 
 CallRouter.prototype.mday = function (param) {
-    return this._DateParser(param, new Date().getDate(), 31);
+    return this._DateParser(param, this.DateOffset().getDate(), 31);
 };
 
 CallRouter.prototype.week = function (param) {
-    return this._DateParser(param, new Date()._getWeek(), 53);
+    return this._DateParser(param, this.DateOffset()._getWeek(), 53);
 };
 
 CallRouter.prototype.mweek = function (param) {
-    return this._DateParser(param, (new Date()._getWeekOfMonth() + 1), 6);
+    return this._DateParser(param, (this.DateOffset()._getWeekOfMonth() + 1), 6);
 };
 
 CallRouter.prototype.wday = function (param) {
-    return this._DateParser(param, (new Date().getDay() + 1), 7);
+    return this._DateParser(param, (this.DateOffset().getDay() + 1), 7);
 };
 
 CallRouter.prototype.hour = function (param) {
-    return this._DateParser(param, new Date().getHours(), 23);
+    return this._DateParser(param, this.DateOffset().getHours(), 23);
 };
 
 CallRouter.prototype.minute = function (param) {
-    return this._DateParser(param, new Date().getMinutes(), 59);
+    return this._DateParser(param, this.DateOffset().getMinutes(), 59);
 };
 
 CallRouter.prototype.minute_of_day = function (param) {
-    var now = new Date();
+    var now = this.DateOffset();
     return this._DateParser(param, (now.getHours() * 60 + now.getMinutes()), 1440);
 };
 
