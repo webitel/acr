@@ -6,7 +6,8 @@ var esl = require('modesl'),
     globalCollection = require('./middleware/system'),
     DEFAULT_HANGUP_CAUSE = require('./const').DEFAULT_HANGUP_CAUSE,
     Consul = require('consul');
-    call = 0;
+    call = 0,
+    internalExtension = require('./middleware/dialplan/internalExtansion');
 
 var PUBLIC_CONTEXT = 'public';
 
@@ -41,7 +42,6 @@ consul.agent.check.register(check, function(err) {
 });
 */
 
-
 var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10025,
         myevents: false }, function() {
     log.info("ESL server is up port " + this.port);
@@ -55,7 +55,6 @@ esl_server.on('connection::ready', function(conn, id) {
     //console.log(conn.channelData.serialize());
 
     try {
-
         var context = conn.channelData.getHeader('Channel-Context'),
             destinationNumber = conn.channelData.getHeader('Channel-Destination-Number');
 // TODO replace !==
@@ -69,8 +68,7 @@ esl_server.on('connection::ready', function(conn, id) {
                     log.error(message);
                     conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                     return
-                }
-                ;
+                };
 
                 globalCollection.getGlobalVariables(conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
                     if (err) {
@@ -102,7 +100,8 @@ esl_server.on('connection::ready', function(conn, id) {
                 });
             });
         } else {
-            dilplan.findActualDefaultDialplan(conn.channelData.getHeader('variable_domain_name'), function (err, result) {
+            var domainName = conn.channelData.getHeader('variable_domain_name');
+            dilplan.findActualDefaultDialplan(domainName, function (err, result) {
                 if (err || result.length == 0) {
                     // TODO
                     var message = (err)
@@ -120,7 +119,7 @@ esl_server.on('connection::ready', function(conn, id) {
                     ;
 
                     if (result instanceof Array) {
-                        var _r, _reg;
+                        var _r, _reg, _isNotRout = true;
                         for (var i = 0, len = result.length; i < len; i++) {
                             if (result[i]['destination_number']) {
                                 _r = result[i]['destination_number'].match(new RegExp('^/(.*?)/([gimy]*)$'));
@@ -134,6 +133,7 @@ esl_server.on('connection::ready', function(conn, id) {
                                     var callflow = result[i]['callflow'];
                                     var _router = new CallRouter(conn, globalVariable, result[i]['destination_number'], destinationNumber);
                                     try {
+                                        _isNotRout = false;
                                         _router.start(callflow);
                                         break;
                                     } catch (e) {
@@ -141,17 +141,15 @@ esl_server.on('connection::ready', function(conn, id) {
                                         // TODO узнать что ответить на ошибку
                                         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                                         break;
-                                    }
-                                    ;
-                                }
-                                ;
+                                    };
+                                };
                                 log.trace('Break: %s', result[i]['destination_number']);
-                            }
-                            ;
-                        }
-                        ;
-                    }
-                    ;
+                            };
+                        };
+                        if (_isNotRout) {
+                            internalExtension(conn, destinationNumber, domainName);
+                        };
+                    };
                 });
             });
         }
