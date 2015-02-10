@@ -3,8 +3,7 @@
  */
 
 var log = require('./log')(module),
-    vm = require('vm'),
-    time = require('time');
+    vm = require('vm');
 
 var OPERATION = {
     IF: "if",
