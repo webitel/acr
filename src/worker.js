@@ -61,9 +61,12 @@ esl_server.on('connection::ready', function(conn, id) {
 
         if (context == PUBLIC_CONTEXT) {
             dilplan.findActualPublicDialplan(destinationNumber, function (err, result) {
-                if (err) {
+                if (err || result.length == 0) {
                     // TODO
-                    log.error(err.message);
+                    var message = (err)
+                        ? err.message
+                        : "Not found route";
+                    log.error(message);
                     conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                     return
                 }
@@ -100,11 +103,12 @@ esl_server.on('connection::ready', function(conn, id) {
             });
         } else {
             dilplan.findActualDefaultDialplan(conn.channelData.getHeader('variable_domain_name'), function (err, result) {
-                if (err) {
+                if (err || result.length == 0) {
                     // TODO
-                    log.error(err.message);
-                    conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                    return
+                    var message = (err)
+                        ? err.message
+                        : "Not found route";
+                    log.error(message);
                 };
                 globalCollection.getGlobalVariables(conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
                     if (err) {

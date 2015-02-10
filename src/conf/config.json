@@ -1,13 +1,13 @@
 {
   "server": {
     "host": "0.0.0.0",
-    "ports": 
-      [ 
-        10025, 
-        10026, 
-        10027, 
-        10028 
-      ]
+    "ports":
+    [
+      10025,
+      10026,
+      10027,
+      10028
+    ]
   },
   "mongodb": {
     "uri": "mongodb://MONGODB_HOST:27017/webitel",
