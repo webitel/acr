@@ -5,7 +5,7 @@ Advanced Call Router - route calls that match configured rules.
 
 ## Default ports
 
-`10025/tcp`, `10026/tcp`, `10027/tcp`, `10028/tcp`.
+`10025/tcp` and `10026/tcp`
 
 ## Environment Variables
 
