@@ -31,7 +31,11 @@ mongoClient.connect(config.get('mongodb:uri') ,function(err, db) {
     log.info('Connected db %s ', config.get('mongodb:uri'));
     db.on('close', function () {
         log.error('close mongo');
-    })
+    });
+
+    db.on('error', function (err) {
+        log.error(err);
+    });
 });
 
 drv.getCollection = function (name) {

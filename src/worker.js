@@ -52,11 +52,13 @@ esl_server.on('connection::ready', function(conn, id) {
         log.error(error.message);
     });
 
+    log.trace('New call %s', id);
     //console.log(conn.channelData.serialize());
 
     try {
         var context = conn.channelData.getHeader('Channel-Context'),
-            destinationNumber = conn.channelData.getHeader('Channel-Destination-Number');
+            destinationNumber = conn.channelData.getHeader('Channel-Destination-Number') ||
+                conn.channelData.getHeader('Caller-Destination-Number');
 
         if (context == PUBLIC_CONTEXT) {
             dilplan.findActualPublicDialplan(destinationNumber, function (err, result) {
@@ -71,7 +73,7 @@ esl_server.on('connection::ready', function(conn, id) {
                     log.error("Not found route");
                     conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                     return;
-                }
+                };
 
                 globalCollection.getGlobalVariables(conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
                     if (err) {
@@ -97,8 +99,7 @@ esl_server.on('connection::ready', function(conn, id) {
                         log.error(e.message);
                         //TODO узнать что ответить на ошибку
                         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                    }
-                    ;
+                    };
 
                 });
             });
@@ -106,9 +107,13 @@ esl_server.on('connection::ready', function(conn, id) {
             var domainName = conn.channelData.getHeader('variable_domain_name'),
                 _isNotRout = true;
             dilplan.findActualDefaultDialplan(domainName, function (err, result) {
+
                 if (err) {
-                    throw  err.message;
+                    log.error(err.message);
+                    conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
+                    return;
                 };
+
                 if (result.length == 0) {
                     log.warn("Not found route");
                 };
@@ -164,8 +169,8 @@ esl_server.on('connection::ready', function(conn, id) {
         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
     };
 
-    conn.on('esl::end', function(evt, body) {
-        log.trace("Call end");
+    conn.on('esl::end', function() {
+        log.trace("Call end %s", id);
     });
 });
 
