@@ -12,18 +12,55 @@ var OPERATION = {
     APPLICATION: "app",
     DATA: "data",
     ASYNC: "async",
-    CALL_RECORD: "callRecord"
+
+    ECHO: "echo",
+
+    ANSWER: "answer",
+    SET: "set",
+    GOTO: "goto",
+    GATEWAY: "gateway",
+    DEVICE: "device",
+    RECORD_SESSION: "record_session",
+    HANGUP: "hangup",
+    SCRIPT: "script",
+    LOG: "log"
 };
+
+var FS_COMMAND = {
+    ANSWER: "answer",
+    PRE_ANSWER: "pre_answer",
+    RING_READY: "ring_ready",
+    TRANSFER: "transfer",
+    HANGUP: "hangup",
+    BRIDGE: "bridge",
+
+    SET: "set",
+    MULTISET: "multiset",
+    EXPORT: "export",
+
+    RECORD_SESSION: "record_session",
+    STOP_RECORD_SESSION: "stop_record_session",
+
+    LUA: "lua",
+    JS: "js",
+
+    LOG: "log",
+
+    ECHO: "echo",
+    DELAY_ECHO: "delay_echo"
+};
+
 
 var COMMANDS = {
     REGEXP: "&reg"
 };
 
-var CallRouter = module.exports = function (connection, globalVar, desNumber, chnNumber, timeOffset) {
+var CallRouter = module.exports = function (connection, globalVar, desNumber, chnNumber, timeOffset, versionSchema) {
     this.globalVar = globalVar || {};
     this.connection = connection;
     this.regCollection = {};
     this.offset = timeOffset;
+    this.versionSchema = versionSchema;
     this.setDestinationNumber(desNumber, chnNumber);
 };
 
@@ -92,7 +129,7 @@ CallRouter.prototype.yday = function (param) {
     var now = new this.DateOffset(),
         start = new Date(now.getFullYear(), 0, 0),
         diff = now - start,
-        oneDay = 1000*60*60*24;
+        oneDay = 1000 * 60 * 60 * 24;
     return this._DateParser(param, (Math.floor(diff / oneDay)), 366);
 };
 
@@ -231,14 +268,6 @@ CallRouter.prototype.execIf = function (condition) {
     };
 };
 
-CallRouter.prototype.execCallRecord = function (_obj) {
-    var _quality = _obj[OPERATION.CALL_RECORD] || '16';
-    this.execApp({
-        'app': 'lua',
-        'data': 'RecordSession.lua ' + _quality
-    });
-};
-
 CallRouter.prototype.execApp = function (_obj) {
     if (_obj[OPERATION.APPLICATION]) {
         if (_obj[OPERATION.DATA]) {
@@ -251,25 +280,67 @@ CallRouter.prototype.execApp = function (_obj) {
             });
         };
         if (_obj[OPERATION.ASYNC]) {
-            log.trace('Execute sync app: %s, with data: %s', _obj[OPERATION.APPLICATION], _obj[OPERATION.DATA]);
+            log.trace('Execute sync app: %s, with data: %s', _obj[OPERATION.APPLICATION], _obj[OPERATION.DATA] || '');
             this.connection.setEventLock(false);
         } else {
             this.connection.setEventLock(true);
-            log.trace('Execute app: %s, with data: %s', _obj[OPERATION.APPLICATION], _obj[OPERATION.DATA]);
+            log.trace('Execute app: %s, with data: %s', _obj[OPERATION.APPLICATION], _obj[OPERATION.DATA] || '');
         };
-        this.connection.execute(_obj[OPERATION.APPLICATION], _obj[OPERATION.DATA]);
+        this.connection.execute(_obj[OPERATION.APPLICATION], _obj[OPERATION.DATA] || '');
     };
 };
 
 CallRouter.prototype.doExec = function (condition) {
-    if (condition instanceof Object && condition.hasOwnProperty(OPERATION.IF)) {
-        this.execIf(condition[OPERATION.IF]);
-    } else if (condition instanceof Object && condition.hasOwnProperty(OPERATION.APPLICATION)) {
-        this.execApp(condition);
-    } else if (condition instanceof Object && condition.hasOwnProperty(OPERATION.CALL_RECORD)) {
-        this.execCallRecord(condition);
-    } else {
-        log.error('error parse json');
+    if (condition instanceof Object) {
+
+        if (this.versionSchema === 2) {
+
+            if (condition.hasOwnProperty(OPERATION.IF)) {
+                this.execIf(condition[OPERATION.IF]);
+            }
+            else if (condition.hasOwnProperty(OPERATION.ANSWER)) {
+                this._answer(condition);
+            }
+            else if (condition.hasOwnProperty(OPERATION.SET)) {
+                this._set(condition);
+            }
+            else if (condition.hasOwnProperty(OPERATION.GOTO)) {
+                this._goto(condition);
+            }
+            else if (condition.hasOwnProperty(OPERATION.GATEWAY)) {
+                this._gateway(condition);
+            }
+            else if (condition.hasOwnProperty(OPERATION.DEVICE)) {
+                this._device(condition);
+            }
+            else if (condition.hasOwnProperty(OPERATION.RECORD_SESSION)) {
+                this._recordSession(condition);
+            }
+            else if (condition.hasOwnProperty(OPERATION.HANGUP)) {
+                this._hangup(condition);
+            }
+            else if (condition.hasOwnProperty(OPERATION.SCRIPT)) {
+                this._script(condition);
+            }
+            else if (condition.hasOwnProperty(OPERATION.LOG)) {
+                this._console(condition);
+            }
+            else if (condition.hasOwnProperty(OPERATION.ECHO)) {
+                this._echo(condition);
+            }
+            else {
+                log.error('error parse json');
+            };
+        } else {
+            if (condition.hasOwnProperty(OPERATION.IF)) {
+                this.execIf(condition[OPERATION.IF]);
+            } else if (condition.hasOwnProperty(OPERATION.APPLICATION)) {
+                this.execApp(condition);
+            } else {
+                log.error('error parse json');
+            };
+        }
+
     };
 };
 
@@ -290,4 +361,167 @@ CallRouter.prototype.start = function (callflows) {
             scope.execute([callflow]);
         });
     };
+};
+
+CallRouter.prototype._answer = function (app) {
+    var _app;
+    if (app[OPERATION.ANSWER] == "" || /\b200\b|\bOK\b/i.test(app[OPERATION.ANSWER])) {
+        _app = FS_COMMAND.ANSWER;
+    } else if (/\b183\b|\bSession Progress\b/i.test(app[OPERATION.ANSWER])) {
+        _app = FS_COMMAND.PRE_ANSWER;
+    } else if (/\b180\b|\bRinging\b/i.test(app[OPERATION.ANSWER])) {
+        _app = FS_COMMAND.RING_READY;
+    };
+    if (_app) {
+        this.execApp({
+            "app": _app
+        });
+    } else {
+        log.warn('Bad parameter ', app[OPERATION.ANSWER]);
+    };
+};
+
+CallRouter.prototype._set = function (app) {
+    var _app, _data;
+    if (app[OPERATION.SET].indexOf('all:') == 0) {
+        _app = FS_COMMAND.EXPORT;
+        _data = app[OPERATION.SET].substring(4);
+    } else if (app[OPERATION.SET].indexOf('nolocal:') == 0) {
+        _app = FS_COMMAND.EXPORT;
+        _data = app[OPERATION.SET];
+    } else if (/(\w|{|}|&|&|\$|\$\$|-|\s|'|")*=(\w|{|}|&|\$|\$\$|-|\s|'|")*,/.test(app[OPERATION.SET])) {
+        _app = FS_COMMAND.MULTISET;
+        _data = '^^,' + app[OPERATION.SET]
+    } else {
+        _app = FS_COMMAND.SET;
+        _data = app[OPERATION.SET];
+    };
+
+    if (_app) {
+        this.execApp({
+            "app": _app,
+            "data": _data
+        });
+    } else {
+        log.warn('Bad parameter ', app[OPERATION.SET]);
+    };
+};
+
+CallRouter.prototype._goto = function (app) {
+    var _app = FS_COMMAND.TRANSFER,
+        _data;
+    if (app[OPERATION.GOTO].indexOf('default:') == 0) {
+        _data = app[OPERATION.GOTO].substring(8) + ' XML default';
+    } else if (app[OPERATION.GOTO].indexOf('public:') == 0) {
+        _data = app[OPERATION.GOTO].substring(7) + ' XML public';
+    } else {
+        _data = app[OPERATION.GOTO];
+    };
+
+    this.execApp({
+        "app": _app,
+        "data": _data
+    });
+};
+
+CallRouter.prototype._gateway = function (app) {
+    var _data;
+    if (app[OPERATION.GATEWAY].indexOf('sip:') == 0) {
+        _data = 'sofia/gateway/' + app[OPERATION.GATEWAY].substring(4);
+    };
+
+    if (_data) {
+        this.execApp({
+            "app": FS_COMMAND.BRIDGE,
+            "data": _data
+        });
+    } else {
+        log.warn('Bad parameter ', app[OPERATION.GATEWAY]);
+    };
+};
+
+CallRouter.prototype._device = function (app) {
+    if (typeof app[OPERATION.DEVICE] == 'string' && app[OPERATION.DEVICE] != '') {
+        this.execApp({
+            "app": FS_COMMAND.BRIDGE,
+            "data": "user/" + app[OPERATION.DEVICE] + "@${domain_name}"
+        });
+    } else {
+        log.warn('Bad parameter ', app[OPERATION.DEVICE]);
+    };
+};
+
+CallRouter.prototype._recordSession = function (app) {
+    if (app[OPERATION.RECORD_SESSION] == 'start' || app[OPERATION.RECORD_SESSION] == '') {
+        this.execApp({
+            "app": "multiset",
+            "data": "^^,RECORD_MIN_SEC=2,RECORD_STEREO=true,RECORD_BRIDGE_REQ=true," +
+                "record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name}"
+        });
+
+        this.execApp({
+            "app": FS_COMMAND.RECORD_SESSION,
+            "data": "/recordings/${uuid}.mp3"
+        });
+    } else if (app[OPERATION.RECORD_SESSION] == 'stop') {
+        this.execApp({
+            "app": FS_COMMAND.STOP_RECORD_SESSION,
+            "data": "/recordings/${uuid}.mp3"
+        });
+    } else {
+        log.warn('Bad parameter ', app[OPERATION.RECORD_SESSION]);
+    };
+};
+
+CallRouter.prototype._hangup = function (app) {
+    this.execApp({
+        "app": FS_COMMAND.HANGUP,
+        "data": app[OPERATION.HANGUP] || ''
+    });
+};
+
+CallRouter.prototype._script = function (app) {
+    var _data,
+        _app;
+    if (app[OPERATION.SCRIPT].indexOf('lua:') == 0) {
+        _app = FS_COMMAND.LUA;
+        _data = 'lua/' + app[OPERATION.SCRIPT].substring(4);
+    } else if (app[OPERATION.SCRIPT].indexOf('js:') == 0) {
+        _app = FS_COMMAND.JS;
+        _data = 'js/' + app[OPERATION.SCRIPT].substring(3);
+    } else {
+        log.warn('Bad parameter ', app[OPERATION.SCRIPT]);
+        return false;
+    };
+
+    this.execApp({
+        "app": _app,
+        "data": _data
+    });
+};
+
+CallRouter.prototype._console = function (app) {
+    if (typeof app[OPERATION.LOG] == 'string') {
+        this.execApp({
+            "app": FS_COMMAND.LOG,
+            "data": 'CONSOLE ' + app[OPERATION.LOG]
+        });
+    } else {
+        log.warn('Bad parameter ', app[OPERATION.SCRIPT]);
+        return false;
+    };
+};
+
+CallRouter.prototype._echo = function (app) {
+    var _app, _data = '', delay = parseInt(app[OPERATION.ECHO]);
+    if (delay > 0) {
+        _app = FS_COMMAND.DELAY_ECHO;
+        _data = app[OPERATION.ECHO];
+    } else {
+        _app = FS_COMMAND.ECHO;
+    };
+    this.execApp({
+        "app": _app,
+        "data": _data
+    });
 };

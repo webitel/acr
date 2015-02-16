@@ -95,7 +95,7 @@ esl_server.on('connection::ready', function(conn, id) {
 
                     var callflow = result[0]['callflow'];
                     var _router = new CallRouter(conn, globalVariable, result[0]['destination_number'], destinationNumber,
-                        result[0]['timezone']);
+                        result[0]['timezone'], result[0]['version']);
                     try {
                         _router.start(callflow);
                     } catch (e) {
@@ -142,7 +142,7 @@ esl_server.on('connection::ready', function(conn, id) {
                                 if (_reg) {
                                     var callflow = result[i]['callflow'];
                                     var _router = new CallRouter(conn, globalVariable, result[i]['destination_number'],
-                                        destinationNumber, result[i]['timezone']);
+                                        destinationNumber, result[i]['timezone'], result[0]['version']);
                                     try {
                                         _isNotRout = false;
                                         _router.start(callflow);
