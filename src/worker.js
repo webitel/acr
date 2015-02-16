@@ -89,7 +89,10 @@ esl_server.on('connection::ready', function(conn, id) {
                         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                         return;
                     };
+
                     conn.execute('set', 'domain_name=' + result[0]['domain']);
+                    conn.execute('set', 'presence_data=' + result[0]['domain']);
+
                     var callflow = result[0]['callflow'];
                     var _router = new CallRouter(conn, globalVariable, result[0]['destination_number'], destinationNumber,
                         result[0]['timezone']);
