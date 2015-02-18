@@ -26,7 +26,7 @@ The ACR image uses several environment variables
 
 ## Supported Docker versions
 
-This image is officially supported on Docker version `1.3.2` and newest.
+This image is officially supported on Docker version `1.5` and newest.
 
 ## User Feedback
 
