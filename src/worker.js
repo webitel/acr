@@ -10,7 +10,6 @@ var esl = require('modesl'),
     internalExtension = require('./middleware/dialplan/internalExtansion');
 
 var PUBLIC_CONTEXT = 'public';
-
 /*
 var consul = new Consul({
     host: "10.10.10.160"

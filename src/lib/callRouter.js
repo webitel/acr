@@ -3,7 +3,8 @@
  */
 
 var log = require('./log')(module),
-    vm = require('vm');
+    vm = require('vm'),
+    httpReq = require('./httpRequest');
 
 var OPERATION = {
     IF: "if",
@@ -23,7 +24,13 @@ var OPERATION = {
     RECORD_SESSION: "record_session",
     HANGUP: "hangup",
     SCRIPT: "script",
-    LOG: "log"
+    LOG: "log",
+    HTTP: "httpRequest",
+    SLEEP: "sleep",
+
+    CONFERENCE: "conference",
+
+    SCHEDULE: "schedule"
 };
 
 var FS_COMMAND = {
@@ -47,7 +54,14 @@ var FS_COMMAND = {
     LOG: "log",
 
     ECHO: "echo",
-    DELAY_ECHO: "delay_echo"
+    DELAY_ECHO: "delay_echo",
+
+    SLEEP: "sleep",
+
+    CONFERENCE: "conference",
+
+    SCHEDULE_HANGUP: "sched_hangup",
+    SCHEDULE_TRANSFER: "sched_transfer"
 };
 
 
@@ -170,7 +184,6 @@ CallRouter.prototype.time_of_day = function (param) {
     // TODO
 };
 
-
 CallRouter.prototype._DateParser = function (param, datetime, maxVal) {
     param = param || '';
     var datetimes = param.replace(/\s/g, '').split(','),
@@ -240,7 +253,7 @@ CallRouter.prototype.setDestinationNumber = function (strReg, number) {
     this.regCollection[COMMANDS.REGEXP + '0'] = _regOb;
 };
 
-CallRouter.prototype.execIf = function (condition) {
+CallRouter.prototype.execIf = function (condition, cb) {
     var sandbox = {
         _resultCondition: false,
         sys: this
@@ -258,11 +271,11 @@ CallRouter.prototype.execIf = function (condition) {
             : false);
         if (sandbox._resultCondition) {
             if (condition[OPERATION.THEN]) {
-                this.execute(condition[OPERATION.THEN]);
+                this.execute(condition[OPERATION.THEN], cb);
             };
         } else {
             if (condition[OPERATION.ELSE]) {
-                this.execute(condition[OPERATION.ELSE]);
+                this.execute(condition[OPERATION.ELSE], cb);
             };
         };
     };
@@ -270,7 +283,7 @@ CallRouter.prototype.execIf = function (condition) {
 
 CallRouter.prototype.execApp = function (_obj) {
     if (_obj[OPERATION.APPLICATION]) {
-        if (_obj[OPERATION.DATA]) {
+        if (typeof _obj[OPERATION.DATA] === 'string') {
             var scope = this;
             _obj[OPERATION.DATA] = _obj[OPERATION.DATA].replace(/\&reg(\d+)\.(\$\d+)/g, function(a, reg, key) {
                 var _res = (scope.regCollection[COMMANDS.REGEXP + reg])
@@ -290,43 +303,52 @@ CallRouter.prototype.execApp = function (_obj) {
     };
 };
 
-CallRouter.prototype.doExec = function (condition) {
+CallRouter.prototype.doExec = function (condition, cb) {
     if (condition instanceof Object) {
 
         if (this.versionSchema === 2) {
 
             if (condition.hasOwnProperty(OPERATION.IF)) {
-                this.execIf(condition[OPERATION.IF]);
+                this.execIf(condition[OPERATION.IF], cb);
+            }
+            else if (condition.hasOwnProperty(OPERATION.SLEEP)) {
+                this._sleep(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.ANSWER)) {
-                this._answer(condition);
+                this._answer(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.SET)) {
-                this._set(condition);
+                this._set(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.GOTO)) {
-                this._goto(condition);
+                this._goto(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.GATEWAY)) {
-                this._gateway(condition);
+                this._gateway(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.DEVICE)) {
-                this._device(condition);
+                this._device(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.RECORD_SESSION)) {
-                this._recordSession(condition);
+                this._recordSession(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.HANGUP)) {
-                this._hangup(condition);
+                this._hangup(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.SCRIPT)) {
-                this._script(condition);
+                this._script(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.LOG)) {
-                this._console(condition);
+                this._console(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.ECHO)) {
-                this._echo(condition);
+                this._echo(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.HTTP)) {
+                this._httpRequest(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.CONFERENCE)) {
+                this._conference(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.SCHEDULE)) {
+                this._schedule(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -344,26 +366,51 @@ CallRouter.prototype.doExec = function (condition) {
     };
 };
 
-CallRouter.prototype.execute = function (callflows) {
+CallRouter.prototype.execute = function (callflows, cb) {
     var scope = this;
+    var i = 0;
+
+    var postExec = function (err, res) {
+        i++;
+        if (i == callflows.length) {
+            if (cb)
+                cb();
+            return;
+        };
+        scope.doExec(callflows[i], postExec);
+    };
+
     if (callflows instanceof Array && callflows.length > 0) {
-        callflows.forEach(function (callflow) {
-            scope.doExec(callflow);
-        });
+        //callflows.forEach(function (callflow) {
+        //    scope.doExec(callflow);
+        //});
+        this.doExec(callflows[i], postExec);
     };
 };
 
 CallRouter.prototype.start = function (callflows) {
-    var scope = this;
+    var scope = this,
+        i = 0;
+
+    var postExec = function (err, res) {
+        i++;
+        if (i == callflows.length) {
+            return;
+        };
+        scope.doExec(callflows[i], postExec);
+    };
+
     if (callflows instanceof Array && callflows.length > 0) {
-        callflows.forEach(function (callflow) {
-            scope.destroyLocalRegExpValues();
-            scope.execute([callflow]);
-        });
+        //callflows.forEach(function (callflow) {
+        //    scope.destroyLocalRegExpValues();
+        //    scope.execute([callflow]);
+        //});
+        this.execute([callflows[i]], postExec);
+
     };
 };
 
-CallRouter.prototype._answer = function (app) {
+CallRouter.prototype._answer = function (app, cb) {
     var _app;
     if (app[OPERATION.ANSWER] == "" || /\b200\b|\bOK\b/i.test(app[OPERATION.ANSWER])) {
         _app = FS_COMMAND.ANSWER;
@@ -374,84 +421,123 @@ CallRouter.prototype._answer = function (app) {
     };
     if (_app) {
         this.execApp({
-            "app": _app
+            "app": _app,
+            "async": app[OPERATION.ASYNC] ? true : false
         });
     } else {
         log.warn('Bad parameter ', app[OPERATION.ANSWER]);
     };
+
+    if (cb)
+        cb();
 };
 
-CallRouter.prototype._set = function (app) {
+CallRouter.prototype._set = function (app, cb) {
     var _app, _data;
-    if (app[OPERATION.SET].indexOf('all:') == 0) {
-        _app = FS_COMMAND.EXPORT;
-        _data = app[OPERATION.SET].substring(4);
-    } else if (app[OPERATION.SET].indexOf('nolocal:') == 0) {
-        _app = FS_COMMAND.EXPORT;
-        _data = app[OPERATION.SET];
-    } else if (/(\w|{|}|&|&|\$|\$\$|-|\s|'|")*=(\w|{|}|&|\$|\$\$|-|\s|'|")*,/.test(app[OPERATION.SET])) {
+
+    if (app[OPERATION.SET] instanceof Array) {
         _app = FS_COMMAND.MULTISET;
-        _data = '^^,' + app[OPERATION.SET]
+        _data = '^^:' + app[OPERATION.SET].join(':');
     } else {
-        _app = FS_COMMAND.SET;
-        _data = app[OPERATION.SET];
+        if (app[OPERATION.SET].indexOf('all:') == 0) {
+            _app = FS_COMMAND.EXPORT;
+            _data = app[OPERATION.SET].substring(4);
+        } else if (app[OPERATION.SET].indexOf('nolocal:') == 0) {
+            _app = FS_COMMAND.EXPORT;
+            _data = app[OPERATION.SET];
+        } else {
+            _app = FS_COMMAND.SET;
+            _data = app[OPERATION.SET];
+        };
     };
 
     if (_app) {
         this.execApp({
             "app": _app,
-            "data": _data
+            "data": _data,
+            "async": app[OPERATION.ASYNC] ? true : false
         });
     } else {
         log.warn('Bad parameter ', app[OPERATION.SET]);
     };
+
+    if (cb)
+        cb();
 };
 
-CallRouter.prototype._goto = function (app) {
-    var _app = FS_COMMAND.TRANSFER,
-        _data;
-    if (app[OPERATION.GOTO].indexOf('default:') == 0) {
-        _data = app[OPERATION.GOTO].substring(8) + ' XML default';
-    } else if (app[OPERATION.GOTO].indexOf('public:') == 0) {
-        _data = app[OPERATION.GOTO].substring(7) + ' XML public';
+function _getGotoDataString(param) {
+    param = param || '';
+    if (param.indexOf('default:') == 0) {
+        return param.substring(8) + ' XML default';
+    } else if (param.indexOf('public:') == 0) {
+        return param.substring(7) + ' XML public';
     } else {
-        _data = app[OPERATION.GOTO];
+        return param;
     };
+};
+
+CallRouter.prototype._goto = function (app, cb) {
+    var _app = FS_COMMAND.TRANSFER,
+        _data = _getGotoDataString(app[OPERATION.GOTO]);
 
     this.execApp({
         "app": _app,
-        "data": _data
+        "data": _data,
+        "async": app[OPERATION.ASYNC] ? true : false
     });
+
+    if (cb)
+        cb();
 };
 
-CallRouter.prototype._gateway = function (app) {
+CallRouter.prototype._gateway = function (app, cb) {
     var _data;
-    if (app[OPERATION.GATEWAY].indexOf('sip:') == 0) {
-        _data = 'sofia/gateway/' + app[OPERATION.GATEWAY].substring(4);
+
+    if (app[OPERATION.GATEWAY] instanceof Array) {
+        _data = app[OPERATION.GATEWAY].join(',');
+        _data = _data.replace(/sip:/g, 'sofia/gateway/');
+    } else {
+        if (app[OPERATION.GATEWAY].indexOf('sip:') == 0) {
+            _data = 'sofia/gateway/' + app[OPERATION.GATEWAY].substring(4);
+        };
     };
 
     if (_data) {
         this.execApp({
             "app": FS_COMMAND.BRIDGE,
-            "data": _data
+            "data": _data,
+            "async": app[OPERATION.ASYNC] ? true : false
         });
     } else {
         log.warn('Bad parameter ', app[OPERATION.GATEWAY]);
     };
+
+    if (cb)
+        cb();
 };
 
-CallRouter.prototype._device = function (app) {
-    if (typeof app[OPERATION.DEVICE] == 'string' && app[OPERATION.DEVICE] != '') {
-        this.execApp({
-            "app": FS_COMMAND.BRIDGE,
-            "data": "user/" + app[OPERATION.DEVICE] + "@${domain_name}"
-        });
+CallRouter.prototype._device = function (app, cb) {
+    var _data;
+    if (app[OPERATION.DEVICE] instanceof Array) {
+        for (var i = 0, len = app[OPERATION.DEVICE].length; i < len; i++) {
+            app[OPERATION.DEVICE][i] = 'user/' + app[OPERATION.DEVICE][i] + '@${domain_name}';
+        };
+        _data = app[OPERATION.DEVICE].join(',');
     } else {
-        log.warn('Bad parameter ', app[OPERATION.DEVICE]);
+        _data = 'user/' + app[OPERATION.DEVICE] + '@${domain_name}';
     };
+
+    this.execApp({
+        "app": FS_COMMAND.BRIDGE,
+        "data": _data,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+
+    if (cb)
+        cb();
 };
 
-CallRouter.prototype._recordSession = function (app) {
+CallRouter.prototype._recordSession = function (app, cb) {
     if (app[OPERATION.RECORD_SESSION] == 'start' || app[OPERATION.RECORD_SESSION] == '') {
         this.execApp({
             "app": "multiset",
@@ -471,48 +557,72 @@ CallRouter.prototype._recordSession = function (app) {
     } else {
         log.warn('Bad parameter ', app[OPERATION.RECORD_SESSION]);
     };
+
+    if (cb)
+        cb();
 };
 
-CallRouter.prototype._hangup = function (app) {
+CallRouter.prototype._hangup = function (app, cb) {
     this.execApp({
         "app": FS_COMMAND.HANGUP,
-        "data": app[OPERATION.HANGUP] || ''
+        "data": app[OPERATION.HANGUP] || '',
+        "async": app[OPERATION.ASYNC] ? true : false
     });
+
+    if (cb)
+        cb();
 };
 
-CallRouter.prototype._script = function (app) {
-    var _data,
-        _app;
-    if (app[OPERATION.SCRIPT].indexOf('lua:') == 0) {
-        _app = FS_COMMAND.LUA;
-        _data = 'lua/' + app[OPERATION.SCRIPT].substring(4);
-    } else if (app[OPERATION.SCRIPT].indexOf('js:') == 0) {
-        _app = FS_COMMAND.JS;
-        _data = 'js/' + app[OPERATION.SCRIPT].substring(3);
+CallRouter.prototype._script = function (app, cb) {
+    var _data = 'lua/',
+        _app = FS_COMMAND.LUA,
+        prop = app[OPERATION.SCRIPT];
+
+    if (prop instanceof Object && prop.hasOwnProperty('name')) {
+        if (prop['type'] == 'js') {
+            _app = FS_COMMAND.JS;
+            _data = 'js/';
+        };
+
+        _data = _data.concat(prop['name']);
+
+        if (prop['parameters'] instanceof Array) {
+            for (var i = 0, len = prop['parameters'].length; i < len; i++) {
+                _data = _data.concat(' "', prop['parameters'][i], '"');
+            };
+        };
+
+        this.execApp({
+            "app": _app,
+            "data": _data,
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
+
     } else {
-        log.warn('Bad parameter ', app[OPERATION.SCRIPT]);
-        return false;
+        log.warn('Bad script name.');
     };
 
-    this.execApp({
-        "app": _app,
-        "data": _data
-    });
+    if (cb)
+        cb();
 };
 
-CallRouter.prototype._console = function (app) {
+CallRouter.prototype._console = function (app, cb) {
     if (typeof app[OPERATION.LOG] == 'string') {
         this.execApp({
             "app": FS_COMMAND.LOG,
-            "data": 'CONSOLE ' + app[OPERATION.LOG]
+            "data": 'CONSOLE ' + app[OPERATION.LOG],
+            "async": app[OPERATION.ASYNC] ? true : false
         });
     } else {
         log.warn('Bad parameter ', app[OPERATION.SCRIPT]);
         return false;
     };
+
+    if (cb)
+        cb();
 };
 
-CallRouter.prototype._echo = function (app) {
+CallRouter.prototype._echo = function (app, cb) {
     var _app, _data = '', delay = parseInt(app[OPERATION.ECHO]);
     if (delay > 0) {
         _app = FS_COMMAND.DELAY_ECHO;
@@ -522,6 +632,79 @@ CallRouter.prototype._echo = function (app) {
     };
     this.execApp({
         "app": _app,
-        "data": _data
+        "data": _data,
+        "async": app[OPERATION.ASYNC] ? true : false
     });
+
+    if (cb)
+        cb();
+};
+
+CallRouter.prototype._httpRequest = function (app, cb) {
+    httpReq(app[OPERATION.HTTP], this, cb);
+};
+
+CallRouter.prototype._sleep = function (app, cb) {
+    var delay = parseInt(app[OPERATION.SLEEP]);
+    this.execApp({
+        "app": FS_COMMAND.SLEEP,
+        "data": delay,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+    if (cb)
+        cb();
+};
+
+CallRouter.prototype._conference = function (app, cb) {
+    var _data = '', prop = app[OPERATION.CONFERENCE];
+    if (prop['name'] && /^[a-zA-Z0-9+_-]+$/.test(prop['name'])) {
+        _data = _data.concat(prop['name'], '@',
+            prop.hasOwnProperty('profile') ? prop['profile'] : 'default',
+            prop.hasOwnProperty('pin') ? '+' + prop['pin'] : '',
+            prop.hasOwnProperty('mute') ? '+flags{mute}' : ''
+        );
+        this.execApp({
+            "app": FS_COMMAND.CONFERENCE,
+            "data": _data,
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
+    } else {
+        log.warn("Conference name ASCII letters, _, +, - or numbers ");
+    };
+
+    if (cb)
+        cb();
+};
+
+CallRouter.prototype._schedule = function (app, cb) {
+    var _data = '+',
+        _app,
+        prop = app[OPERATION.SCHEDULE];
+
+    _data += isNaN(prop['seconds'])
+        ? '0 '
+        : prop['seconds'] + ' ';
+
+    if (prop['action'] == OPERATION.HANGUP) {
+        _app = FS_COMMAND.SCHEDULE_HANGUP;
+        _data = _data.concat(prop['data'] ? prop['data'] : '');
+    } else if (prop['action'] == OPERATION.GOTO) {
+        _app = FS_COMMAND.SCHEDULE_TRANSFER;
+
+        _data = _data.concat( _getGotoDataString( prop['data']
+            ? prop['data']
+            : ''));
+    } else {
+        log.warn("Bad parameters SCHEDULE");
+    };
+
+    if (_app)
+        this.execApp({
+            "app": _app,
+            "data": _data,
+            "async": prop[OPERATION.ASYNC] ? true : false
+        });
+
+    if (cb)
+        cb();
 };

@@ -1,17 +1,80 @@
 {
-  "destination_number" : "/^\+?3?8?(0(6|9)3\d{7})$/",
+  "destination_number" : "(1)11",
   "domain" : "10.10.10.144",
   "callflow" : [
+    {
+      "set": ["a=1", "b=2", "c=3"]
+    },
+    {
+      "set": "d=d"
+    },
+    {
+      "set": "all:a=1"
+    },
+    {
+      "set": "nolocal:a=1"
+    },
+    {
+      "gateway": "sip:gw_name/&reg0.$1"
+    },
+    {
+      "gateway": ["sip:gw_name1/&reg0.$1", "sip:gw_name2/&reg0.$1"]
+    },
+    {
+      "device": "1000"
+    },
+    {
+      "device": ["1001", "1002"]
+    },
+    {
+      "conference": {
+        "name": "asdddd",
+        "pin": "123",
+        "mute": true
+      }
+    },
+    {
+      "script": {
+        "name": "jo.js",
+        "type": "js",
+        "parameters": ["das=das das da", "a=1"]
+      }
+    },
+    {
+      "if": {
+        "expression": "1==1",
+        "then":[
+          {
+            "log": "test then OK"
+          },
+          {
+            "if": {
+              "expression": "1==2",
+              "else":[
+                {
+                  "log": "test else OK"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "httpRequest" : {
+        "url" : "http://crm.webitel.com/0/ServiceModel/GetCallerOwnerService.svc/GetCallerOwner",
+        "method": "post"
+      }
+    },
 
     {
-      "app": "log",
-      "data": "hello from &reg0.$1"
+      "device" : "102"
     },
     {
-      "app": "answer"
+      "log" : "TESTING  ${caller_id_name} ${effective_caller_id_name} -> ${owner_caller_id_number}"
     },
     {
-      "app": "echo"
+      "hangup": ""
     }
 
   ]
