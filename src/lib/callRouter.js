@@ -19,8 +19,8 @@ var OPERATION = {
     ANSWER: "answer",
     SET: "set",
     GOTO: "goto",
-    GATEWAY: "gateway",
-    DEVICE: "device",
+   /* GATEWAY: "gateway",
+    DEVICE: "device", */
     RECORD_SESSION: "record_session",
     HANGUP: "hangup",
     SCRIPT: "script",
@@ -30,7 +30,9 @@ var OPERATION = {
 
     CONFERENCE: "conference",
 
-    SCHEDULE: "schedule"
+    SCHEDULE: "schedule",
+
+    BRIDGE: "bridge"
 };
 
 var FS_COMMAND = {
@@ -39,7 +41,6 @@ var FS_COMMAND = {
     RING_READY: "ring_ready",
     TRANSFER: "transfer",
     HANGUP: "hangup",
-    BRIDGE: "bridge",
 
     SET: "set",
     MULTISET: "multiset",
@@ -61,7 +62,9 @@ var FS_COMMAND = {
     CONFERENCE: "conference",
 
     SCHEDULE_HANGUP: "sched_hangup",
-    SCHEDULE_TRANSFER: "sched_transfer"
+    SCHEDULE_TRANSFER: "sched_transfer",
+
+    BRIDGE: "bridge"
 };
 
 
@@ -317,18 +320,21 @@ CallRouter.prototype.doExec = function (condition, cb) {
             else if (condition.hasOwnProperty(OPERATION.ANSWER)) {
                 this._answer(condition, cb);
             }
+            else if (condition.hasOwnProperty(OPERATION.BRIDGE)) {
+                this._bridge(condition, cb);
+            }
             else if (condition.hasOwnProperty(OPERATION.SET)) {
                 this._set(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.GOTO)) {
                 this._goto(condition, cb);
-            }
+            } /*
             else if (condition.hasOwnProperty(OPERATION.GATEWAY)) {
                 this._gateway(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.DEVICE)) {
                 this._device(condition, cb);
-            }
+            }*/
             else if (condition.hasOwnProperty(OPERATION.RECORD_SESSION)) {
                 this._recordSession(condition, cb);
             }
@@ -343,11 +349,14 @@ CallRouter.prototype.doExec = function (condition, cb) {
             }
             else if (condition.hasOwnProperty(OPERATION.ECHO)) {
                 this._echo(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.HTTP)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.HTTP)) {
                 this._httpRequest(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.CONFERENCE)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.CONFERENCE)) {
                 this._conference(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.SCHEDULE)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.SCHEDULE)) {
                 this._schedule(condition, cb);
             }
             else {
@@ -489,7 +498,7 @@ CallRouter.prototype._goto = function (app, cb) {
     if (cb)
         cb();
 };
-
+/*  Переделано на _bridge
 CallRouter.prototype._gateway = function (app, cb) {
     var _data;
 
@@ -536,7 +545,7 @@ CallRouter.prototype._device = function (app, cb) {
     if (cb)
         cb();
 };
-
+*/
 CallRouter.prototype._recordSession = function (app, cb) {
     if (app[OPERATION.RECORD_SESSION] == 'start' || app[OPERATION.RECORD_SESSION] == '') {
         this.execApp({
@@ -704,6 +713,53 @@ CallRouter.prototype._schedule = function (app, cb) {
             "data": _data,
             "async": prop[OPERATION.ASYNC] ? true : false
         });
+
+    if (cb)
+        cb();
+};
+
+CallRouter.prototype._bridge = function (app, cb) {
+    var prop = app[OPERATION.BRIDGE],
+        _data = '',
+        separator = prop['strategy'] == 'sequential'
+            ? '|'
+            : ',';
+
+    if (prop.hasOwnProperty('parameters') && prop['parameters'] instanceof Array) {
+        _data = _data.concat('{', prop['parameters'].join(','), '}');
+    };
+
+    if (prop.hasOwnProperty('endpoints') && prop['endpoints'] instanceof Array) {
+        prop['endpoints'].forEach(function (endpoint) {
+            if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
+                _data = _data.concat('[', endpoint['parameters'].join(','), ']')
+            };
+            switch (endpoint['type']) {
+                case 'sipGateway':
+                    _data = _data.concat('sofia/gateway/', endpoint['name'], '/', endpoint['dialString']);
+                    break;
+                case 'sipUri':
+                    _data = _data.concat('sofia/profile/', endpoint.hasOwnProperty('profile') ? endpoint['profile'] : 'external',
+                        '/', endpoint['dialString'], '@', endpoint['host']);
+                    break;
+                case 'device':
+                    _data = _data.concat('user/', endpoint['name'], '@${domain_name}');
+                    break;
+                case 'user':
+                    _data = _data.concat('user/', endpoint['name'], '@', endpoint.hasOwnProperty('domainName')
+                        ? endpoint['domainName']
+                        : '${domain_name}');
+                    break;
+            };
+            _data = _data.concat(separator);
+        });
+
+        this.execApp({
+            "app": FS_COMMAND.BRIDGE,
+            "data": _data.slice(0, -1),
+            "async": prop[OPERATION.ASYNC] ? true : false
+        });
+    };
 
     if (cb)
         cb();

@@ -18,7 +18,56 @@
       "gateway": "sip:gw_name/&reg0.$1"
     },
     {
-      "gateway": ["sip:gw_name1/&reg0.$1", "sip:gw_name2/&reg0.$1"]
+      "bridge": {
+        "strategy": "simultaneously",
+        "parameters": [
+          "a=1",
+          "b=2"
+        ],
+        "endpoints": [
+          {
+            "name": "gw_name1",
+            "type": "sipGateway",
+            "dialString": "\\+7&reg0.$1",
+            "parameters": [
+              "c=1",
+              "d=2"
+            ]
+          },
+          {
+            "type": "sipUri",
+            "profile": "external",
+            "host": "webitel.com:5080",
+            "dialString": "\\+7&reg0.$1",
+            "parameters": ["k=1"]
+          },
+          {
+            "name": "1000",
+            "type": "device",
+            "parameters": ["c=3"]
+          },
+          {
+            "name": "srg",
+            "type": "user",
+            "domainName": "10.10.10.144",
+            "parameters": ["d=3"]
+          }
+        ]
+      }
+    },
+    {
+      "gateway": {
+        "strategy": "dasd",
+        "endpoint": [
+          {
+            "type": "gateway",
+            "name": "dasdasda"
+          },
+          {
+            "type": "user",
+            "name": "102"
+          }]
+      }
     },
     {
       "device": "1000"
