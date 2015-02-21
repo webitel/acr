@@ -364,10 +364,16 @@ CallRouter.prototype.doExec = function (condition, cb) {
             };
         } else {
             if (condition.hasOwnProperty(OPERATION.IF)) {
-                this.execIf(condition[OPERATION.IF]);
+                this.execIf(condition[OPERATION.IF], cb);
             } else if (condition.hasOwnProperty(OPERATION.APPLICATION)) {
                 this.execApp(condition);
+                if (cb) {
+                    cb();
+                };
             } else {
+                if (cb) {
+                    cb();
+                };
                 log.error('error parse json');
             };
         }
