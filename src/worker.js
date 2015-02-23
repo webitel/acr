@@ -52,7 +52,7 @@ esl_server.on('connection::ready', function(conn, id) {
     });
 
     log.trace('New call %s', id);
-    //console.log(conn.channelData.serialize());
+    console.log(conn.channelData.serialize());
 
     try {
         var context = conn.channelData.getHeader('Channel-Context'),

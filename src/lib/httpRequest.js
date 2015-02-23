@@ -23,7 +23,7 @@ var DEF_HEADERS = {
 };
 
 var DEF_DATA = {
-    "callerIdNumber": "${caller_id_number}"
+    "callerIdNumber": "${Caller-Caller-ID-Number}"
 };
 
 client.on('error', function (err) {
