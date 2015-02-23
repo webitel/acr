@@ -30,23 +30,6 @@ client.on('error', function (err) {
     log.error(err);
 });
 
-function parseRequest (data, response) {
-    try {
-        var jsonData = JSON.parse(data);
-        log.debug(jsonData);
-        for (var key in exportVariables) {
-            if (jsonData.hasOwnProperty(exportVariables[key]) && jsonData[exportVariables[key]]) {
-                router._set({
-                    "set": "all:" + key + "=" + jsonData[exportVariables[key]]
-                });
-            };
-        };
-    } catch (e) {
-        log.error(e.message);
-    } finally {
-        cb();
-    };
-};
 
 module.exports = function (parameters, router, cb) {
 
@@ -56,25 +39,12 @@ module.exports = function (parameters, router, cb) {
     };
 
     var method = parameters['method'] || 'post',
-        method = method.toLowerCase(),
         exportVariables = parameters['exportVariables'] || DEF_EXPORT_VAR,
         headers = parameters['headers'] || DEF_HEADERS;
 
-    var data = parameters['data'] || DEF_DATA;
-
-    if (typeof data == "object") {
-        for (var key in data) {
-            if (/^\$\$\{\W*\w*/.test(data[key])) {
-                data[key] = router.getGlbVar(data[key].replace(/\$|\{|}/g, ''));
-            } else if (/^\$\{\W*\w*/.test(data[key])) {
-                data[key] = router.getChnVar(data[key].replace(/\$|\{|}/g, ''));
-                log.debug('SET VAR VALUE: %s', data[key]);
-            };
-        };
-    };
 
     var webArgs = {
-        data: data,
+        data: parameters['data'] || JSON.parse(JSON.stringify(DEF_DATA)),
         headers: headers,
         requestConfig:{
             timeout: 1000, //request timeout in milliseconds
@@ -84,7 +54,16 @@ module.exports = function (parameters, router, cb) {
             timeout: 1000 //response timeout
         }
     };
-    console.dir(webArgs);
+    method = method.toLowerCase();
+
+    for (var key in webArgs.data) {
+        if (/^\$\$\{\W*\w*/.test(webArgs.data[key])) {
+            webArgs.data[key] = router.getGlbVar(webArgs.data[key].replace(/\$|\{|}/g, ''));
+        } else if (/^\$\{\W*\w*/.test(webArgs.data[key])) {
+            webArgs.data[key] = router.getChnVar(webArgs.data[key].replace(/\$|\{|}/g, ''));
+        };
+    };
+
     var req;
     if (method == METHODS.GET) {
         delete webArgs.data;
