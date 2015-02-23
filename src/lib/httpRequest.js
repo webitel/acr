@@ -23,7 +23,7 @@ var DEF_HEADERS = {
 };
 
 var DEF_DATA = {
-    "callerIdNumber": "${Caller-Caller-ID-Number}"
+    "callerIdNumber": "${caller_id_number}"
 };
 
 client.on('error', function (err) {
@@ -82,7 +82,7 @@ module.exports = function (parameters, router, cb) {
             timeout: 1000 //response timeout
         }
     };
-
+    console.dir(webArgs);
     var req;
     if (method == METHODS.GET) {
         delete webArgs.data;
@@ -91,6 +91,7 @@ module.exports = function (parameters, router, cb) {
         req = client.post(parameters['url'], webArgs, parseRequest);
     } else {
         log.error('Bad parameters method');
+        cb();
         return;
     };
 
