@@ -410,6 +410,7 @@ CallRouter.prototype.start = function (callflows) {
     var postExec = function (err, res) {
         i++;
         if (i == callflows.length) {
+            scope.connection.disconnect();
             return;
         };
         scope.doExec(callflows[i], postExec);

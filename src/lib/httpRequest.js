@@ -13,17 +13,23 @@ var METHODS = {
     DELETE: "delete"
 };
 
-var DEF_EXPORT_VAR = {
-    "effective_caller_id_name": "callerIdName",
-    "owner_caller_id_number": "callerIdOwner"
+var DEF_EXPORT_VAR = function () {
+    return {
+        "effective_caller_id_name": "callerIdName",
+        "owner_caller_id_number": "callerIdOwner"
+    };
 };
 
-var DEF_HEADERS = {
-    "Content-Type":"application/json"
+var DEF_HEADERS = function () {
+    return {
+        "Content-Type":"application/json"
+    }
 };
 
-var DEF_DATA = {
-    "callerIdNumber": "${Caller-Caller-ID-Number}"
+var DEF_DATA = function() {
+    return {
+        "callerIdNumber": "${Caller-Caller-ID-Number}"
+    };
 };
 
 client.on('error', function (err) {
@@ -37,14 +43,34 @@ module.exports = function (parameters, router, cb) {
         cb(new Error('Bad request'));
         return;
     };
+    
+    var _parseRequest = function (dataRequest) {
+        try {
+            var jsonData = JSON.parse(dataRequest);
+            log.debug(jsonData);
+            for (var key in exportVariables) {
+                if (!exportVariables.hasOwnProperty(key)) continue;
+
+                if (jsonData.hasOwnProperty(exportVariables[key]) && jsonData[exportVariables[key]]) {
+                    router._set({
+                        "set": "all:" + key + "=" + jsonData[exportVariables[key]]
+                    });
+                };
+            };
+        } catch (e) {
+            log.error(e.message);
+        } finally {
+            cb();
+        };
+    };
 
     var method = parameters['method'] || 'post',
-        exportVariables = parameters['exportVariables'] || DEF_EXPORT_VAR,
-        headers = parameters['headers'] || DEF_HEADERS;
+        exportVariables = parameters['exportVariables'] || DEF_EXPORT_VAR(),
+        headers = parameters['headers'] || DEF_HEADERS();
 
 
     var webArgs = {
-        data: parameters['data'] || JSON.parse(JSON.stringify(DEF_DATA)),
+        data: parameters['data'] || DEF_DATA(),
         headers: headers,
         requestConfig:{
             timeout: 1000, //request timeout in milliseconds
@@ -57,6 +83,8 @@ module.exports = function (parameters, router, cb) {
     method = method.toLowerCase();
 
     for (var key in webArgs.data) {
+        if (!webArgs.data.hasOwnProperty(key)) continue;
+
         if (/^\$\$\{\W*\w*/.test(webArgs.data[key])) {
             webArgs.data[key] = router.getGlbVar(webArgs.data[key].replace(/\$|\{|}/g, ''));
         } else if (/^\$\{\W*\w*/.test(webArgs.data[key])) {
@@ -67,41 +95,9 @@ module.exports = function (parameters, router, cb) {
     var req;
     if (method == METHODS.GET) {
         delete webArgs.data;
-        req = client.get(parameters['url'], webArgs, function (dataRequest) {
-            try {
-                var jsonData = JSON.parse(dataRequest);
-                log.debug(jsonData);
-                for (var key in exportVariables) {
-                    if (jsonData.hasOwnProperty(exportVariables[key]) && jsonData[exportVariables[key]]) {
-                        router._set({
-                            "set": "all:" + key + "=" + jsonData[exportVariables[key]]
-                        });
-                    };
-                };
-            } catch (e) {
-                log.error(e.message);
-            } finally {
-                cb();
-            };
-        });
+        req = client.get(parameters['url'], webArgs, _parseRequest);
     } else if (method == METHODS.POST) {
-        req = client.post(parameters['url'], webArgs, function (dataRequest) {
-            try {
-                var jsonData = JSON.parse(dataRequest);
-                log.debug(jsonData);
-                for (var key in exportVariables) {
-                    if (jsonData.hasOwnProperty(exportVariables[key]) && jsonData[exportVariables[key]]) {
-                        router._set({
-                            "set": "all:" + key + "=" + jsonData[exportVariables[key]]
-                        });
-                    };
-                };
-            } catch (e) {
-                log.error(e.message);
-            } finally {
-                cb();
-            };
-        });
+        req = client.post(parameters['url'], webArgs, _parseRequest);
     } else {
         log.error('Bad parameters method');
         cb();
