@@ -1,6 +1,7 @@
 /**
  * Created by i.navrotskyj on 17.02.2015.
  */
+
 var Client = require('node-rest-client').Client,
     client = new Client(),
     //EventEmitter2 = require('eventemitter2').EventEmitter2,
@@ -53,7 +54,7 @@ module.exports = function (parameters, router, cb) {
 
                 if (jsonData.hasOwnProperty(exportVariables[key]) && jsonData[exportVariables[key]]) {
                     router._set({
-                        "set": "all:" + key + "=" + jsonData[exportVariables[key]]
+                        "setVar": "all:" + key + "=" + jsonData[exportVariables[key]]
                     });
                 };
             };

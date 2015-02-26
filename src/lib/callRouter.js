@@ -17,7 +17,7 @@ var OPERATION = {
     ECHO: "echo",
 
     ANSWER: "answer",
-    SET: "set",
+    SET: "setVar",
     GOTO: "goto",
    /* GATEWAY: "gateway",
     DEVICE: "device", */
@@ -118,6 +118,10 @@ CallRouter.prototype.DateOffset = function() {
     var d = new Date(),
         utc = d.getTime() + (d.getTimezoneOffset() * 60000);
     return new Date(utc + (3600000 * this.offset));
+};
+
+CallRouter.prototype.setChnVar = function (name, value) {
+    this.connection.channelData.addHeader(name, value);
 };
 
 CallRouter.prototype.getChnVar = function (name) {
@@ -227,7 +231,8 @@ Date.prototype._getWeekOfMonth = function(exact) {
 
 CallRouter.prototype.match = function (reg, val) {
     var _reg;
-    _reg = reg.match(new RegExp('^/(.*?)/([gimy]*)$'));
+    _reg = reg.replace(/\u0001/g, '\\');
+    _reg = _reg.match(new RegExp('^/(.*?)/([gimy]*)$'));
     if (!_reg) {
         _reg = [null, reg];
     };
@@ -237,7 +242,7 @@ CallRouter.prototype.match = function (reg, val) {
     for (var key in _result) {
         _regOb['$' + key] = _result[key];
     };
-    this.regCollection[COMMANDS.REGEXP + (Object.keys(this.regCollection).length + 1)] = _regOb;
+    this.regCollection[COMMANDS.REGEXP + (Object.keys(this.regCollection).length)] = _regOb;
     return _result ? true : false;
 };
 
@@ -264,10 +269,14 @@ CallRouter.prototype.execIf = function (condition, cb) {
     if (condition['sysExpression']) {
         var expression = condition['sysExpression'] || '';
 
-        log.info('Parse expression: %s', expression);
+        log.trace('Parse expression: %s', expression);
             // TODO
-       var script = vm.createScript('_resultCondition = (' + expression + ')');
-       script.runInNewContext(sandbox);
+        try {
+            var script = vm.createScript('try { _resultCondition = (' + expression + ') } catch (e) {}');
+            script.runInNewContext(sandbox);
+        } catch (e) {
+            log.error(e.message);
+        };
 
         log.trace('Condition %s : %s', expression, sandbox._resultCondition
             ? true
@@ -275,10 +284,14 @@ CallRouter.prototype.execIf = function (condition, cb) {
         if (sandbox._resultCondition) {
             if (condition[OPERATION.THEN]) {
                 this.execute(condition[OPERATION.THEN], cb);
+            } else {
+                cb();
             };
         } else {
             if (condition[OPERATION.ELSE]) {
                 this.execute(condition[OPERATION.ELSE], cb);
+            } else {
+                cb();
             };
         };
     };
@@ -448,22 +461,36 @@ CallRouter.prototype._answer = function (app, cb) {
         cb();
 };
 
+CallRouter.prototype._addVariableArrayToChannelDump = function (variables) {
+    if (variables instanceof  Array) {
+        var scope = this, _tmp;
+        variables.forEach(function(variableStr) {
+            if (typeof variableStr != 'string') return;
+            _tmp = variableStr.split('=');
+            scope.setChnVar('variable_' + _tmp[0], _tmp[1]);
+        });
+    };
+};
+
 CallRouter.prototype._set = function (app, cb) {
-    var _app, _data;
+    var _app, _data, _chnArrayVar;
 
     if (app[OPERATION.SET] instanceof Array) {
         _app = FS_COMMAND.MULTISET;
         _data = '^^:' + app[OPERATION.SET].join(':');
+        _chnArrayVar = app[OPERATION.SET];
     } else {
         if (app[OPERATION.SET].indexOf('all:') == 0) {
             _app = FS_COMMAND.EXPORT;
             _data = app[OPERATION.SET].substring(4);
+            _chnArrayVar = [_data];
         } else if (app[OPERATION.SET].indexOf('nolocal:') == 0) {
             _app = FS_COMMAND.EXPORT;
             _data = app[OPERATION.SET];
         } else {
             _app = FS_COMMAND.SET;
             _data = app[OPERATION.SET];
+            _chnArrayVar = [_data];
         };
     };
 
@@ -476,6 +503,8 @@ CallRouter.prototype._set = function (app, cb) {
     } else {
         log.warn('Bad parameter ', app[OPERATION.SET]);
     };
+
+    this._addVariableArrayToChannelDump(_chnArrayVar);
 
     if (cb)
         cb();

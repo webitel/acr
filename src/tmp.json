@@ -1,130 +1,33 @@
 {
-  "destination_number" : "(1)11",
-  "domain" : "10.10.10.144",
-  "callflow" : [
+  "destination_number": [
+    "380442252540",
+    "380442252520"
+  ],
+  "domain": "nrg.bpmonline.com",
+  "callflow": [
+
     {
-      "set": ["a=1", "b=2", "c=3"]
-    },
-    {
-      "set": "d=d"
-    },
-    {
-      "set": "all:a=1"
-    },
-    {
-      "set": "nolocal:a=1"
-    },
-    {
-      "gateway": "sip:gw_name/&reg0.$1"
-    },
-    {
-      "bridge": {
-        "strategy": "simultaneously",
-        "parameters": [
-          "a=1",
-          "b=2"
-        ],
-        "endpoints": [
-          {
-            "name": "gw_name1",
-            "type": "sipGateway",
-            "dialString": "\\+7&reg0.$1",
-            "parameters": [
-              "c=1",
-              "d=2"
-            ]
-          },
-          {
-            "type": "sipUri",
-            "profile": "external",
-            "host": "webitel.com:5080",
-            "dialString": "\\+7&reg0.$1",
-            "parameters": ["k=1"]
-          },
-          {
-            "name": "1000",
-            "type": "device",
-            "parameters": ["c=3"]
-          },
-          {
-            "name": "srg",
-            "type": "user",
-            "domainName": "10.10.10.144",
-            "parameters": ["d=3"]
-          }
-        ]
-      }
-    },
-    {
-      "gateway": {
-        "strategy": "dasd",
-        "endpoint": [
-          {
-            "type": "gateway",
-            "name": "dasdasda"
-          },
-          {
-            "type": "user",
-            "name": "102"
-          }]
-      }
-    },
-    {
-      "device": "1000"
-    },
-    {
-      "device": ["1001", "1002"]
-    },
-    {
-      "conference": {
-        "name": "asdddd",
-        "pin": "123",
-        "mute": true
-      }
-    },
-    {
-      "script": {
-        "name": "jo.js",
-        "type": "js",
-        "parameters": ["das=das das da", "a=1"]
-      }
-    },
-    {
-      "if": {
-        "expression": "1==1",
-        "then":[
-          {
-            "log": "test then OK"
-          },
-          {
-            "if": {
-              "expression": "1==2",
-              "else":[
-                {
-                  "log": "test else OK"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "httpRequest" : {
-        "url" : "http://crm.webitel.com/0/ServiceModel/GetCallerOwnerService.svc/GetCallerOwner",
-        "method": "post"
-      }
+      "set": ["ringback=$${ru-ring}", "transfer_ringback=$${hold_music}",
+              "continue_on_fail=true", "hangup_after_bridge=true", "ignore_early_media=true"]
     },
 
     {
-      "device" : "102"
+      "httpRequest": { "url": "https://nrg.bpmonline.com/0/ServiceModel/GetCallerOwnerService.svc/" }
     },
     {
-      "log" : "TESTING  ${caller_id_name} ${effective_caller_id_name} -> ${owner_caller_id_number}"
+      "if" : {
+        "expression" : "1==1",
+        "then" : [{
+                    "bridge" : {
+                      "parameters": ["call_timeout=10"],
+                      "endpoints": [{ "name": "${owner_caller_id_number}", "type": "user" }]
+                    }
+                  }]
+      }
     },
     {
-      "hangup": ""
+      "goto": "default:nrg_in"
     }
-
-  ]
+  ],
+  "version": 2
 }
