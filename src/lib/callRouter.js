@@ -759,7 +759,7 @@ CallRouter.prototype._bridge = function (app, cb) {
         _data = '',
         separator = prop['strategy'] == 'failover'
             ? '|'
-            : ':_:'; // ":_:" - only for user & device; "," - for other types
+            : ','; // ":_:" - only for user & device; "," - for other types
 
     if (prop.hasOwnProperty('parameters') && prop['parameters'] instanceof Array) {
         _data = _data.concat('{', prop['parameters'].join(','), '}');
