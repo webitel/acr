@@ -477,7 +477,7 @@ CallRouter.prototype._set = function (app, cb) {
 
     if (app[OPERATION.SET] instanceof Array) {
         _app = FS_COMMAND.MULTISET;
-        _data = '^^:' + app[OPERATION.SET].join(':');
+        _data = '^^,' + app[OPERATION.SET].join(',');
         _chnArrayVar = app[OPERATION.SET];
     } else {
         if (app[OPERATION.SET].indexOf('all:') == 0) {
@@ -757,9 +757,9 @@ CallRouter.prototype._schedule = function (app, cb) {
 CallRouter.prototype._bridge = function (app, cb) {
     var prop = app[OPERATION.BRIDGE],
         _data = '',
-        separator = prop['strategy'] == 'sequential'
+        separator = prop['strategy'] == 'failover'
             ? '|'
-            : ',';
+            : ','; // ":_:" - only for user & device; "," - for other types
 
     if (prop.hasOwnProperty('parameters') && prop['parameters'] instanceof Array) {
         _data = _data.concat('{', prop['parameters'].join(','), '}');
