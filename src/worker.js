@@ -69,7 +69,7 @@ esl_server.on('connection::ready', function(conn, id) {
                 };
 
                 if (result.length == 0) {
-                    log.error("Not found route");
+                    log.warn("Not found route PUBLIC");
                     conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                     return;
                 };
@@ -117,7 +117,7 @@ esl_server.on('connection::ready', function(conn, id) {
                 };
 
                 if (result.length == 0) {
-                    log.warn("Not found route");
+                    log.warn("Not found route DEFAULT");
                 };
                 globalCollection.getGlobalVariables(conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
                     if (err) {
