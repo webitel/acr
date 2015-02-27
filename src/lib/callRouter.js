@@ -21,7 +21,7 @@ var OPERATION = {
     GOTO: "goto",
    /* GATEWAY: "gateway",
     DEVICE: "device", */
-    RECORD_SESSION: "record_session",
+    RECORD_SESSION: "recordSession",
     HANGUP: "hangup",
     SCRIPT: "script",
     LOG: "log",
