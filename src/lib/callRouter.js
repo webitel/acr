@@ -757,7 +757,7 @@ CallRouter.prototype._schedule = function (app, cb) {
 CallRouter.prototype._bridge = function (app, cb) {
     var prop = app[OPERATION.BRIDGE],
         _data = '',
-        separator = prop['strategy'] == 'failover'
+        separator = prop['strategy'] == 'failover' // TODO переделать
             ? '|'
             : ','; // ":_:" - only for user & device; "," - for other types
 
@@ -772,16 +772,35 @@ CallRouter.prototype._bridge = function (app, cb) {
             };
             switch (endpoint['type']) {
                 case 'sipGateway':
+                    separator = prop['strategy'] == 'failover'
+                        ? '|'
+                        : ',';
                     _data = _data.concat('sofia/gateway/', endpoint['name'], '/', endpoint['dialString']);
                     break;
                 case 'sipUri':
+                    separator = prop['strategy'] == 'failover'
+                        ? '|'
+                        : ',';
                     _data = _data.concat('sofia/profile/', endpoint.hasOwnProperty('profile') ? endpoint['profile'] : 'external',
                         '/', endpoint['dialString'], '@', endpoint['host']);
                     break;
+                case 'sipDevice':
+                    separator = prop['strategy'] == 'failover'
+                        ? '|'
+                        : ',';
+                    _data = _data.concat('sofia/', endpoint.hasOwnProperty('profile') ? endpoint['profile'] : 'external',
+                        '/', endpoint['name'], '%', endpoint['domainName'], '^', endpoint['dialString']);
+                    break;
                 case 'device':
+                    separator = prop['strategy'] == 'failover'
+                        ? '|'
+                        : ':_:';
                     _data = _data.concat('user/', endpoint['name'], '@${domain_name}');
                     break;
                 case 'user':
+                    separator = prop['strategy'] == 'failover'
+                        ? '|'
+                        : ':_:';
                     _data = _data.concat('user/', endpoint['name'], '@', endpoint.hasOwnProperty('domainName')
                         ? endpoint['domainName']
                         : '${domain_name}');
@@ -792,7 +811,7 @@ CallRouter.prototype._bridge = function (app, cb) {
 
         this.execApp({
             "app": FS_COMMAND.BRIDGE,
-            "data": _data.slice(0, -1),
+            "data": _data.slice(0, (-1 * separator.length)),
             "async": prop[OPERATION.ASYNC] ? true : false
         });
     };
