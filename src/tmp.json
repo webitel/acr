@@ -1,33 +1,40 @@
 {
-  "destination_number": [
-    "380442252540",
-    "380442252520"
-  ],
+  "destination_number": "^\\+?3?8?(0(6|9)3\\d{7})$",
+  "name": "life",
   "domain": "nrg.bpmonline.com",
+  "order": 3,
   "callflow": [
-
     {
-      "set": ["ringback=$${ru-ring}", "transfer_ringback=$${hold_music}",
-              "continue_on_fail=true", "hangup_after_bridge=true", "ignore_early_media=true"]
-    },
-
-    {
-      "httpRequest": { "url": "https://nrg.bpmonline.com/0/ServiceModel/GetCallerOwnerService.svc/" }
+      "recordSession": "start"
     },
     {
-      "if" : {
-        "expression" : "1==1",
-        "then" : [{
-                    "bridge" : {
-                      "parameters": ["call_timeout=10"],
-                      "endpoints": [{ "name": "${owner_caller_id_number}", "type": "user" }]
-                    }
-                  }]
+      "bridge": {
+        "strategy": "failover",
+        "parameters": [
+          "continue_on_fail=true",
+          "hangup_after_bridge=true",
+          "ignore_early_media=true"
+        ],
+        "endpoints": [
+          {
+            "name":
+            "380634412772",
+            "type": "sipDevice",
+            "profile": "devices",
+            "domainName": "switch-d1.webitel.com",
+            "profile": "internal",
+            "dialString": "&reg0.$1"
+          },
+          {
+            "name": "380632442112",
+            "type": "sipDevice",
+            "profile": "devices",
+            "domainName": "switch-d1.webitel.com",
+            "profile": "internal",
+            "dialString": "&reg0.$1"
+          }
+        ]
       }
-    },
-    {
-      "goto": "default:nrg_in"
     }
-  ],
-  "version": 2
+  ]
 }

@@ -781,7 +781,7 @@ CallRouter.prototype._bridge = function (app, cb) {
                     separator = prop['strategy'] == 'failover'
                         ? '|'
                         : ',';
-                    _data = _data.concat('sofia/profile/', endpoint.hasOwnProperty('profile') ? endpoint['profile'] : 'external',
+                    _data = _data.concat('sofia/', endpoint.hasOwnProperty('profile') ? endpoint['profile'] : 'external',
                         '/', endpoint['dialString'], '@', endpoint['host']);
                     break;
                 case 'sipDevice':
