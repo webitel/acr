@@ -3,8 +3,7 @@
     "host": "0.0.0.0",
     "ports":
     [
-      10025,
-      10026
+      ACR_COUNT
     ]
   },
   "mongodb": {

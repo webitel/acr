@@ -5,7 +5,7 @@ Advanced Call Router - route calls that match configured rules.
 
 ## Default ports
 
-`10025/tcp` and `10026/tcp`
+`10030/tcp` and +1 for the next daemon.
 
 ## Environment Variables
 
@@ -13,6 +13,8 @@ The ACR image uses several environment variables
 
 ### Server variables
 
+`ACR_COUNT` - how many daemons to start (default: 1)
+ 
 `MONGODB_HOST` - MongoDB host or IP
 
 ### Logs
@@ -22,7 +24,6 @@ The ACR image uses several environment variables
 `LOGSTASH_ENABLE` - send logs to Logstash Server (default: false)
 
 `LOGSTASH_HOST` - Logstash host or IP
-
 
 ## Supported Docker versions
 
