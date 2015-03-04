@@ -33,5 +33,6 @@ module.exports = function (conn, userId, domainName) {
             execSyncApp(conn, "playback", "voicemail/vm-not_available_no_voicemail.wav");
             execSyncApp(conn, "hangup", "USER_NOT_REGISTERED");
         };
+        conn.disconnect();
     });
 };
