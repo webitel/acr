@@ -772,35 +772,20 @@ CallRouter.prototype._bridge = function (app, cb) {
             };
             switch (endpoint['type']) {
                 case 'sipGateway':
-                    separator = prop['strategy'] == 'failover'
-                        ? '|'
-                        : ',';
                     _data = _data.concat('sofia/gateway/', endpoint['name'], '/', endpoint['dialString']);
                     break;
                 case 'sipUri':
-                    separator = prop['strategy'] == 'failover'
-                        ? '|'
-                        : ',';
                     _data = _data.concat('sofia/', endpoint.hasOwnProperty('profile') ? endpoint['profile'] : 'external',
                         '/', endpoint['dialString'], '@', endpoint['host']);
                     break;
                 case 'sipDevice':
-                    separator = prop['strategy'] == 'failover'
-                        ? '|'
-                        : ',';
                     _data = _data.concat('sofia/', endpoint.hasOwnProperty('profile') ? endpoint['profile'] : 'external',
                         '/', endpoint['name'], '%', endpoint['domainName'], '^', endpoint['dialString']);
                     break;
                 case 'device':
-                    separator = prop['strategy'] == 'failover'
-                        ? '|'
-                        : ':_:';
                     _data = _data.concat('user/', endpoint['name'], '@${domain_name}');
                     break;
                 case 'user':
-                    separator = prop['strategy'] == 'failover'
-                        ? '|'
-                        : ':_:';
                     _data = _data.concat('user/', endpoint['name'], '@', endpoint.hasOwnProperty('domainName')
                         ? endpoint['domainName']
                         : '${domain_name}');
