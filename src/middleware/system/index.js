@@ -20,7 +20,9 @@ var sys = {
                 cb(err);
                 return;
             };
-            globalVariables[uuid] = res;
+            if (res && res.length > 0) {
+                globalVariables[uuid] = res;
+            };
             cb(null, res);
         });
     },

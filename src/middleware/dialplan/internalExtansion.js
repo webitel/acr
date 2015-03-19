@@ -14,25 +14,29 @@ module.exports = function (conn, userId, domainName) {
     domainName = domainName || '';
 
     conn.api('user_exists id ' + userId + ' ' + domainName, function (res) {
-        if (res && res['body'] === "false") {
-            execSyncApp(conn, "answer");
-            execSyncApp(conn, "sleep", "1500");
-            execSyncApp(conn, "playback", "ivr/ivr-you_have_dialed_an_invalid_extension.wav");
-            execSyncApp(conn, "hangup", "UNALLOCATED_NUMBER");
-        } else {
-            execSyncApp(conn, "set", "continue_on_fail=true");
-            execSyncApp(conn, "set", "hangup_after_bridge=true");
-            execSyncApp(conn, "set", "effective_callee_id_number=${destination_number}");
-            execSyncApp(conn, "set", "outbound_callee_id_number=${destination_number}");
-            execSyncApp(conn, "set", "ringback=${ru-ring}");
-            execSyncApp(conn, "set", "transfer_ringback=$${uk-ring}");
-            execSyncApp(conn, "lua", "RecordSession.lua");
-            execSyncApp(conn, "bridge", "user/${destination_number}@${domain_name}");
-            execSyncApp(conn, "answer");
-            execSyncApp(conn, "sleep", "1500");
-            execSyncApp(conn, "playback", "voicemail/vm-not_available_no_voicemail.wav");
-            execSyncApp(conn, "hangup", "USER_NOT_REGISTERED");
+        try {
+            if (res && res['body'] === "false") {
+                execSyncApp(conn, "answer");
+                execSyncApp(conn, "sleep", "1500");
+                execSyncApp(conn, "playback", "ivr/ivr-you_have_dialed_an_invalid_extension.wav");
+                execSyncApp(conn, "hangup", "UNALLOCATED_NUMBER");
+            } else {
+                execSyncApp(conn, "set", "continue_on_fail=true");
+                execSyncApp(conn, "set", "hangup_after_bridge=true");
+                execSyncApp(conn, "set", "effective_callee_id_number=${destination_number}");
+                execSyncApp(conn, "set", "outbound_callee_id_number=${destination_number}");
+                execSyncApp(conn, "set", "ringback=${ru-ring}");
+                execSyncApp(conn, "set", "transfer_ringback=$${uk-ring}");
+                execSyncApp(conn, "lua", "RecordSession.lua");
+                execSyncApp(conn, "bridge", "user/${destination_number}@${domain_name}");
+                execSyncApp(conn, "answer");
+                execSyncApp(conn, "sleep", "1500");
+                execSyncApp(conn, "playback", "voicemail/vm-not_available_no_voicemail.wav");
+                execSyncApp(conn, "hangup", "USER_NOT_REGISTERED");
+            };
+            conn.disconnect();
+        } catch (e) {
+            log.error(e.message);
         };
-        conn.disconnect();
     });
 };

@@ -6,6 +6,12 @@ var log = require('./log')(module),
     vm = require('vm'),
     httpReq = require('./httpRequest');
 
+var MEDIA_TYPE = {
+    WAV: 'wav',
+    MP3: 'mp3',
+    LOCAL: 'local'
+};
+
 var OPERATION = {
     IF: "if",
     THEN: "then",
@@ -32,7 +38,8 @@ var OPERATION = {
 
     SCHEDULE: "schedule",
 
-    BRIDGE: "bridge"
+    BRIDGE: "bridge",
+    PLAYBACK: "playback"
 };
 
 var FS_COMMAND = {
@@ -64,7 +71,8 @@ var FS_COMMAND = {
     SCHEDULE_HANGUP: "sched_hangup",
     SCHEDULE_TRANSFER: "sched_transfer",
 
-    BRIDGE: "bridge"
+    BRIDGE: "bridge",
+    PLAYBACK: "playback"
 };
 
 
@@ -72,13 +80,15 @@ var COMMANDS = {
     REGEXP: "&reg"
 };
 
-var CallRouter = module.exports = function (connection, globalVar, desNumber, chnNumber, timeOffset, versionSchema) {
-    this.globalVar = globalVar || {};
+var CallRouter = module.exports = function (connection, option) {
+    option = option || {};
+    this.globalVar = option['globalVar'] || {};
     this.connection = connection;
     this.regCollection = {};
-    this.offset = timeOffset;
-    this.versionSchema = versionSchema;
-    this.setDestinationNumber(desNumber, chnNumber);
+    this.offset = option['timeOffset'];
+    this.domain = option['domain'];
+    this.versionSchema = option['versionSchema'];
+    this.setDestinationNumber(option['desNumber'], option['chnNumber']);
 };
 
 function push(arr, e) {
@@ -371,6 +381,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
             }
             else if (condition.hasOwnProperty(OPERATION.SCHEDULE)) {
                 this._schedule(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.PLAYBACK)) {
+                this._playback(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -750,6 +762,42 @@ CallRouter.prototype._schedule = function (app, cb) {
             "async": prop[OPERATION.ASYNC] ? true : false
         });
 
+    if (cb)
+        cb();
+};
+
+CallRouter.prototype._playback = function (app, cb) {
+    var _fileName = app[OPERATION.PLAYBACK]["name"],
+        type = app[OPERATION.PLAYBACK]["type"],
+        filePath = '';
+
+    if (typeof _fileName !== 'string') {
+        if (cb)
+            cb();
+        return;
+    };
+
+
+    switch (type) {
+        case MEDIA_TYPE.WAV:
+            // TODO
+            break;
+        case MEDIA_TYPE.LOCAL:
+            filePath = _fileName;
+            break;
+        default :
+            var cdrUrl = this.getGlbVar('cdr_url');
+            if (cdrUrl) {
+                filePath = encodeURI(cdrUrl.replace(/https?/, 'shout') + '/sys/media/' + MEDIA_TYPE.MP3 + '/' + _fileName
+                    + '?domain=' + this.domain);
+            };
+    };
+
+    this.execApp({
+        "app": FS_COMMAND.PLAYBACK,
+        "data": filePath,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
     if (cb)
         cb();
 };

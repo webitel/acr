@@ -5,41 +5,10 @@ var esl = require('modesl'),
     dilplan = require('./middleware/dialplan'),
     globalCollection = require('./middleware/system'),
     DEFAULT_HANGUP_CAUSE = require('./const').DEFAULT_HANGUP_CAUSE,
-    Consul = require('consul');
     call = 0,
     internalExtension = require('./middleware/dialplan/internalExtansion');
 
 var PUBLIC_CONTEXT = 'public';
-/*
-var consul = new Consul({
-    host: "10.10.10.160"
-});
-
-var check = {
-    name: 'ACR',
-    ttl: '15s',
-    notes: 'Started'
-};
-
-consul.agent.check.register(check, function(err) {
-    if (err) throw err;
-    consul.agent.check.pass('ACR', function(err) {
-        if (err) throw err;
-        return {
-            Output: "test"
-        }
-    });
-    setInterval(function () {
-        consul.agent.check.pass('ACR', function(err) {
-            if (err) throw err;
-            return {
-                Output: "test"
-            }
-        });
-    }, 15000)
-
-});
-*/
 
 var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10025,
         myevents: false }, function() {
@@ -93,8 +62,15 @@ esl_server.on('connection::ready', function(conn, id) {
                     conn.execute('set', 'presence_data=' + result[0]['domain']);
 
                     var callflow = result[0]['callflow'];
-                    var _router = new CallRouter(conn, globalVariable, result[0]['destination_number'], destinationNumber,
-                        result[0]['timezone'], result[0]['version']);
+                    var _router = new CallRouter(conn, {
+                        "globalVar": globalVariable,
+                        "desNumber": result[0]['destination_number'],
+                        "chnNumber": destinationNumber,
+                        "timeOffset": result[0]['timezone'],
+                        "versionSchema": result[0]['version'],
+                        "domain": result[0]['domain']
+                    });
+
                     try {
                         _router.start(callflow);
                     } catch (e) {
@@ -140,8 +116,15 @@ esl_server.on('connection::ready', function(conn, id) {
                                 _reg = new RegExp(_r[1], _r[2]).exec(destinationNumber);
                                 if (_reg) {
                                     var callflow = result[i]['callflow'];
-                                    var _router = new CallRouter(conn, globalVariable, result[i]['destination_number'],
-                                        destinationNumber, result[i]['timezone'], result[i]['version']);
+                                    var _router = new CallRouter(conn, {
+                                        "globalVar": globalVariable,
+                                        "desNumber": result[i]['destination_number'],
+                                        "chnNumber": destinationNumber,
+                                        "timeOffset": result[i]['timezone'],
+                                        "versionSchema": result[i]['version'],
+                                        "domain": result[0]['domain']
+                                    });
+
                                     try {
                                         _isNotRout = false;
                                         _router.start(callflow);
