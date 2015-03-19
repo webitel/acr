@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+echo 'Webitel ACR '$VERSION
+
 if [ "$MONGODB_HOST" ]; then
 	sed -i 's/MONGODB_HOST/'$MONGODB_HOST'/g' /acr/conf/config.json
 fi
