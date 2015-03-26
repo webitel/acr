@@ -27,7 +27,7 @@ var dialplan = {
             return;
         }
         var dialCollection = db.getCollection(defaultCollection);
-        dialCollection.find({"domain": domainName})
+        dialCollection.find({"domain": domainName}, {read  : true})
             .sort({"order": 1})
             .toArray(cb);
     }

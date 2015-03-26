@@ -73,6 +73,7 @@ esl_server.on('connection::ready', function(conn, id) {
 
                     try {
                         _router.start(callflow);
+                        delete _router;
                     } catch (e) {
                         log.error(e.message);
                         //TODO узнать что ответить на ошибку
@@ -112,8 +113,11 @@ esl_server.on('connection::ready', function(conn, id) {
                                 if (!_r) {
                                     _r = [null, result[i]['destination_number']]
                                 };
-
-                                _reg = new RegExp(_r[1], _r[2]).exec(destinationNumber);
+                                try {
+                                    _reg = new RegExp(_r[1], _r[2]).exec(destinationNumber);
+                                } catch (e) {
+                                    _reg = null;
+                                };
                                 if (_reg) {
                                     var callflow = result[i]['callflow'];
                                     var _router = new CallRouter(conn, {
@@ -128,6 +132,7 @@ esl_server.on('connection::ready', function(conn, id) {
                                     try {
                                         _isNotRout = false;
                                         _router.start(callflow);
+                                        delete _router;
                                         break;
                                     } catch (e) {
                                         log.error(e.message);

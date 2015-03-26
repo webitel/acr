@@ -16,6 +16,7 @@ var OPERATION = {
     IF: "if",
     THEN: "then",
     ELSE: "else",
+    SWITCH: "switch",
     APPLICATION: "app",
     DATA: "data",
     ASYNC: "async",
@@ -72,7 +73,8 @@ var FS_COMMAND = {
     SCHEDULE_TRANSFER: "sched_transfer",
 
     BRIDGE: "bridge",
-    PLAYBACK: "playback"
+    PLAYBACK: "playback",
+    PLAY_AND_GET: "play_and_get_digits"
 };
 
 
@@ -80,8 +82,12 @@ var COMMANDS = {
     REGEXP: "&reg"
 };
 
+var MAX_CYCLE_COUNT = 20;
+
 var CallRouter = module.exports = function (connection, option) {
     option = option || {};
+    this.index = 0;
+    this.cycleCount = 0;
     this.globalVar = option['globalVar'] || {};
     this.connection = connection;
     this.regCollection = {};
@@ -271,23 +277,45 @@ CallRouter.prototype.setDestinationNumber = function (strReg, number) {
     this.regCollection[COMMANDS.REGEXP + '0'] = _regOb;
 };
 
+CallRouter.prototype._switch = function (condition, cb) {
+    var _var = condition['variable'] || '',
+        _case = condition['case'] || {},
+        _value = this._parseVariable(_var);
+
+    if (_case.hasOwnProperty(_value)) {
+        log.trace('Switch %s = %s', _var, _value);
+        this.execute(_case[_value], cb);
+    } else if (_case.hasOwnProperty('default')) {
+        log.trace('Switch %s = default', _var);
+        this.execute(_case['default'], cb);
+    } else {
+        cb();
+    };
+};
+
 CallRouter.prototype.execIf = function (condition, cb) {
     var sandbox = {
-        _resultCondition: false,
-        sys: this
+        _resultCondition: false//,
+       // sys: this
     };
     if (condition['sysExpression']) {
         var expression = condition['sysExpression'] || '';
 
         log.trace('Parse expression: %s', expression);
-            // TODO
-        try {
+        // TODO переделать на новый процесс.
+       /* try {
             var script = vm.createScript('try { _resultCondition = (' + expression + ') } catch (e) {}');
             script.runInNewContext(sandbox);
         } catch (e) {
             log.error(e.message);
-        };
+        };*/
 
+        try {
+            var _fn = new Function('sys, module, process', 'try { return (' + expression + ') } catch (e) {}');
+            sandbox._resultCondition = _fn(this);
+        } catch (e) {
+            log.error(e.message);
+        }
         log.trace('Condition %s : %s', expression, sandbox._resultCondition
             ? true
             : false);
@@ -307,7 +335,25 @@ CallRouter.prototype.execIf = function (condition, cb) {
     };
 };
 
-CallRouter.prototype.execApp = function (_obj) {
+CallRouter.prototype._parseVariable = function (name) {
+    var scope = this;
+    name = name || '';
+    try {
+        return name
+            .replace(/\$\$\{([\s\S]*?)\}/gi, function (a, b) {
+                d
+                return scope.getGlbVar(b);
+            })
+            // ChannelVar
+            .replace(/\$\{([\s\S]*?)\}/gi, function (a, b) {
+                return scope.getChnVar(b)
+            });
+    } catch (e) {
+        log.error('_parseVariable: %s', e.message);
+    };
+};
+
+CallRouter.prototype.execApp = function (_obj, cb) {
     if (_obj[OPERATION.APPLICATION]) {
         if (typeof _obj[OPERATION.DATA] === 'string') {
             var scope = this;
@@ -325,7 +371,7 @@ CallRouter.prototype.execApp = function (_obj) {
             this.connection.setEventLock(true);
             log.trace('Execute app: %s, with data: %s', _obj[OPERATION.APPLICATION], _obj[OPERATION.DATA] || '');
         };
-        this.connection.execute(_obj[OPERATION.APPLICATION], _obj[OPERATION.DATA] || '');
+        this.connection.execute(_obj[OPERATION.APPLICATION], _obj[OPERATION.DATA] || '', cb);
     };
 };
 
@@ -336,6 +382,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
 
             if (condition.hasOwnProperty(OPERATION.IF)) {
                 this.execIf(condition[OPERATION.IF], cb);
+            } else if (condition.hasOwnProperty(OPERATION.SWITCH)) {
+                this._switch(condition[OPERATION.SWITCH], cb);
             }
             else if (condition.hasOwnProperty(OPERATION.SLEEP)) {
                 this._sleep(condition, cb);
@@ -429,16 +477,16 @@ CallRouter.prototype.execute = function (callflows, cb) {
 };
 
 CallRouter.prototype.start = function (callflows) {
-    var scope = this,
-        i = 0;
+    this.callflows = callflows;
+    var scope = this;
 
     var postExec = function (err, res) {
-        i++;
-        if (i == callflows.length) {
+        scope.index++;
+        if (scope.index == callflows.length) {
             scope.connection.disconnect();
             return;
         };
-        scope.doExec(callflows[i], postExec);
+        scope.doExec(callflows[scope.index], postExec);
     };
 
     if (callflows instanceof Array && callflows.length > 0) {
@@ -446,8 +494,7 @@ CallRouter.prototype.start = function (callflows) {
         //    scope.destroyLocalRegExpValues();
         //    scope.execute([callflow]);
         //});
-        this.execute([callflows[i]], postExec);
-
+        this.execute([callflows[this.index]], postExec);
     };
 };
 
@@ -534,8 +581,22 @@ function _getGotoDataString(param) {
 };
 
 CallRouter.prototype._goto = function (app, cb) {
-    var _app = FS_COMMAND.TRANSFER,
-        _data = _getGotoDataString(app[OPERATION.GOTO]);
+    var _app = FS_COMMAND.TRANSFER;
+    if (app[OPERATION.GOTO] && app[OPERATION.GOTO].indexOf('local:') === 0) {
+        var _i = parseInt(app[OPERATION.GOTO].substring(6));
+        if (!isNaN(_i) && this.index !== _i) {
+            log.trace('GOTO ' + _i);
+
+            this.index = _i;
+            this.start(this.callflows);
+        } else {
+            log.error('Command "goto" cycle!');
+            if (cb)
+                cb();
+        };
+        return;
+    };
+    var _data = _getGotoDataString(app[OPERATION.GOTO]);
 
     this.execApp({
         "app": _app,
@@ -546,54 +607,7 @@ CallRouter.prototype._goto = function (app, cb) {
     if (cb)
         cb();
 };
-/*  Переделано на _bridge
-CallRouter.prototype._gateway = function (app, cb) {
-    var _data;
 
-    if (app[OPERATION.GATEWAY] instanceof Array) {
-        _data = app[OPERATION.GATEWAY].join(',');
-        _data = _data.replace(/sip:/g, 'sofia/gateway/');
-    } else {
-        if (app[OPERATION.GATEWAY].indexOf('sip:') == 0) {
-            _data = 'sofia/gateway/' + app[OPERATION.GATEWAY].substring(4);
-        };
-    };
-
-    if (_data) {
-        this.execApp({
-            "app": FS_COMMAND.BRIDGE,
-            "data": _data,
-            "async": app[OPERATION.ASYNC] ? true : false
-        });
-    } else {
-        log.warn('Bad parameter ', app[OPERATION.GATEWAY]);
-    };
-
-    if (cb)
-        cb();
-};
-
-CallRouter.prototype._device = function (app, cb) {
-    var _data;
-    if (app[OPERATION.DEVICE] instanceof Array) {
-        for (var i = 0, len = app[OPERATION.DEVICE].length; i < len; i++) {
-            app[OPERATION.DEVICE][i] = 'user/' + app[OPERATION.DEVICE][i] + '@${domain_name}';
-        };
-        _data = app[OPERATION.DEVICE].join(',');
-    } else {
-        _data = 'user/' + app[OPERATION.DEVICE] + '@${domain_name}';
-    };
-
-    this.execApp({
-        "app": FS_COMMAND.BRIDGE,
-        "data": _data,
-        "async": app[OPERATION.ASYNC] ? true : false
-    });
-
-    if (cb)
-        cb();
-};
-*/
 CallRouter.prototype._recordSession = function (app, cb) {
     if (app[OPERATION.RECORD_SESSION] == 'start' || app[OPERATION.RECORD_SESSION] == '') {
         this.execApp({
@@ -769,14 +783,15 @@ CallRouter.prototype._schedule = function (app, cb) {
 CallRouter.prototype._playback = function (app, cb) {
     var _fileName = app[OPERATION.PLAYBACK]["name"],
         type = app[OPERATION.PLAYBACK]["type"],
-        filePath = '';
+        filePath = '',
+        scope = this;
 
     if (typeof _fileName !== 'string') {
+        log.warn('Bad _playback parameters');
         if (cb)
             cb();
         return;
     };
-
 
     switch (type) {
         case MEDIA_TYPE.WAV:
@@ -793,13 +808,39 @@ CallRouter.prototype._playback = function (app, cb) {
             };
     };
 
-    this.execApp({
-        "app": FS_COMMAND.PLAYBACK,
-        "data": filePath,
-        "async": app[OPERATION.ASYNC] ? true : false
-    });
-    if (cb)
-        cb();
+    if (app[OPERATION.PLAYBACK].hasOwnProperty('getDigits')) {
+        var _playAndGetDigits = app[OPERATION.PLAYBACK]['getDigits'],
+            _setVar = _playAndGetDigits['setVar'] || 'MyVar',
+            _min = _playAndGetDigits['min'] || 1,
+            _max = _playAndGetDigits['max'] || 1,
+            _tries = _playAndGetDigits['tries'] || 1,
+            _timeout = _playAndGetDigits['timeout'] || 3000;
+
+        this.execApp({
+            "app": FS_COMMAND.PLAY_AND_GET,
+            "data": [_min, _max, _tries, _timeout, '#', filePath, 'silence_stream://250', _setVar, '\\d+'].join(' '),
+            "async": app[OPERATION.PLAYBACK][OPERATION.ASYNC] ? true : false
+        }, function (res) {
+            try {
+                var _r = res.getHeader('variable_' + _setVar) || '';
+                scope._addVariableArrayToChannelDump([_setVar + '=' + _r]);
+                log.trace('Set %s = %s', _setVar, _r);
+            } catch (e) {
+                log.error(e.message);
+            };
+            if (cb)
+                cb();
+        });
+
+    } else {
+        this.execApp({
+            "app": FS_COMMAND.PLAYBACK,
+            "data": filePath,
+            "async": app[OPERATION.PLAYBACK][OPERATION.ASYNC] ? true : false
+        });
+        if (cb)
+            cb();
+    };
 };
 
 CallRouter.prototype._bridge = function (app, cb) {
