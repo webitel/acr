@@ -22,7 +22,7 @@ module.exports = function (conn, userId, domainName) {
                 execSyncApp(conn, "hangup", "UNALLOCATED_NUMBER");
             } else {
                 execSyncApp(conn, "set", "continue_on_fail=true");
-                //execSyncApp(conn, "set", "hangup_after_bridge=true");
+                execSyncApp(conn, "set", "hangup_after_bridge=true");
                 execSyncApp(conn, "set", "effective_callee_id_number=${destination_number}");
                 execSyncApp(conn, "set", "outbound_callee_id_number=${destination_number}");
                 execSyncApp(conn, "set", "ringback=${ru-ring}");
