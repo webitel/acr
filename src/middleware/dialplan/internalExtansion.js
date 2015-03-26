@@ -29,10 +29,10 @@ module.exports = function (conn, userId, domainName) {
                 execSyncApp(conn, "set", "transfer_ringback=$${uk-ring}");
                 execSyncApp(conn, "lua", "RecordSession.lua");
                 execSyncApp(conn, "bridge", "user/${destination_number}@${domain_name}");
-                execSyncApp(conn, "answer");
-                execSyncApp(conn, "sleep", "1500");
-                execSyncApp(conn, "playback", "voicemail/vm-not_available_no_voicemail.wav");
-                execSyncApp(conn, "hangup", "USER_NOT_REGISTERED");
+                //execSyncApp(conn, "answer");
+                //execSyncApp(conn, "sleep", "1500");
+                //execSyncApp(conn, "playback", "voicemail/vm-not_available_no_voicemail.wav");
+                //execSyncApp(conn, "hangup", "USER_NOT_REGISTERED");
             };
             conn.disconnect();
         } catch (e) {
