@@ -2,11 +2,19 @@
 var cluster = require('cluster'),
     log = require('./lib/log')(module),
     conf = require('./conf'),
-    ports = conf.get('server:ports'),
-    _ports = {}, _k = ports.length;
+    port = conf.get('server:ports'),
+    ports = [port],
+    _ports = {},
+    _k = ports.length;
 
 // Code to run if we're in the master process
 if (cluster.isMaster) {
+    if (process.env['ACR_COUNT']) {
+        for (var i = 1, len = parseInt(process.env['ACR_COUNT']); i < len; i++) {
+            ports.push(port + i);
+        };
+        _k = ports.length;
+    };
 
     var debug = process.execArgv.indexOf('--debug') !== -1;
     cluster.setupMaster({
