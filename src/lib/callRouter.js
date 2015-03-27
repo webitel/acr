@@ -472,7 +472,12 @@ CallRouter.prototype.execute = function (callflows, cb) {
         //callflows.forEach(function (callflow) {
         //    scope.doExec(callflow);
         //});
-        this.doExec(callflows[i], postExec);
+
+        try {
+            this.doExec(callflows[i], postExec);
+        } catch (e) {
+            log.error(e);
+        }
     };
 };
 
@@ -494,7 +499,11 @@ CallRouter.prototype.start = function (callflows) {
         //    scope.destroyLocalRegExpValues();
         //    scope.execute([callflow]);
         //});
-        this.execute([callflows[this.index]], postExec);
+        try {
+            this.execute([callflows[this.index]], postExec);
+        } catch (e) {
+            log.error(e);
+        }
     };
 };
 
@@ -586,8 +595,11 @@ CallRouter.prototype._goto = function (app, cb) {
         var _i = parseInt(app[OPERATION.GOTO].substring(6));
         if (!isNaN(_i) && this.index !== _i) {
             log.trace('GOTO ' + _i);
-
             this.index = _i;
+            this.cycleCount++;
+            if (this.cycleCount === MAX_CYCLE_COUNT) {
+                throw 'Cycle max count';
+            };
             this.start(this.callflows);
         } else {
             log.error('Command "goto" cycle!');

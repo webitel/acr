@@ -17,7 +17,7 @@ var esl_server = new esl.Server({host: conf.get('server:host'), port: process.en
 
 esl_server.on('connection::ready', function(conn, id) {
     conn.on('error', function (error) {
-        log.error(error.message);
+        log.warn('Call %s error: %s', id, error.message);
     });
 
     log.trace('New call %s', id);
@@ -73,7 +73,6 @@ esl_server.on('connection::ready', function(conn, id) {
 
                     try {
                         _router.start(callflow);
-                        delete _router;
                     } catch (e) {
                         log.error(e.message);
                         //TODO узнать что ответить на ошибку
@@ -132,7 +131,6 @@ esl_server.on('connection::ready', function(conn, id) {
                                     try {
                                         _isNotRout = false;
                                         _router.start(callflow);
-                                        delete _router;
                                         break;
                                     } catch (e) {
                                         log.error(e.message);

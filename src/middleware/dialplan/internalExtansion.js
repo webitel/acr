@@ -28,13 +28,23 @@ module.exports = function (conn, userId, domainName) {
                 execSyncApp(conn, "set", "ringback=${ru-ring}");
                 execSyncApp(conn, "set", "transfer_ringback=$${uk-ring}");
                 execSyncApp(conn, "lua", "RecordSession.lua");
-                execSyncApp(conn, "bridge", "user/${destination_number}@${domain_name}");
-                //execSyncApp(conn, "answer");
-                //execSyncApp(conn, "sleep", "1500");
-                //execSyncApp(conn, "playback", "voicemail/vm-not_available_no_voicemail.wav");
-                //execSyncApp(conn, "hangup", "USER_NOT_REGISTERED");
+                conn.setEventLock(true);
+                conn.execute("bridge", "user/${destination_number}@${domain_name}", function (res) {
+                    try {
+                        if (res && res.getHeader('variable_endpoint_disposition') !== 'ANSWER') {
+
+                                execSyncApp(conn, "answer");
+                                execSyncApp(conn, "sleep", "1500");
+                                execSyncApp(conn, "playback", "voicemail/vm-not_available_no_voicemail.wav");
+                                execSyncApp(conn, "hangup", "USER_NOT_REGISTERED");
+                        };
+                    } catch (e) {
+                        log.warn(e.message);
+                    } finally {
+                        conn.disconnect();
+                    };
+                });
             };
-            conn.disconnect();
         } catch (e) {
             log.error(e.message);
         };
