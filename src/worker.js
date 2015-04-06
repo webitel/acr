@@ -19,7 +19,6 @@ esl_server.on('connection::ready', function(conn, id) {
     conn.on('error', function (error) {
         log.warn('Call %s error: %s', id, error.message);
     });
-
     log.trace('New call %s', id);
     //console.log(conn.channelData.serialize());
 
@@ -27,7 +26,7 @@ esl_server.on('connection::ready', function(conn, id) {
         var context = conn.channelData.getHeader('Channel-Context'),
             destinationNumber = conn.channelData.getHeader('Channel-Destination-Number') ||
                 conn.channelData.getHeader('Caller-Destination-Number');
-
+        log.debug('Call %s -> %s', id, destinationNumber);
         if (context == PUBLIC_CONTEXT) {
             dilplan.findActualPublicDialplan(destinationNumber, function (err, result) {
                 if (err) {

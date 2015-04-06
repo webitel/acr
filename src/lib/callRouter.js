@@ -3,8 +3,8 @@
  */
 
 var log = require('./log')(module),
-    vm = require('vm'),
-    httpReq = require('./httpRequest');
+    httpReq = require('./httpRequest'),
+    calendar = require('../middleware/calendar');
 
 var MEDIA_TYPE = {
     WAV: 'wav',
@@ -40,7 +40,11 @@ var OPERATION = {
     SCHEDULE: "schedule",
 
     BRIDGE: "bridge",
-    PLAYBACK: "playback"
+    PLAYBACK: "playback",
+
+    BREAK: "break",
+
+    CALENDAR: "calendar"
 };
 
 var FS_COMMAND = {
@@ -118,6 +122,7 @@ function equalsRange (_curentDay, _tmp, maxVal) {
     return (_curentDay >= _min && _curentDay <= _max);
 };
 
+
 CallRouter.prototype.destroyLocalRegExpValues = function () {
     var scope = this;
     Object.keys(this.regCollection).forEach(function (key) {
@@ -133,7 +138,7 @@ CallRouter.prototype.DateOffset = function() {
     };
     var d = new Date(),
         utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-    return new Date(utc + (3600000 * this.offset));
+    return new Date(utc + (60000 * Math.abs(this.offset) ));
 };
 
 CallRouter.prototype.setChnVar = function (name, value) {
@@ -431,6 +436,10 @@ CallRouter.prototype.doExec = function (condition, cb) {
                 this._schedule(condition, cb);
             } else if (condition.hasOwnProperty(OPERATION.PLAYBACK)) {
                 this._playback(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.BREAK)) {
+                this._break(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.CALENDAR)) {
+                this._calendar(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -452,6 +461,36 @@ CallRouter.prototype.doExec = function (condition, cb) {
         }
 
     };
+};
+
+CallRouter.prototype._calendar = function (condition, cb) {
+    var exportVariable = condition[OPERATION.CALENDAR]['exportVariable'],
+        scope = this
+        ;
+    if (!exportVariable) {
+        log.trace('_calendar: Bad parameters.');
+        if (cb) {
+            cb(new Error('Bad parameters.'))
+        };
+        return;
+    };
+    calendar(this, condition[OPERATION.CALENDAR], function (err, res) {
+        try {
+            if (err) {
+                log.error(err['message']);
+                if (cb)
+                    cb(err);
+                return;
+            };
+            scope._set({
+                "setVar": ''.concat(exportVariable, '=', res.length)
+            }, cb);
+        } catch (e) {
+            log.error(e['message']);
+            if (cb)
+                cb(e);
+        };
+    });
 };
 
 CallRouter.prototype.execute = function (callflows, cb) {
@@ -587,6 +626,11 @@ function _getGotoDataString(param) {
     } else {
         return param;
     };
+};
+
+
+CallRouter.prototype._break = function (app, cb) {
+    cb(new Error('BREAK'));
 };
 
 CallRouter.prototype._goto = function (app, cb) {

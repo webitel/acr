@@ -44,19 +44,29 @@ module.exports = function (parameters, router, cb) {
         cb(new Error('Bad request'));
         return;
     };
+    var path, current;
     
     var _parseRequest = function (dataRequest) {
         try {
-            var jsonData = JSON.parse(dataRequest);
-            log.debug(jsonData);
-            for (var key in exportVariables) {
-                if (!exportVariables.hasOwnProperty(key)) continue;
+            var jsonData;
 
-                if (jsonData.hasOwnProperty(exportVariables[key]) && jsonData[exportVariables[key]]) {
-                    router._set({
-                        "setVar": "all:" + key + "=" + jsonData[exportVariables[key]]
-                    });
-                };
+            if (typeof dataRequest === 'object') {
+                jsonData = dataRequest;
+            } else {
+                jsonData = JSON.parse(dataRequest);
+            };
+            //log.debug(jsonData);
+            for (var key in exportVariables) {
+                path = exportVariables[key] || '';
+                current = jsonData;
+                path.split('.').forEach(function(token) {
+                    current = current && current[token];
+                });
+
+                if (!current) continue;
+                router._set({
+                    "setVar": "all:" + key + "=" + current
+                });
             };
         } catch (e) {
             log.error(e.message);
@@ -73,7 +83,7 @@ module.exports = function (parameters, router, cb) {
     var webArgs = {
         data: parameters['data'] || DEF_DATA(),
         headers: headers,
-        requestConfig:{
+        requestConfig: {
             timeout: 1000, //request timeout in milliseconds
             keepAlive: false //Enable/disable keep-alive functionalityidle socket.
         },
