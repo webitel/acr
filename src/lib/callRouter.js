@@ -44,7 +44,8 @@ var OPERATION = {
 
     BREAK: "break",
 
-    CALENDAR: "calendar"
+    CALENDAR: "calendar",
+    PARK: "park"
 };
 
 var FS_COMMAND = {
@@ -78,7 +79,8 @@ var FS_COMMAND = {
 
     BRIDGE: "bridge",
     PLAYBACK: "playback",
-    PLAY_AND_GET: "play_and_get_digits"
+    PLAY_AND_GET: "play_and_get_digits",
+    PARK: "park"
 };
 
 
@@ -434,12 +436,18 @@ CallRouter.prototype.doExec = function (condition, cb) {
             }
             else if (condition.hasOwnProperty(OPERATION.SCHEDULE)) {
                 this._schedule(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.PLAYBACK)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.PLAYBACK)) {
                 this._playback(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.BREAK)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.BREAK)) {
                 this._break(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.CALENDAR)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.CALENDAR)) {
                 this._calendar(condition, cb);
+            }
+            else if (condition.hasOwnProperty(OPERATION.PARK)) {
+                this._park(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -566,6 +574,36 @@ CallRouter.prototype._answer = function (app, cb) {
 
     if (cb)
         cb();
+};
+
+CallRouter.prototype._park = function (app, cb) {
+    var _data = '',
+        _auto = '',
+        _app = app[OPERATION.PARK]
+        ;
+    if (!_app['name'] || !_app['lot']) {
+        log.warn('Bad parameters park: name and lot required.');
+        if (cb)
+            cb();
+        return;
+    };
+
+    if (_app['auto']) {
+        _auto = 'auto ' + _app['auto'] + ' ';
+        _app['lot'] = _app['lot'].replace('-', ' ');
+    };
+
+    _data = _data.concat(_app['name'], '@${domain_name} ', _auto, _app['lot']);
+
+    this.execApp({
+        "app": FS_COMMAND.PARK,
+        "data": _data,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+
+    if (cb)
+        cb();
+
 };
 
 CallRouter.prototype._addVariableArrayToChannelDump = function (variables) {
