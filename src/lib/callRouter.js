@@ -45,7 +45,8 @@ var OPERATION = {
     BREAK: "break",
 
     CALENDAR: "calendar",
-    PARK: "park"
+    PARK: "park",
+    QUEUE: "queue"
 };
 
 var FS_COMMAND = {
@@ -80,7 +81,8 @@ var FS_COMMAND = {
     BRIDGE: "bridge",
     PLAYBACK: "playback",
     PLAY_AND_GET: "play_and_get_digits",
-    PARK: "park"
+    PARK: "park",
+    CALLCENTER: "callcenter"
 };
 
 
@@ -448,6 +450,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
             }
             else if (condition.hasOwnProperty(OPERATION.PARK)) {
                 this._park(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.QUEUE)) {
+                this._queue(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -983,6 +987,24 @@ CallRouter.prototype._bridge = function (app, cb) {
             "async": prop[OPERATION.ASYNC] ? true : false
         });
     };
+
+    if (cb)
+        cb();
+};
+
+CallRouter.prototype._queue = function (app, cb) {
+    var _data = '', prop = app[OPERATION.CALLCENTER];
+    if (prop['name'] && /^[a-zA-Z0-9+_-]+$/.test(prop['name'])) {
+        _data = prop['name'] + '@${domain_name}';
+    } else {
+        log.error('Bad parameters queue.');
+    };
+
+    this.execApp({
+        "app": FS_COMMAND.CALLCENTER,
+        "data": _data,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
 
     if (cb)
         cb();
