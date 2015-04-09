@@ -993,7 +993,7 @@ CallRouter.prototype._bridge = function (app, cb) {
 };
 
 CallRouter.prototype._queue = function (app, cb) {
-    var _data = '', prop = app[OPERATION.CALLCENTER];
+    var _data = '', prop = app[OPERATION.QUEUE];
     if (prop['name'] && /^[a-zA-Z0-9+_-]+$/.test(prop['name'])) {
         _data = prop['name'] + '@${domain_name}';
     } else {
