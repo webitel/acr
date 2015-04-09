@@ -117,6 +117,9 @@ esl_server.on('connection::ready', function(conn, id) {
                                     _reg = null;
                                 };
                                 if (_reg) {
+                                    if (!conn.channelData.getHeader('variable_presence_data')) {
+                                        conn.execute('set', 'presence_data=' + conn.channelData.getHeader('variable_presence_id'));
+                                    };
                                     var callflow = result[i]['callflow'];
                                     var _router = new CallRouter(conn, {
                                         "globalVar": globalVariable,
