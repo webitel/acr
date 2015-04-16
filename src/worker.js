@@ -91,6 +91,8 @@ esl_server.on('connection::ready', function(conn, id) {
                     return;
                 };
 
+                conn.execute('set', 'sip_h_Call-Info=_undef_');
+
                 if (result.length == 0) {
                     log.warn("Not found route DEFAULT");
                 };
