@@ -223,7 +223,9 @@ CallRouter.prototype._DateParser = function (param, datetime, maxVal) {
     if (datetimes[0] == "") {
         throw Error("bad parameters");
     };
+
     for (var i = 0; i < datetimes.length; i++) {
+        log.trace('Offset: %s, CurrentVal: %s, SrvVal: %s', this.offset, datetimes[i], datetime);
         result = (datetimes[i].indexOf('-') == -1)
             ? datetime == parseInt(datetimes[i])
             : equalsRange(datetime, datetimes[i], maxVal);
