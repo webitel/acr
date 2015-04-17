@@ -1018,17 +1018,16 @@ CallRouter.prototype._queue = function (app, cb) {
 };
 
 CallRouter.prototype._exportVars = function (app, cb) {
-    var _data = [], _item = {}, prop = app[OPERATION.EXPORT_VARS], scope = this;
+    var _item = {}, prop = app[OPERATION.EXPORT_VARS], scope = this;
 
     if (prop instanceof Array) {
         prop.forEach(function (item) {
             _item = {};
             _item[item] = scope.getChnVar(item);
-            _data.push(_item)
         });
 
         scope._set({
-            "setVar": 'webitel_data=' + JSON.stringify(_data)
+            "setVar": 'webitel_data=' + JSON.stringify(_item)
         }, function () {
             scope._set({
                 "setVar": 'cc_export_vars=webitel_data'
