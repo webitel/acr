@@ -1021,21 +1021,22 @@ CallRouter.prototype._exportVars = function (app, cb) {
     var _data = [], _item = {}, prop = app[OPERATION.EXPORT_VARS], scope = this;
 
     if (prop instanceof Array) {
-        this._set({
-            "setVar": 'cc_export_vars=' + prop.join(',')
-        }, function () {
-            prop.forEach(function (item) {
-                _item = {};
-                _item[item] = scope.getChnVar(item);
-                _data.push(_item)
-            });
+        prop.forEach(function (item) {
+            _item = {};
+            _item[item] = scope.getChnVar(item);
+            _data.push(_item)
+        });
 
-            scope._set({
-                "setVar": 'webitel_data=' + "'" + JSON.stringify(_data) + "'"
-            }, cb);
+        scope._set({
+            "setVar": 'webitel_data=' + JSON.stringify(_data)
+        }, function () {
+            this._set({
+                "setVar": 'cc_export_vars=webitel_data'
+            }, function () {
+                if (cb)
+                    return cb();
+            });
         });
         
     };
-    if (cb)
-        return cb();
 };
