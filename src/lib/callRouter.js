@@ -46,7 +46,9 @@ var OPERATION = {
 
     CALENDAR: "calendar",
     PARK: "park",
-    QUEUE: "queue"
+    QUEUE: "queue",
+
+    EXPORT_VARS: "exportVars"
 };
 
 var FS_COMMAND = {
@@ -454,6 +456,9 @@ CallRouter.prototype.doExec = function (condition, cb) {
                 this._park(condition, cb);
             } else if (condition.hasOwnProperty(OPERATION.QUEUE)) {
                 this._queue(condition, cb);
+            }
+            else if (condition.hasOwnProperty(OPERATION.EXPORT_VARS)) {
+                this._exportVars(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -1010,4 +1015,27 @@ CallRouter.prototype._queue = function (app, cb) {
 
     if (cb)
         cb();
+};
+
+CallRouter.prototype._exportVars = function (app, cb) {
+    var _data = [], _item = {}, prop = app[OPERATION.EXPORT_VARS], scope = this;
+
+    if (prop instanceof Array) {
+        this._set({
+            "setVar": 'cc_export_vars=' + prop.join(',')
+        }, function () {
+            prop.forEach(function (item) {
+                _item = {};
+                _item[item] = scope.getChnVar(item);
+                _data.push(_item)
+            });
+
+            scope._set({
+                "setVar": 'webitel_data=' + "'" + JSON.stringify(_data) + "'"
+            }, cb);
+        });
+        
+    };
+    if (cb)
+        return cb();
 };
