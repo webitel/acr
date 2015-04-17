@@ -1022,7 +1022,6 @@ CallRouter.prototype._exportVars = function (app, cb) {
 
     if (prop instanceof Array) {
         prop.forEach(function (item) {
-            _item = {};
             _item[item] = scope.getChnVar(item);
         });
 
