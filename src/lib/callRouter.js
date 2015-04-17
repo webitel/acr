@@ -1030,13 +1030,12 @@ CallRouter.prototype._exportVars = function (app, cb) {
         scope._set({
             "setVar": 'webitel_data=' + JSON.stringify(_data)
         }, function () {
-            this._set({
+            scope._set({
                 "setVar": 'cc_export_vars=webitel_data'
             }, function () {
                 if (cb)
                     return cb();
             });
         });
-        
     };
 };
