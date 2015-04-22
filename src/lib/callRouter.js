@@ -980,9 +980,23 @@ CallRouter.prototype._bridge = function (app, cb) {
                     _data = _data.concat('user/', endpoint['name'], '@${domain_name}');
                     break;
                 case 'user':
-                    _data = _data.concat('user/', endpoint['name'], '@', endpoint.hasOwnProperty('domainName')
-                        ? endpoint['domainName']
-                        : '${domain_name}');
+                    switch (endpoint['proto']) {
+                        case "sip":
+                            _data = _data.concat('{^^:webitel_call_uuid=${create_uuid()}:sip_invite_domain=${domain_name}:' +
+                                'presence_id=',endpoint['name'], '@${domain_name}}${sofia_contact(*/', endpoint['name'],
+                                '@${domain_name})}');
+                            break;
+                        case "webrtc":
+                            _data = _data.concat('{^^:webitel_call_uuid=${create_uuid()}:sip_invite_domain=${domain_name}:' +
+                                'presence_id=',endpoint['name'], '@${domain_name}}${verto_contact(', endpoint['name'],
+                                '@${domain_name})}');
+                            break;
+                        default :
+                            _data = _data.concat('user/', endpoint['name'], '@', endpoint.hasOwnProperty('domainName')
+                                ? endpoint['domainName']
+                                : '${domain_name}');
+                            break;
+                    };
                     break;
             };
             _data = _data.concat(separator);
