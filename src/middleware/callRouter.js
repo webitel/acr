@@ -252,7 +252,7 @@ CallRouter.prototype.getChnVar = function (name) {
 
 CallRouter.prototype.getGlbVar = function (name) {
     try {
-        var _var = this.globalVar[0][name];
+        var _var = this.globalVar[name];
         return _var
             ? _var
             : ''
