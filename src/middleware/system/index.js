@@ -3,43 +3,39 @@
  */
 
 var db = require('../../lib/mongoDrv'),
-    log = require('../../lib/log')(module);
+    log = require('../../lib/log')(module),
     conf = require('../../conf'),
-    sysCollectionName = conf.get('mongodb:globalCollection'),
     globalVariables = {};
 
 var sys = {
-    getGlobalVariables: function (uuid, cb) {
+    getGlobalVariables: function (conn, uuid, cb) {
+
         if (globalVariables[uuid]) {
             cb(null, globalVariables[uuid]);
             return;
         };
 
-        this.getGlobalVarFromUUID(uuid, function (err, res) {
-            if (err) {
-                cb(err);
-                return;
-            };
-            if (res && res.length > 0) {
-                globalVariables[uuid] = res;
-            };
-            cb(null, res);
-        });
-    },
-
-    getGlobalVarFromUUID: function (uuid, cb) {
-        try {
-            if (!uuid || uuid == '') {
-                cb(new Error('uuid is undefined'));
-                return;
+        conn.api('global_getvar', function (globalVarObject) {
+            try {
+                var _json = {},
+                    _param;
+                var _body = globalVarObject['body'];
+                if (_body) {
+                    _body.split('\n').forEach(function (str) {
+                        _param = str.split('=');
+                        if (_param[0] == '') return;
+                        _json[_param[0]] = _param[1];
+                    });
+                }
+                ;
+                globalVariables[uuid] = _json;
+                log.info('Add hash global variable. Core uuid: ' + uuid);
+                cb(null, globalVariables[uuid]);
+            } catch (e) {
+                log.error(e['message']);
+                cb(e);
             }
-            var gCollection = db.getCollection(sysCollectionName);
-            gCollection.find({"Core-UUID": uuid})
-                .limit(1)
-                .toArray(cb);
-        } catch (e) {
-            cb(e);
-        };
+        });
     }
 };
 

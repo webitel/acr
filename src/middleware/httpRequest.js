@@ -5,7 +5,7 @@
 var Client = require('node-rest-client').Client,
     client = new Client(),
     //EventEmitter2 = require('eventemitter2').EventEmitter2,
-    log = require('./log')(module);
+    log = require('./../lib/log')(module);
 
 var METHODS = {
     GET: "get",

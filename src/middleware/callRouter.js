@@ -2,9 +2,12 @@
  * Created by i.navrotskyj on 24.01.2015.
  */
 
-var log = require('./log')(module),
+var log = require('./../lib/log')(module),
     httpReq = require('./httpRequest'),
-    calendar = require('../middleware/calendar');
+    dbRoute = require('./dbRoute'),
+    findDomainVariables = require('./dialplan').findDomainVariables,
+    updateDomainVariables = require('./dialplan').updateDomainVariables,
+    calendar = require('./calendar/index');
 
 var MEDIA_TYPE = {
     WAV: 'wav',
@@ -103,6 +106,14 @@ var CallRouter = module.exports = function (connection, option) {
     this.regCollection = {};
     this.offset = option['timeOffset'];
     this.domain = option['domain'];
+    this.domainVariables = {};
+    this.updateDomainVariable = false;
+
+    //this.localVar = option['localVariables'] || {};
+    //this._dbId = option['id'] || '';
+    //this.COLLECTION_NAME = option['collectionName'];
+    //this.updateLocalVariable = false;
+
     this.versionSchema = option['versionSchema'];
     this.setDestinationNumber(option['desNumber'], option['chnNumber']);
 };
@@ -128,6 +139,86 @@ function equalsRange (_curentDay, _tmp, maxVal) {
     return (_curentDay >= _min && _curentDay <= _max);
 };
 
+/* TODO
+
+CallRouter.prototype.getLocalVariable = function (key) {
+    return this.localVar[key];
+};
+
+CallRouter.prototype.setLocalVariable = function (key, value) {
+    this.localVar[key] = value;
+    this.updateLocalVariable = true;
+};
+
+CallRouter.prototype.updateLocalVariables = function () {
+    try {
+        if (this.updateLocalVariable) {
+            dbRoute.setLocalVariables(this._dbId, this.localVar, this.COLLECTION_NAME, function (err, res) {
+                console.log(arguments);
+            });
+            return true;
+        }
+        ;
+        return false;
+    } catch (e) {
+        log.error(e['message']);
+    };
+};
+
+*/
+
+CallRouter.prototype.saveDomainVariables = function (cb) {
+    try {
+        if (this.updateDomainVariable) {
+            updateDomainVariables(this.domain, this.domainVariables, function (err, res) {
+                if (err) {
+                    log.error('Save domain variable error: %s', err['message']);
+                    if(cb) cb(err);
+                    return
+                };
+
+                log.trace('Saved domain variable %s', res);
+            });
+        };
+    } catch (e) {
+        log.error(e['message']);
+    };
+};
+
+CallRouter.prototype.setupDomainVariables = function (cb) {
+    var scope = this;
+    findDomainVariables(this.domain, function (err, res) {
+        if (err) {
+            log.error(err['message']);
+            if (cb) cb();
+            return;
+        };
+
+        if (res && res['variables']) {
+            var variables = res['variables'],
+                _arr = [];
+            for (var key in variables) {
+                //if (typeof variables[key] === 'string') {
+                    _arr.push(key + '=' + variables[key]);
+                //};
+            };
+            scope.domainVariables = res['variables'];
+            scope.domainVariablesRecordId = res['_id'];
+            if (_arr.length > 0) {
+                scope._set({
+                    "setVar": _arr
+                }, cb);
+                return;
+            };
+        };
+        if (cb) cb();
+    });
+};
+
+CallRouter.prototype.setDomainVariable = function (key, value) {
+    this.updateDomainVariable = true;
+    this.domainVariables[key] = value;
+};
 
 CallRouter.prototype.destroyLocalRegExpValues = function () {
     var scope = this;
@@ -154,6 +245,7 @@ CallRouter.prototype.setChnVar = function (name, value) {
 CallRouter.prototype.getChnVar = function (name) {
     var _var = this.connection.channelData.getHeader('variable_' + name)
         || this.connection.channelData.getHeader(name)
+        //|| this.getLocalVariable(name)
         || '';
     return _var ;
 };
@@ -454,7 +546,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
             }
             else if (condition.hasOwnProperty(OPERATION.PARK)) {
                 this._park(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.QUEUE)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.QUEUE)) {
                 this._queue(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.EXPORT_VARS)) {
@@ -518,7 +611,8 @@ CallRouter.prototype.execute = function (callflows, cb) {
 
     var postExec = function (err, res) {
         i++;
-        if (i == callflows.length) {
+        if (i == callflows.length || (callflows[i - 1] && callflows[i - 1] instanceof  Object &&
+            callflows[i - 1]['break'] === true)) {
             if (cb)
                 cb();
             return;
@@ -539,13 +633,23 @@ CallRouter.prototype.execute = function (callflows, cb) {
     };
 };
 
+CallRouter.prototype.run = function (callflows) {
+    var scope = this;
+    this.setupDomainVariables(function () {
+        scope.start(callflows);
+    });
+};
+
 CallRouter.prototype.start = function (callflows) {
     this.callflows = callflows;
     var scope = this;
 
     var postExec = function (err, res) {
         scope.index++;
-        if (scope.index == callflows.length) {
+        if (scope.index == callflows.length || (callflows[scope.index - 1] && callflows[scope.index - 1] instanceof  Object &&
+                callflows[scope.index - 1]['break'] === true)) {
+            //scope.updateLocalVariables();
+            scope.saveDomainVariables();
             scope.connection.disconnect();
             return;
         };
@@ -643,6 +747,13 @@ CallRouter.prototype._set = function (app, cb) {
         } else if (app[OPERATION.SET].indexOf('nolocal:') == 0) {
             _app = FS_COMMAND.EXPORT;
             _data = app[OPERATION.SET];
+        } else if (app[OPERATION.SET].indexOf('domain:') == 0) {
+            var tmpStr = app[OPERATION.SET].substring(7),
+                tmp = tmpStr.split('=');
+            this.setDomainVariable(tmp[0], tmp[1] || '');
+            _app = FS_COMMAND.SET;
+            _data = tmpStr;
+            _chnArrayVar = [_data];
         } else {
             _app = FS_COMMAND.SET;
             _data = app[OPERATION.SET];
@@ -961,37 +1072,55 @@ CallRouter.prototype._bridge = function (app, cb) {
 
     if (prop.hasOwnProperty('endpoints') && prop['endpoints'] instanceof Array) {
         prop['endpoints'].forEach(function (endpoint) {
-            if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
-                _data = _data.concat('[', endpoint['parameters'].join(','), ']')
-            };
             switch (endpoint['type']) {
                 case 'sipGateway':
+                    if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
+                        _data = _data.concat('[', endpoint['parameters'].join(','), ']')
+                    };
                     _data = _data.concat('sofia/gateway/', endpoint['name'], '/', endpoint['dialString']);
                     break;
                 case 'sipUri':
+                    if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
+                        _data = _data.concat('[', endpoint['parameters'].join(','), ']')
+                    };
                     _data = _data.concat('sofia/', endpoint.hasOwnProperty('profile') ? endpoint['profile'] : 'external',
                         '/', endpoint['dialString'], '@', endpoint['host']);
                     break;
                 case 'sipDevice':
+                    if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
+                        _data = _data.concat('[', endpoint['parameters'].join(','), ']')
+                    };
                     _data = _data.concat('sofia/', endpoint.hasOwnProperty('profile') ? endpoint['profile'] : 'external',
                         '/', endpoint['name'], '%', endpoint['domainName'], '^', endpoint['dialString']);
                     break;
                 case 'device':
+                    if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
+                        _data = _data.concat('[', endpoint['parameters'].join(','), ']')
+                    };
                     _data = _data.concat('user/', endpoint['name'], '@${domain_name}');
                     break;
                 case 'user':
                     switch (endpoint['proto']) {
                         case "sip":
-                            _data = _data.concat('{^^:webitel_call_uuid=${create_uuid()}:sip_invite_domain=${domain_name}:' +
-                                'presence_id=',endpoint['name'], '@${domain_name}}${sofia_contact(*/', endpoint['name'],
-                                '@${domain_name})}');
+                            _data = _data.concat('[', 'webitel_call_uuid=${create_uuid()},sip_invite_domain=${domain_name},' +
+                                'presence_id=', endpoint['name'], '@${domain_name}');
+                            if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
+                                _data = _data.concat(',', endpoint['parameters'].join(','));
+                            };
+                            _data = _data.concat(']${sofia_contact(*/', endpoint['name'],'@${domain_name})}');
                             break;
                         case "webrtc":
-                            _data = _data.concat('{^^:webitel_call_uuid=${create_uuid()}:sip_invite_domain=${domain_name}:' +
-                                'presence_id=',endpoint['name'], '@${domain_name}}${verto_contact(', endpoint['name'],
-                                '@${domain_name})}');
+                            _data = _data.concat('[', 'webitel_call_uuid=${create_uuid()},sip_invite_domain=${domain_name},' +
+                                'presence_id=', endpoint['name'], '@${domain_name}');
+                            if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
+                                _data = _data.concat(',', endpoint['parameters'].join(','));
+                            };
+                            _data = _data.concat('${verto_contact(', endpoint['name'], '@${domain_name})}');
                             break;
                         default :
+                            if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
+                                _data = _data.concat('[', endpoint['parameters'].join(','), ']')
+                            };
                             _data = _data.concat('user/', endpoint['name'], '@', endpoint.hasOwnProperty('domainName')
                                 ? endpoint['domainName']
                                 : '${domain_name}');

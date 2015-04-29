@@ -8,6 +8,8 @@
     "publicCollection": "public",
     "defaultCollection": "default",
     "globalCollection": "global",
+    "extensionsCollection": "extension",
+    "variablesCollection": "domainVariables",
     "calendarCollection": "calendar"
   },
   "application": {

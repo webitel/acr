@@ -1,16 +1,15 @@
 var esl = require('modesl'),
     log = require('./lib/log')(module),
     conf = require('./conf'),
-    CallRouter = require('./lib/callRouter'),
-    dilplan = require('./middleware/dialplan'),
+    publicContext = require('./middleware/publicContext'),
+    defaultContext = require('./middleware/defaultContext'),
     globalCollection = require('./middleware/system'),
-    DEFAULT_HANGUP_CAUSE = require('./const').DEFAULT_HANGUP_CAUSE,
-    call = 0,
-    internalExtension = require('./middleware/dialplan/internalExtansion');
+    DEFAULT_HANGUP_CAUSE = require('./const').DEFAULT_HANGUP_CAUSE
+    ;
 
 var PUBLIC_CONTEXT = 'public';
 
-var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10025,
+var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10030,
         myevents: false }, function() {
     log.info("ESL server is up port " + this.port);
 });
@@ -27,137 +26,23 @@ esl_server.on('connection::ready', function(conn, id) {
             destinationNumber = conn.channelData.getHeader('Channel-Destination-Number') ||
                 conn.channelData.getHeader('Caller-Destination-Number');
         log.debug('Call %s -> %s', id, destinationNumber);
-        if (context == PUBLIC_CONTEXT) {
-            dilplan.findActualPublicDialplan(destinationNumber, function (err, result) {
-                if (err) {
-                    // TODO
-                    log.error(err.message);
-                    conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                    return
-                };
 
-                if (result.length == 0) {
-                    log.warn("Not found route PUBLIC");
-                    conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                    return;
-                };
+        globalCollection.getGlobalVariables(conn, conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
+            if (err) {
+                log.error(err.message);
+                conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
+                return
+            };
 
-                globalCollection.getGlobalVariables(conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
-                    if (err) {
-                        // TODO
-                        log.error(err.message);
-                        conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                        return
-                    };
+            if (context == PUBLIC_CONTEXT) {
+                publicContext(conn, destinationNumber, globalVariable);
+            } else {
+                defaultContext(conn, destinationNumber, globalVariable);
+            };
+        });
 
-                    if (result.length == 0) {
-                        // TODO
-                        log.error('Not found the route.');
-                        conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                        return;
-                    };
-
-                    conn.execute('set', 'domain_name=' + result[0]['domain']);
-                    conn.execute('set', 'presence_data=' + result[0]['domain']);
-
-                    var callflow = result[0]['callflow'];
-                    var _router = new CallRouter(conn, {
-                        "globalVar": globalVariable,
-                        "desNumber": result[0]['destination_number'],
-                        "chnNumber": destinationNumber,
-                        "timeOffset": result[0]['timezone'],
-                        "versionSchema": result[0]['version'],
-                        "domain": result[0]['domain']
-                    });
-
-                    try {
-                        _router.start(callflow);
-                    } catch (e) {
-                        log.error(e.message);
-                        //TODO узнать что ответить на ошибку
-                        conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                    };
-
-                });
-            });
-        } else {
-            var domainName = conn.channelData.getHeader('variable_domain_name'),
-                _isNotRout = true;
-            dilplan.findActualDefaultDialplan(domainName, function (err, result) {
-
-                if (err) {
-                    log.error(err.message);
-                    conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                    return;
-                };
-
-                conn.execute('set', 'sip_h_Call-Info=_undef_');
-
-                if (result.length == 0) {
-                    log.warn("Not found route DEFAULT");
-                };
-                globalCollection.getGlobalVariables(conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
-                    if (err) {
-                        // TODO
-                        log.error(err.message);
-                        conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                        return
-                    };
-
-                    if (result instanceof Array) {
-                        var _r, _reg;
-                        for (var i = 0, len = result.length; i < len; i++) {
-                            if (result[i]['destination_number'] && typeof result[i]['destination_number'] === 'string') {
-                                _r = result[i]['destination_number'].match(new RegExp('^/(.*?)/([gimy]*)$'));
-                                // Bad destination reg exp value
-                                if (!_r) {
-                                    _r = [null, result[i]['destination_number']]
-                                };
-                                try {
-                                    _reg = new RegExp(_r[1], _r[2]).exec(destinationNumber);
-                                } catch (e) {
-                                    _reg = null;
-                                };
-                                if (_reg) {
-                                    if (!conn.channelData.getHeader('variable_presence_data')) {
-                                        conn.execute('set', 'presence_data=' + conn.channelData.getHeader('variable_presence_id'));
-                                    };
-                                    var callflow = result[i]['callflow'];
-                                    var _router = new CallRouter(conn, {
-                                        "globalVar": globalVariable,
-                                        "desNumber": result[i]['destination_number'],
-                                        "chnNumber": destinationNumber,
-                                        "timeOffset": result[i]['timezone'],
-                                        "versionSchema": result[i]['version'],
-                                        "domain": result[0]['domain']
-                                    });
-
-                                    try {
-                                        _isNotRout = false;
-                                        _router.start(callflow);
-                                        break;
-                                    } catch (e) {
-                                        log.error(e.message);
-                                        // TODO узнать что ответить на ошибку
-                                        conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                                        break;
-                                    };
-                                };
-                                log.trace('Break: %s', result[i]['destination_number']);
-                            } else {
-                                log.warn('Bad destination_number parameters');
-                            };
-                        };
-                    };
-                    if (_isNotRout) {
-                        internalExtension(conn, destinationNumber, domainName);
-                    };
-                });
-            });
-        };
     } catch (e) {
         log.error(e.message);
-        // TODO узнать что ответить на ошибку
         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
     };
 
