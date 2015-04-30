@@ -1013,8 +1013,8 @@ CallRouter.prototype._playback = function (app, cb) {
         case MEDIA_TYPE.WAV:
             var cdrUrl = this.getGlbVar('cdr_url');
             if (cdrUrl) {
-                filePath = "'shell_stream:///scripts/fetch_remote_audio.sh " + encodeURI(cdrUrl + '/sys/media/' +
-                    MEDIA_TYPE.WAV + '/' + _fileName + '?domain=' + this.domain + "'");
+                filePath = "shell_stream:///scripts/fetch_remote_audio.sh " + encodeURI(cdrUrl + '/sys/media/' +
+                    MEDIA_TYPE.WAV + '/' + _fileName + '?domain=' + this.domain);
             };
             break;
         case MEDIA_TYPE.LOCAL:
