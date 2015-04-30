@@ -1014,7 +1014,7 @@ CallRouter.prototype._playback = function (app, cb) {
             var cdrUrl = this.getGlbVar('cdr_url');
             if (cdrUrl) {
                 filePath = (app[OPERATION.PLAYBACK]['refresh'] === true ? '{refresh=true}' : '') + "http_cache://" +
-                    encodeURI(cdrUrl + '/sys/media/' + MEDIA_TYPE.WAV + '/' + _fileName + '?domain=' + this.domain);
+                    encodeURI(cdrUrl + '/sys/media/' + MEDIA_TYPE.WAV + '/' + _fileName + '?stream=false&domain=' + this.domain);
             };
             break;
         case MEDIA_TYPE.LOCAL:
