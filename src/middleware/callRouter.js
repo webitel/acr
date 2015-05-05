@@ -51,7 +51,9 @@ var OPERATION = {
     PARK: "park",
     QUEUE: "queue",
 
-    EXPORT_VARS: "exportVars"
+    EXPORT_VARS: "exportVars",
+
+    IVR: "ivr"
 };
 
 var FS_COMMAND = {
@@ -87,7 +89,9 @@ var FS_COMMAND = {
     PLAYBACK: "playback",
     PLAY_AND_GET: "play_and_get_digits",
     PARK: "park",
-    CALLCENTER: "callcenter"
+    CALLCENTER: "callcenter",
+
+    IVR: 'ivr'
 };
 
 
@@ -553,6 +557,9 @@ CallRouter.prototype.doExec = function (condition, cb) {
             else if (condition.hasOwnProperty(OPERATION.EXPORT_VARS)) {
                 this._exportVars(condition, cb);
             }
+            else if (condition.hasOwnProperty(OPERATION.IVR)) {
+                this._ivr(condition, cb);
+            }
             else {
                 log.error('error parse json');
             };
@@ -945,7 +952,7 @@ CallRouter.prototype._sleep = function (app, cb) {
 CallRouter.prototype._conference = function (app, cb) {
     var _data = '', prop = app[OPERATION.CONFERENCE];
     if (prop['name'] && /^[a-zA-Z0-9+_-]+$/.test(prop['name'])) {
-        _data = _data.concat(prop['name'], '@',
+        _data = _data.concat(prop['name'], '_', this.domain, '@',
             prop.hasOwnProperty('profile') ? prop['profile'] : 'default',
             prop.hasOwnProperty('pin') ? '+' + prop['pin'] : '',
             prop.hasOwnProperty('mute') ? '+flags{mute}' : ''
@@ -1183,4 +1190,20 @@ CallRouter.prototype._exportVars = function (app, cb) {
             });
         });
     };
+};
+
+CallRouter.prototype._ivr = function (app, cb) {
+    if (typeof app[OPERATION.IVR] === 'string') {
+
+        this.execApp({
+            "app": FS_COMMAND.IVR,
+            "data": app[OPERATION.IVR] + '@' + this.domain,
+            "async": prop[OPERATION.ASYNC] ? true : false
+        });
+
+    } else {
+        log.error('Bar ivr menu parameters');
+    }
+    if (cb)
+        cb();
 };
