@@ -1198,7 +1198,7 @@ CallRouter.prototype._ivr = function (app, cb) {
         this.execApp({
             "app": FS_COMMAND.IVR,
             "data": app[OPERATION.IVR] + '@' + this.domain,
-            "async": prop[OPERATION.ASYNC] ? true : false
+            "async": app[OPERATION.ASYNC] ? true : false
         });
 
     } else {
