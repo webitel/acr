@@ -2,7 +2,7 @@
 var cluster = require('cluster'),
     log = require('./lib/log')(module),
     conf = require('./conf'),
-    port = conf.get('server:ports'),
+    port = parseInt(conf.get('server:ports')),
     ports = [port],
     _ports = {},
     _k = ports.length;
