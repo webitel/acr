@@ -52,6 +52,7 @@ var OPERATION = {
     QUEUE: "queue",
 
     EXPORT_VARS: "exportVars",
+    VOICEMAIL: "voicemail",
 
     IVR: "ivr"
 };
@@ -90,6 +91,7 @@ var FS_COMMAND = {
     PLAY_AND_GET: "play_and_get_digits",
     PARK: "park",
     CALLCENTER: "callcenter",
+    VOICEMAIL: "voicemail",
 
     IVR: 'ivr'
 };
@@ -559,6 +561,9 @@ CallRouter.prototype.doExec = function (condition, cb) {
             }
             else if (condition.hasOwnProperty(OPERATION.IVR)) {
                 this._ivr(condition, cb);
+            }
+            else if (condition.hasOwnProperty(OPERATION.VOICEMAIL)) {
+                this._voicemail(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -1204,6 +1209,75 @@ CallRouter.prototype._ivr = function (app, cb) {
     } else {
         log.error('Bar ivr menu parameters');
     }
+    if (cb)
+        cb();
+};
+
+CallRouter.prototype._voicemail = function (app, cb) {
+    var prop = app[OPERATION.VOICEMAIL] || {},
+        domain = this['domain']
+        ;
+
+    if (!prop['user']) {
+        log.error('Bad voicemail parameters.');
+        if (cb) cb(new Error('Bad voicemail parameters.'));
+        return;
+    };
+
+    if (prop['check'] === true) {
+        var auth = prop['auth'],
+            data;
+        if (auth === false) {
+            data = 'check default ' + domain + ' ' + prop['user'];
+        } else if (auth === true) {
+            data = 'check auth default ' + domain + ' ' + prop['user'];
+        } else {
+            data = 'check auth default ' + domain + ' ' + prop['user'];
+            this.execApp({
+                "app": FS_COMMAND.SET,
+                "data": 'voicemail_authorized=${sip_authorized}',
+                "async": false
+            });
+        };
+
+        this.execApp({
+            "app": FS_COMMAND.VOICEMAIL,
+            "data": data,
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
+
+    } else {
+        var _set = [];
+        if (prop['skip_greeting'] === true)
+            _set.push('skip_greeting=true');
+
+        if (prop['skip_instructions'] === true)
+            _set.push('skip_instructions=true');
+
+        if (prop['cc'] instanceof Array) {
+            var cc = '';
+            prop['cc'].forEach(function (item, index) {
+                if (index > 0)
+                    cc += ',';
+
+                cc += item + '@' + domain
+            });
+            _set.push('vm_cc=' + cc);
+        };
+
+        if (_set.length > 0) {
+            this._set({
+                "setVar": _set
+            });
+        };
+
+        this.execApp({
+            "app": FS_COMMAND.VOICEMAIL,
+            "data": 'default ' + domain + ' ' + prop['user'],
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
+    };
+
     if (cb)
         cb();
 };
