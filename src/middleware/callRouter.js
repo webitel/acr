@@ -1220,29 +1220,29 @@ CallRouter.prototype._voicemail = function (app, cb) {
         ;
 
     if (prop['check'] === true) {
-        var auth = prop['auth'],
-            data;
-        if (auth === false) {
-            data = 'check default ' + domain + ' ' + user;
-        } else if (auth === true) {
+
+        if (typeof prop['announce'] === 'boolean') {
             this.execApp({
                 "app": FS_COMMAND.SET,
-                "data": 'voicemail_authorized=false',
-                "async": false
-            });
-            data = 'check auth_only default ' + domain + ' ' + user;
-        } else {
-            data = 'check auth_only default ' + domain + ' ' + user;
-            this.execApp({
-                "app": FS_COMMAND.SET,
-                "data": 'voicemail_authorized=${sip_authorized}',
+                "data": "vm_announce_cid=" + prop['announce'].toString(),
                 "async": false
             });
         };
 
+        var auth = (typeof prop['auth'] === 'boolean')
+                ? (!prop['auth']).toString()
+                : "${sip_authorized}"
+            ;
+
+        this.execApp({
+            "app": FS_COMMAND.SET,
+            "data": 'voicemail_authorized=' + auth,
+            "async": false
+        });
+
         this.execApp({
             "app": FS_COMMAND.VOICEMAIL,
-            "data": data,
+            "data": 'check default ' + domain + ' ' + user,
             "async": app[OPERATION.ASYNC] ? true : false
         }, function() {
             if (cb)
@@ -1285,9 +1285,8 @@ CallRouter.prototype._voicemail = function (app, cb) {
             "app": FS_COMMAND.VOICEMAIL,
             "data": 'default ' + domain + ' ' + prop['user'],
             "async": app[OPERATION.ASYNC] ? true : false
-        }, function() {
-            if (cb)
-                cb();
         });
+        if (cb)
+            cb();
     };
 };
