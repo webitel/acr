@@ -1230,9 +1230,9 @@ CallRouter.prototype._voicemail = function (app, cb) {
                 "data": 'voicemail_authorized=false',
                 "async": false
             });
-            data = 'check auth default ' + domain + ' ' + user;
+            data = 'check auth_only default ' + domain + ' ' + user;
         } else {
-            data = 'check auth default ' + domain + ' ' + user;
+            data = 'check auth_only default ' + domain + ' ' + user;
             this.execApp({
                 "app": FS_COMMAND.SET,
                 "data": 'voicemail_authorized=${sip_authorized}',
