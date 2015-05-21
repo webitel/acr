@@ -1244,6 +1244,9 @@ CallRouter.prototype._voicemail = function (app, cb) {
             "app": FS_COMMAND.VOICEMAIL,
             "data": data,
             "async": app[OPERATION.ASYNC] ? true : false
+        }, function() {
+            if (cb)
+                cb();
         });
 
     } else {
@@ -1282,9 +1285,9 @@ CallRouter.prototype._voicemail = function (app, cb) {
             "app": FS_COMMAND.VOICEMAIL,
             "data": 'default ' + domain + ' ' + prop['user'],
             "async": app[OPERATION.ASYNC] ? true : false
+        }, function() {
+            if (cb)
+                cb();
         });
     };
-
-    if (cb)
-        cb();
 };
