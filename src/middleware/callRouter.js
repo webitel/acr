@@ -1215,24 +1215,24 @@ CallRouter.prototype._ivr = function (app, cb) {
 
 CallRouter.prototype._voicemail = function (app, cb) {
     var prop = app[OPERATION.VOICEMAIL] || {},
-        domain = this['domain']
+        domain = this['domain'],
+        user = prop['user'] || ''
         ;
-
-    if (!prop['user']) {
-        log.error('Bad voicemail parameters.');
-        if (cb) cb(new Error('Bad voicemail parameters.'));
-        return;
-    };
 
     if (prop['check'] === true) {
         var auth = prop['auth'],
             data;
         if (auth === false) {
-            data = 'check default ' + domain + ' ' + prop['user'];
+            data = 'check default ' + domain + ' ' + user;
         } else if (auth === true) {
-            data = 'check auth default ' + domain + ' ' + prop['user'];
+            this.execApp({
+                "app": FS_COMMAND.SET,
+                "data": 'voicemail_authorized=false',
+                "async": false
+            });
+            data = 'check auth default ' + domain + ' ' + user;
         } else {
-            data = 'check auth default ' + domain + ' ' + prop['user'];
+            data = 'check auth default ' + domain + ' ' + user;
             this.execApp({
                 "app": FS_COMMAND.SET,
                 "data": 'voicemail_authorized=${sip_authorized}',
@@ -1247,6 +1247,13 @@ CallRouter.prototype._voicemail = function (app, cb) {
         });
 
     } else {
+
+        if (prop['user'] == '') {
+            log.error('Bad voicemail parameters.');
+            if (cb) cb(new Error('Bad voicemail parameters.'));
+            return;
+        };
+
         var _set = [];
         if (prop['skip_greeting'] === true)
             _set.push('skip_greeting=true');
