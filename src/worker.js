@@ -34,11 +34,19 @@ esl_server.on('connection::ready', function(conn, id) {
                 return
             };
 
+            var soundPref = '\/$${sounds_dir}\/en\/us\/callie';
+            if (conn.channelData.getHeader('variable_default_language') == 'ru') {
+                soundPref = '\/$${sounds_dir}\/ru\/RU\/elena';
+            };
+
+            conn.execute('set', 'sound_prefix=' + soundPref);
+
             if (context == PUBLIC_CONTEXT) {
                 publicContext(conn, destinationNumber, globalVariable);
             } else {
                 defaultContext(conn, destinationNumber, globalVariable);
             };
+
         });
 
     } catch (e) {

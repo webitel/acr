@@ -40,6 +40,6 @@ esl.on('esl::event::CHANNEL_CREATE::*', function (event) {
 
 esl.on('esl::event::CHANNEL_DESTROY::*', function (event) {
     //if (event.getHeader('variable_node_call') == 'test' ) {
-        console.log('END CALL: ' + (i--))
+        console.log('END CALL: ' + (i--));
     //}
 }) ;
