@@ -25,6 +25,7 @@ module.exports = function (conn, destinationNumber, globalVariable) {
 
         conn.execute('set', 'domain_name=' + result[0]['domain']);
         conn.execute('set', 'presence_data=' + result[0]['domain']);
+        conn.execute('set', 'force_transfer_context=default');
 
         var callflow = result[0]['callflow'];
         var _router = new CallRouter(conn, {
