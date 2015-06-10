@@ -1316,7 +1316,7 @@ CallRouter.prototype._bind_action = function (app, cb) {
 
     var data = prop['name'] + ',' + prop['digits'] + ',' + type + ':' + prop['action'];
 
-    if (app['parameters'] instanceof Array) {
+    if (prop['parameters'] instanceof Array) {
         data += ',' + prop['parameters'].join(',');
     } else if (typeof prop['parameters'] === 'string') {
         data += ',' + prop['parameters'];
