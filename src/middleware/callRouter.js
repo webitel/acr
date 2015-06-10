@@ -54,7 +54,10 @@ var OPERATION = {
     EXPORT_VARS: "exportVars",
     VOICEMAIL: "voicemail",
 
-    IVR: "ivr"
+    IVR: "ivr",
+
+    BIND_ACTION: "ivr",
+    CLEAR_ACTION: "ivr"
 };
 
 var FS_COMMAND = {
@@ -93,7 +96,10 @@ var FS_COMMAND = {
     CALLCENTER: "callcenter",
     VOICEMAIL: "voicemail",
 
-    IVR: 'ivr'
+    IVR: 'ivr',
+
+    BIND_DIGIT_ACTION: 'bind_digit_action',
+    CLEAR_DIGIT_ACTION: 'clear_digit_action'
 };
 
 
@@ -564,6 +570,10 @@ CallRouter.prototype.doExec = function (condition, cb) {
             }
             else if (condition.hasOwnProperty(OPERATION.VOICEMAIL)) {
                 this._voicemail(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.BIND_ACTION)) {
+                this._bind_action(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.CLEAR_ACTION)) {
+                this._clear_action(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -1289,4 +1299,52 @@ CallRouter.prototype._voicemail = function (app, cb) {
         if (cb)
             cb();
     };
+};
+
+
+CallRouter.prototype._bind_action = function (app, cb) {
+    var prop = app[OPERATION.BIND_ACTION];
+
+    if (!prop['action'] || !prop['name']) {
+        log.error('Bad parameters bind_action');
+        if (cb)
+            cb();
+        return;
+    };
+
+    var type = prop['type'] || 'exec';
+
+    var data = prop['name'] + ',' + prop['digits'] + ',' + type + ':' + prop['action'];
+
+    if (app['parameters'] instanceof Array) {
+        data += ',' + prop['parameters'].join(',');
+    } else if (typeof prop['parameters'] === 'string') {
+        data += ',' + prop['parameters'];
+    };
+
+    this.execApp({
+        "app": FS_COMMAND.BIND_DIGIT_ACTION,
+        "data": data,
+        "async": prop[OPERATION.ASYNC] ? true : false
+    });
+
+    if (cb)
+        cb();
+};
+
+CallRouter.prototype._clear_action = function (app, cb) {
+    if (typeof app[OPERATION.CLEAR_ACTION] !== 'string') {
+        log.error('Bad parameters clear_action');
+        if (cb)
+            cb();
+        return;
+    };
+
+    this.execApp({
+        "app": FS_COMMAND.CLEAR_DIGIT_ACTION,
+        "data": app[OPERATION.CLEAR_ACTION],
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+    if (cb)
+        cb();
 };
