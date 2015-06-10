@@ -57,7 +57,9 @@ var OPERATION = {
     IVR: "ivr",
 
     BIND_ACTION: "bindAction",
-    CLEAR_ACTION: "clearAction"
+    CLEAR_ACTION: "clearAction",
+
+    BIND_EXTENSION: "bindExtension"
 };
 
 var FS_COMMAND = {
@@ -99,7 +101,9 @@ var FS_COMMAND = {
     IVR: 'ivr',
 
     BIND_DIGIT_ACTION: 'bind_digit_action',
-    CLEAR_DIGIT_ACTION: 'clear_digit_action'
+    CLEAR_DIGIT_ACTION: 'clear_digit_action',
+
+    BIND_EXTENSION: 'bind_meta_app'
 };
 
 
@@ -574,6 +578,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
                 this._bind_action(condition, cb);
             } else if (condition.hasOwnProperty(OPERATION.CLEAR_ACTION)) {
                 this._clear_action(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.BIND_EXTENSION)) {
+                this._bind_extension(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -1326,10 +1332,10 @@ CallRouter.prototype._bind_action = function (app, cb) {
         "app": FS_COMMAND.BIND_DIGIT_ACTION,
         "data": data,
         "async": prop[OPERATION.ASYNC] ? true : false
-    }, function () {
-        if (cb)
-            cb();
     });
+
+    if (cb)
+        cb();
 };
 
 CallRouter.prototype._clear_action = function (app, cb) {
@@ -1349,6 +1355,31 @@ CallRouter.prototype._clear_action = function (app, cb) {
         "data": data,
         "async": app[OPERATION.ASYNC] ? true : false
     });
+    if (cb)
+        cb();
+};
+
+
+CallRouter.prototype._bind_extension = function (app, cb) {
+    var prop = app[OPERATION.BIND_EXTENSION];
+    if (!prop['digits'] || !prop['digits']) {
+        log.error('Bad parameters _bind_extension');
+        if (cb)
+            cb();
+        return;
+    };
+
+    var listen = prop['listen'] || 'a';
+    var respond = prop['respond'] || 's';
+
+    var data = prop['digits'] + ' ' + listen + ' ' + respond + ' execute_extension::' + prop['extension'].toString();
+
+    this.execApp({
+        "app": FS_COMMAND.BIND_EXTENSION,
+        "data": data,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+
     if (cb)
         cb();
 };
