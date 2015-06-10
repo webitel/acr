@@ -7,6 +7,7 @@ var log = require('./../lib/log')(module),
     dbRoute = require('./dbRoute'),
     findDomainVariables = require('./dialplan').findDomainVariables,
     updateDomainVariables = require('./dialplan').updateDomainVariables,
+    findExtension = require('./dialplan').findActualExtension,
     calendar = require('./calendar/index');
 
 var MEDIA_TYPE = {
@@ -59,7 +60,9 @@ var OPERATION = {
     BIND_ACTION: "bindAction",
     CLEAR_ACTION: "clearAction",
 
-    BIND_EXTENSION: "bindExtension"
+    BIND_EXTENSION: "bindExtension",
+
+    ATT_XFER: 'attXfer'
 };
 
 var FS_COMMAND = {
@@ -103,7 +106,9 @@ var FS_COMMAND = {
     BIND_DIGIT_ACTION: 'bind_digit_action',
     CLEAR_DIGIT_ACTION: 'clear_digit_action',
 
-    BIND_EXTENSION: 'bind_meta_app'
+    BIND_EXTENSION: 'bind_meta_app',
+
+    ATT_XFER: 'att_xfer'
 };
 
 
@@ -580,6 +585,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
                 this._clear_action(condition, cb);
             } else if (condition.hasOwnProperty(OPERATION.BIND_EXTENSION)) {
                 this._bind_extension(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.ATT_XFER)) {
+                this._att_xfer(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -1328,12 +1335,19 @@ CallRouter.prototype._bind_action = function (app, cb) {
         data += ',' + prop['parameters'];
     };
 
+    var scope = this;
     this.execApp({
         "app": FS_COMMAND.BIND_DIGIT_ACTION,
         "data": data,
         "async": prop[OPERATION.ASYNC] ? true : false
-    });
+    }, function () {
 
+    });
+    scope.execApp({
+        "app": 'digit_action_set_realm',
+        "data": prop['name'],
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
     if (cb)
         cb();
 };
@@ -1382,4 +1396,41 @@ CallRouter.prototype._bind_extension = function (app, cb) {
 
     if (cb)
         cb();
+};
+
+CallRouter.prototype._att_xfer = function (app, cb) {
+    // findExtension
+    var prop = app[OPERATION.ATT_XFER],
+        scope = this;
+    if (!prop['destination']) {
+        log.error('Bar request _att_xfer');
+        if (cb)
+            cb();
+        return;
+    };
+
+    var destination = this.getChnVar(prop['destination']) || prop['destination'];
+
+    findExtension(destination, scope.domain, function (err, res) {
+        if (err) {
+            log.error(err['message']);
+            if (cb)
+                cb();
+            return;
+        };
+        var data = '';
+        if (res || !prop['gateway']) {
+            data = 'user/' + prop['destination'] + '@' + scope.domain;
+        } else {
+            data = 'sofia/gateway/' + prop['gateway'] + '/' + prop['destination'];
+        };
+        scope.execApp({
+            "app": FS_COMMAND.ATT_XFER,
+            "data": data,
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
+
+        if (cb)
+            cb();
+    });
 };
