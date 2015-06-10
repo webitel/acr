@@ -56,8 +56,8 @@ var OPERATION = {
 
     IVR: "ivr",
 
-    BIND_ACTION: "ivr",
-    CLEAR_ACTION: "ivr"
+    BIND_ACTION: "bindAction",
+    CLEAR_ACTION: "clearAction"
 };
 
 var FS_COMMAND = {
