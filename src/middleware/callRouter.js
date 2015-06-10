@@ -467,7 +467,6 @@ CallRouter.prototype._parseVariable = function (name) {
     try {
         return name
             .replace(/\$\$\{([\s\S]*?)\}/gi, function (a, b) {
-                d
                 return scope.getGlbVar(b);
             })
             // ChannelVar
@@ -1409,7 +1408,7 @@ CallRouter.prototype._att_xfer = function (app, cb) {
         return;
     };
 
-    var destination = this.getChnVar(prop['destination']) || prop['destination'];
+    var destination = this._parseVariable(prop['destination']) || prop['destination'];
 
     findExtension(destination, scope.domain, function (err, res) {
         if (err) {
@@ -1420,10 +1419,11 @@ CallRouter.prototype._att_xfer = function (app, cb) {
         };
         var data = '';
         if (res || !prop['gateway']) {
-            data = 'user/' + prop['destination'] + '@' + scope.domain;
+            data = 'user/' + destination + '@' + scope.domain;
         } else {
-            data = 'sofia/gateway/' + prop['gateway'] + '/' + prop['destination'];
+            data = 'sofia/gateway/' + prop['gateway'] + '/' + destination;
         };
+
         scope.execApp({
             "app": FS_COMMAND.ATT_XFER,
             "data": data,
