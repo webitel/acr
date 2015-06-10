@@ -1326,10 +1326,10 @@ CallRouter.prototype._bind_action = function (app, cb) {
         "app": FS_COMMAND.BIND_DIGIT_ACTION,
         "data": data,
         "async": prop[OPERATION.ASYNC] ? true : false
+    }, function () {
+        if (cb)
+            cb();
     });
-
-    if (cb)
-        cb();
 };
 
 CallRouter.prototype._clear_action = function (app, cb) {
@@ -1340,9 +1340,13 @@ CallRouter.prototype._clear_action = function (app, cb) {
         return;
     };
 
+    var data = app[OPERATION.CLEAR_ACTION] == ""
+        ? "all"
+        : app[OPERATION.CLEAR_ACTION];
+
     this.execApp({
         "app": FS_COMMAND.CLEAR_DIGIT_ACTION,
-        "data": app[OPERATION.CLEAR_ACTION],
+        "data": data,
         "async": app[OPERATION.ASYNC] ? true : false
     });
     if (cb)
