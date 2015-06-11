@@ -1334,6 +1334,8 @@ CallRouter.prototype._bind_action = function (app, cb) {
         data += ',' + prop['parameters'];
     };
 
+    this.connection.execute('export', 'domain_name=' + this.domain);
+
     var scope = this;
     this.execApp({
         "app": FS_COMMAND.BIND_DIGIT_ACTION,
@@ -1362,7 +1364,6 @@ CallRouter.prototype._clear_action = function (app, cb) {
     var data = app[OPERATION.CLEAR_ACTION] == ""
         ? "all"
         : app[OPERATION.CLEAR_ACTION];
-
     this.execApp({
         "app": FS_COMMAND.CLEAR_DIGIT_ACTION,
         "data": data,
