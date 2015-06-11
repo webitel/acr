@@ -62,7 +62,9 @@ var OPERATION = {
 
     BIND_EXTENSION: "bindExtension",
 
-    ATT_XFER: 'attXfer'
+    ATT_XFER: 'attXfer',
+
+    UN_SET: 'unSet'
 };
 
 var FS_COMMAND = {
@@ -108,7 +110,9 @@ var FS_COMMAND = {
 
     BIND_EXTENSION: 'bind_meta_app',
 
-    ATT_XFER: 'att_xfer'
+    ATT_XFER: 'att_xfer',
+
+    UN_SET: 'unset'
 };
 
 
@@ -586,6 +590,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
                 this._bind_extension(condition, cb);
             } else if (condition.hasOwnProperty(OPERATION.ATT_XFER)) {
                 this._att_xfer(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.UN_SET)) {
+                this._unSet(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -1344,11 +1350,12 @@ CallRouter.prototype._bind_action = function (app, cb) {
     }, function () {
 
     });
-    scope.execApp({
-        "app": 'digit_action_set_realm',
-        "data": prop['name'],
-        "async": app[OPERATION.ASYNC] ? true : false
-    });
+
+    //scope.execApp({
+    //    "app": 'digit_action_set_realm',
+    //    "data": prop['name'],
+    //    "async": app[OPERATION.ASYNC] ? true : false
+    //});
     if (cb)
         cb();
 };
@@ -1435,3 +1442,22 @@ CallRouter.prototype._att_xfer = function (app, cb) {
             cb();
     });
 };
+
+CallRouter.prototype._unSet = function (app, cb) {
+    if (typeof app[OPERATION.UN_SET] !== 'string') {
+        log.error('bad request _unSet');
+        if (cb) {
+            cb();
+        }
+        return;
+    }
+    this.execApp({
+        "app": FS_COMMAND.UN_SET,
+        "data": app[OPERATION.UN_SET],
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+
+    if (cb) {
+        cb();
+    };
+}
