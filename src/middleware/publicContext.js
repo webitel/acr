@@ -8,7 +8,7 @@ var log = require('../lib/log')(module),
     DEFAULT_HANGUP_CAUSE = require('../const').DEFAULT_HANGUP_CAUSE
     ;
 
-module.exports = function (conn, destinationNumber, globalVariable) {
+module.exports = function (conn, destinationNumber, globalVariable, notExistsDirection) {
     dialplan.findActualPublicDialplan(destinationNumber, function (err, result) {
         if (err) {
             // TODO
@@ -21,6 +21,12 @@ module.exports = function (conn, destinationNumber, globalVariable) {
             log.warn("Not found route PUBLIC");
             conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
             return;
+        };
+
+        // WTEL-183
+        if (notExistsDirection) {
+            log.trace('set: webitel_direction=inbound');
+            conn.execute('set', 'webitel_direction=inbound');
         };
 
         conn.execute('set', 'domain_name=' + result[0]['domain']);

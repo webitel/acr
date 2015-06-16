@@ -9,7 +9,7 @@ var log = require('../lib/log')(module),
     internalExtension = require('./dialplan/internalExtansion')
     ;
 
-module.exports = function (conn, destinationNumber, globalVariable) {
+module.exports = function (conn, destinationNumber, globalVariable, notExistsDirection) {
     var domainName = conn.channelData.getHeader('variable_domain_name'),
         _isNotRout = true
         ;
@@ -24,6 +24,17 @@ module.exports = function (conn, destinationNumber, globalVariable) {
 
         if (resultExtension) {
             try {
+
+                // WTEL-183
+                if (notExistsDirection) {
+                    var _tmpDirection = conn.channelData.getHeader('variable_user_scheme')
+                        ? 'internal'
+                        : 'outbound';
+                    conn.execute('set', 'webitel_direction=' + _tmpDirection);
+                    log.trace('set: webitel_direction=%s', _tmpDirection);
+
+                };
+
                 var callflow = resultExtension['callflow'];
                 var _router = new CallRouter(conn, {
                     "globalVar": globalVariable,
@@ -49,6 +60,12 @@ module.exports = function (conn, destinationNumber, globalVariable) {
 
                 if (result.length == 0) {
                     log.warn("Not found route DEFAULT");
+                };
+
+                // WTEL-183
+                if (notExistsDirection) {
+                    conn.execute('set', 'webitel_direction=outbound');
+                    log.trace('set: webitel_direction=outbound');
                 };
 
                 if (result instanceof Array) {

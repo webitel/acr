@@ -40,18 +40,10 @@ esl_server.on('connection::ready', function(conn, id) {
 
             conn.execute('set', 'sound_prefix=' + soundPref);
 
-            if (!conn.channelData.getHeader('variable_webitel_direction')) {
-                // TODO WTEL-183
-                conn.execute('set', 'webitel_direction=' + (context == PUBLIC_CONTEXT)
-                    ? 'outbound'
-                    : 'inbound');
-            };
-
-
             if (context == PUBLIC_CONTEXT) {
-                publicContext(conn, destinationNumber, globalVariable);
+                publicContext(conn, destinationNumber, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
             } else {
-                defaultContext(conn, destinationNumber, globalVariable);
+                defaultContext(conn, destinationNumber, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
             };
 
         });
