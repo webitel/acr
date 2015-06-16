@@ -99,7 +99,7 @@ var FS_COMMAND = {
     BRIDGE: "bridge",
     PLAYBACK: "playback",
     PLAY_AND_GET: "play_and_get_digits",
-    PARK: "park",
+    PARK: "valet_park",
     CALLCENTER: "callcenter",
     VOICEMAIL: "voicemail",
 
