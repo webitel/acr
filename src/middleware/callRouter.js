@@ -13,6 +13,7 @@ var log = require('./../lib/log')(module),
 var MEDIA_TYPE = {
     WAV: 'wav',
     MP3: 'mp3',
+    SILENCE: 'silence',
     LOCAL: 'local'
 };
 
@@ -1036,36 +1037,51 @@ CallRouter.prototype._schedule = function (app, cb) {
         cb();
 };
 
-CallRouter.prototype._playback = function (app, cb) {
-    var _fileName = app[OPERATION.PLAYBACK]["name"],
-        type = app[OPERATION.PLAYBACK]["type"],
-        filePath = '',
-        scope = this;
-
-    if (typeof _fileName !== 'string') {
-        log.warn('Bad _playback parameters');
-        if (cb)
-            cb();
-        return;
-    };
-
+CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh) {
+    var filePath = '';
     switch (type) {
         case MEDIA_TYPE.WAV:
             var cdrUrl = this.getGlbVar('cdr_url');
             if (cdrUrl) {
-                filePath = (app[OPERATION.PLAYBACK]['refresh'] === true ? '{refresh=true}' : '') + "http_cache://" +
-                    encodeURI(cdrUrl + '/sys/media/' + MEDIA_TYPE.WAV + '/' + _fileName + '?stream=false&domain=' + this.domain + '&.wav');
+                filePath = (refresh === true ? '{refresh=true}' : '') + "http_cache://" +
+                encodeURI(cdrUrl + '/sys/media/' + MEDIA_TYPE.WAV + '/' + fileName + '?stream=false&domain=' + this.domain + '&.wav');
             };
             break;
         case MEDIA_TYPE.LOCAL:
-            filePath = _fileName;
+            filePath = fileName;
+            break;
+        case MEDIA_TYPE.SILENCE:
+            filePath = 'silence_stream://' + fileName;
             break;
         default :
             var cdrUrl = this.getGlbVar('cdr_url');
             if (cdrUrl) {
-                filePath = encodeURI(cdrUrl.replace(/https?/, 'shout') + '/sys/media/' + MEDIA_TYPE.MP3 + '/' + _fileName
-                    + '?domain=' + this.domain);
+                filePath = encodeURI(cdrUrl.replace(/https?/, 'shout') + '/sys/media/' + MEDIA_TYPE.MP3 + '/' + fileName
+                + '?domain=' + this.domain);
             };
+    };
+
+    return filePath;
+};
+
+CallRouter.prototype._playback = function (app, cb) {
+    var filePath = '',
+        prop = app[OPERATION.PLAYBACK],
+        scope = this;
+
+    if (typeof prop['name'] === 'string') {
+        filePath = this._getPlaybackFileString(prop['type'], prop['name'], prop['name']);
+    } else if (prop['files'] instanceof Array) {
+        var files = prop['files'];
+        for (var i = 0, len = files.length; i < len; i++) {
+            filePath += '!' + this._getPlaybackFileString(files[i]['type'], files[i]['name'], files[i]['name']);
+        };
+        filePath = 'file_string://' + filePath.substring(1);
+    } else {
+        log.warn('Bad _playback parameters');
+        if (cb)
+            cb();
+        return;
     };
 
     if (app[OPERATION.PLAYBACK].hasOwnProperty('getDigits')) {
@@ -1105,14 +1121,16 @@ CallRouter.prototype._playback = function (app, cb) {
 
 CallRouter.prototype._bridge = function (app, cb) {
     var prop = app[OPERATION.BRIDGE],
-        _data = '',
+        _data,
         separator = prop['strategy'] == 'failover' // TODO переделать
             ? '|'
             : ','; // ":_:" - only for user & device; "," - for other types
 
+    _data = '{' + 'domain_name=' + this.domain;
     if (prop.hasOwnProperty('parameters') && prop['parameters'] instanceof Array) {
-        _data = _data.concat('{', prop['parameters'].join(','), '}');
+        _data = _data.concat(',', prop['parameters'].join(','));
     };
+    _data += '}';
 
     if (prop.hasOwnProperty('endpoints') && prop['endpoints'] instanceof Array) {
         prop['endpoints'].forEach(function (endpoint) {
