@@ -65,7 +65,9 @@ var OPERATION = {
 
     ATT_XFER: 'attXfer',
 
-    UN_SET: 'unSet'
+    UN_SET: 'unSet',
+
+    SET_USER: 'setUser'
 };
 
 var FS_COMMAND = {
@@ -113,7 +115,9 @@ var FS_COMMAND = {
 
     ATT_XFER: 'att_xfer',
 
-    UN_SET: 'unset'
+    UN_SET: 'unset',
+
+    SET_USER: 'set_user'
 };
 
 
@@ -593,6 +597,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
                 this._att_xfer(condition, cb);
             } else if (condition.hasOwnProperty(OPERATION.UN_SET)) {
                 this._unSet(condition, cb);
+            } else if (condition.hasOwnProperty(OPERATION.SET_USER)) {
+                this._setUser(condition, cb);
             }
             else {
                 log.error('error parse json');
@@ -1478,4 +1484,25 @@ CallRouter.prototype._unSet = function (app, cb) {
     if (cb) {
         cb();
     };
-}
+};
+
+CallRouter.prototype._setUser = function (app, cb) {
+    var prop = app[OPERATION.SET_USER];
+    if (typeof prop['name'] !== 'string') {
+        log.error('bad request setUser');
+        if (cb) {
+            cb();
+        };
+        return;
+    };
+
+    this.execApp({
+        "app": FS_COMMAND.SET_USER,
+        "data": prop['name'] + '@' + this.domain + (prop['prefix'] ? ' ' + prop['prefix'] : ''),
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+
+    if (cb) {
+        cb();
+    };
+};
