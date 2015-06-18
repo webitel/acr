@@ -1516,7 +1516,8 @@ CallRouter.prototype._callForward = function (app, cb) {
     var prop = app[OPERATION.CALL_FORWARD],
         status = this.getChnVar('Caller-Account-Status'),
         number = this.getChnVar('Caller-Account-Status-Description');
-
+    log.trace('CF: status = %s', status);
+    log.trace('CF: number = %s', number);
     if (status != 'CALLFORWARD') {
         if (cb)
             cb();
