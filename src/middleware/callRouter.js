@@ -67,7 +67,8 @@ var OPERATION = {
 
     UN_SET: 'unSet',
 
-    SET_USER: 'setUser'
+    SET_USER: 'setUser',
+    CALL_FORWARD: 'checkCallForward'
 };
 
 var FS_COMMAND = {
@@ -137,6 +138,7 @@ var CallRouter = module.exports = function (connection, option) {
     this.offset = option['timeOffset'];
     this.domain = option['domain'];
     this.domainVariables = {};
+    this.end = false;
     this.updateDomainVariable = false;
 
     //this.localVar = option['localVariables'] || {};
@@ -467,6 +469,10 @@ CallRouter.prototype.execIf = function (condition, cb) {
                 cb();
             };
         };
+    } else {
+        log.error('Bad request IF');
+        if (cb)
+            cb();
     };
 };
 
@@ -518,6 +524,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
                 this.execIf(condition[OPERATION.IF], cb);
             } else if (condition.hasOwnProperty(OPERATION.SWITCH)) {
                 this._switch(condition[OPERATION.SWITCH], cb);
+            } if (condition.hasOwnProperty(OPERATION.CALL_FORWARD)) {
+                this._callForward(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.SLEEP)) {
                 this._sleep(condition, cb);
@@ -533,13 +541,7 @@ CallRouter.prototype.doExec = function (condition, cb) {
             }
             else if (condition.hasOwnProperty(OPERATION.GOTO)) {
                 this._goto(condition, cb);
-            } /*
-            else if (condition.hasOwnProperty(OPERATION.GATEWAY)) {
-                this._gateway(condition, cb);
             }
-            else if (condition.hasOwnProperty(OPERATION.DEVICE)) {
-                this._device(condition, cb);
-            }*/
             else if (condition.hasOwnProperty(OPERATION.RECORD_SESSION)) {
                 this._recordSession(condition, cb);
             }
@@ -658,8 +660,9 @@ CallRouter.prototype.execute = function (callflows, cb) {
 
     var postExec = function (err, res) {
         i++;
-        if (i == callflows.length || (callflows[i - 1] && callflows[i - 1] instanceof  Object &&
-            callflows[i - 1]['break'] === true)) {
+        scope.end = (callflows[i - 1] && callflows[i - 1] instanceof  Object &&
+            callflows[i - 1]['break'] === true) || scope.end;
+        if (i == callflows.length || scope.end) {
             if (cb)
                 cb();
             return;
@@ -693,8 +696,10 @@ CallRouter.prototype.start = function (callflows) {
 
     var postExec = function (err, res) {
         scope.index++;
-        if (scope.index == callflows.length || (callflows[scope.index - 1] && callflows[scope.index - 1] instanceof  Object &&
-                callflows[scope.index - 1]['break'] === true)) {
+        scope.end = (callflows[scope.index - 1] && callflows[scope.index - 1] instanceof  Object &&
+            callflows[scope.index - 1]['break'] === true) || scope.end;
+
+        if (scope.index == callflows.length || scope.end) {
             //scope.updateLocalVariables();
             scope.saveDomainVariables();
             scope.connection.disconnect();
@@ -837,7 +842,7 @@ function _getGotoDataString(param) {
 
 
 CallRouter.prototype._break = function (app, cb) {
-    cb(new Error('BREAK'));
+    cb();
 };
 
 CallRouter.prototype._goto = function (app, cb) {
@@ -1502,6 +1507,44 @@ CallRouter.prototype._setUser = function (app, cb) {
         "async": app[OPERATION.ASYNC] ? true : false
     });
 
+    if (cb) {
+        cb();
+    };
+};
+
+CallRouter.prototype._callForward = function (app, cb) {
+    var prop = app[OPERATION.CALL_FORWARD],
+        status = this.getChnVar('Caller-Account-Status'),
+        number = this.getChnVar('Caller-Account-Status-Description');
+
+    if (status != 'CALLFORWARD') {
+        if (cb)
+            cb();
+        return;
+    };
+
+    if (!number) {
+        log.warn('bad request _callForward. SKIP application');
+        if (cb) {
+            cb();
+        };
+        return;
+    };
+
+    if (prop['user']) {
+        this.execApp({
+            "app": FS_COMMAND.SET_USER,
+            "data": (prop.user['name'] || prop.user) + '@' + this.domain + (prop.user['prefix'] ? ' ' + prop.user['prefix'] : ''),
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
+    };
+
+    this.execApp({
+        "app": FS_COMMAND.TRANSFER,
+        "data": number + ' XML default'
+    });
+
+    this.end = true;
     if (cb) {
         cb();
     };
