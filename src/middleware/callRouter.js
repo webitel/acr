@@ -522,9 +522,11 @@ CallRouter.prototype.doExec = function (condition, cb) {
 
             if (condition.hasOwnProperty(OPERATION.IF)) {
                 this.execIf(condition[OPERATION.IF], cb);
-            } else if (condition.hasOwnProperty(OPERATION.SWITCH)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.SWITCH)) {
                 this._switch(condition[OPERATION.SWITCH], cb);
-            } if (condition.hasOwnProperty(OPERATION.CALL_FORWARD)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.CALL_FORWARD)) {
                 this._callForward(condition, cb);
             }
             else if (condition.hasOwnProperty(OPERATION.SLEEP)) {
@@ -589,21 +591,27 @@ CallRouter.prototype.doExec = function (condition, cb) {
             }
             else if (condition.hasOwnProperty(OPERATION.VOICEMAIL)) {
                 this._voicemail(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.BIND_ACTION)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.BIND_ACTION)) {
                 this._bind_action(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.CLEAR_ACTION)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.CLEAR_ACTION)) {
                 this._clear_action(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.BIND_EXTENSION)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.BIND_EXTENSION)) {
                 this._bind_extension(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.ATT_XFER)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.ATT_XFER)) {
                 this._att_xfer(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.UN_SET)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.UN_SET)) {
                 this._unSet(condition, cb);
-            } else if (condition.hasOwnProperty(OPERATION.SET_USER)) {
+            }
+            else if (condition.hasOwnProperty(OPERATION.SET_USER)) {
                 this._setUser(condition, cb);
             }
             else {
-                log.error('error parse json');
+                log.error('error parse json: ', condition);
             };
         } else {
             if (condition.hasOwnProperty(OPERATION.IF)) {
@@ -996,7 +1004,7 @@ CallRouter.prototype._sleep = function (app, cb) {
 
 CallRouter.prototype._conference = function (app, cb) {
     var _data = '', prop = app[OPERATION.CONFERENCE];
-    if (prop['name'] && /^[a-zA-Z0-9+_-]+$/.test(prop['name'])) {
+    if (prop['name'] /*&& /^[a-zA-Z0-9+_-]+$/.test(prop['name'] )*/) {
         _data = _data.concat(prop['name'], '_', this.domain, '@',
             prop.hasOwnProperty('profile') ? prop['profile'] : 'default',
             prop.hasOwnProperty('pin') ? '+' + prop['pin'] : '',
@@ -1535,8 +1543,9 @@ CallRouter.prototype._callForward = function (app, cb) {
     if (prop['user']) {
         this.execApp({
             "app": FS_COMMAND.SET_USER,
-            "data": (prop.user['name'] || prop.user) + '@' + this.domain + (prop.user['prefix'] ? ' ' + prop.user['prefix'] : ''),
-            "async": app[OPERATION.ASYNC] ? true : false
+            "data": (prop.user['name'] || prop.user) + '@' + this.domain + (prop.user['prefix'] ? ' ' + prop.user['prefix'] : '')
+        }, function (res) {
+            console.dir(res);
         });
     };
 
