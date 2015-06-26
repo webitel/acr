@@ -64,12 +64,12 @@ module.exports = function (parameters, router, cb) {
                 });
 
                 if (!current) continue;
-                router._set({
+                router.__setVar({
                     "setVar": "all:" + key + "=" + current
                 });
             };
         } catch (e) {
-            log.error(e.message);
+            log.error(e);
         } finally {
             cb();
         };
