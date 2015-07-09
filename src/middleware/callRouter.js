@@ -68,7 +68,8 @@ var OPERATION = {
     UN_SET: 'unSet',
 
     SET_USER: 'setUser',
-    CALL_FORWARD: 'checkCallForward'
+    CALL_FORWARD: 'checkCallForward',
+    RECEIVE_FAX: 'receiveFax'
 };
 
 var FS_COMMAND = {
@@ -118,7 +119,9 @@ var FS_COMMAND = {
 
     UN_SET: 'unset',
 
-    SET_USER: 'set_user'
+    SET_USER: 'set_user',
+
+    RX_FAX: 'rxfax'
 };
 
 
@@ -140,7 +143,8 @@ var CallRouter = module.exports = function (connection, option) {
     this.domainVariables = {};
     this.end = false;
     this.updateDomainVariable = false;
-
+    this.uuid = connection.channelData.getHeader('variable_uuid');
+    
     //this.localVar = option['localVariables'] || {};
     //this._dbId = option['id'] || '';
     //this.COLLECTION_NAME = option['collectionName'];
@@ -217,11 +221,36 @@ CallRouter.prototype.saveDomainVariables = function (cb) {
     };
 };
 
-CallRouter.prototype.log = {
-    "info": function () {
-        console.error(this.domain || 'ERROR');
-    }
+var _logs = {};
+
+for (var key in log.levels) {
+    if (log.levels.hasOwnProperty(key)) {
+        _logs[key] = function (msg) {
+            log[key](this.uuid + '-> ' + (msg || ''));
+        };
+    };
 };
+
+var logs = {};
+var self = null;
+var generateGetter = function(fnc){
+    return function(){
+        return function(){
+            return _logs[fnc].apply(self, arguments);
+        };
+    };
+};
+for(var prop in _logs){
+    if(_logs.hasOwnProperty(prop)){
+        logs.__defineGetter__(prop, generateGetter(prop));
+    };
+};
+
+CallRouter.prototype.__defineGetter__('log', function(){
+    self = this;
+    return logs;
+});
+
 
 CallRouter.prototype.setupDomainVariables = function (cb) {
     var scope = this;
@@ -532,7 +561,7 @@ function getFnName(cond) {
         return null;
     } else {
         for (var i = 0, len = propKeys.length; i < len; i++) {
-            if (propKeys[i] !== 'break') {
+            if (propKeys[i] !== 'break' && propKeys[i] !== 'async') {
                 return propKeys[i];
             };
         };
@@ -1457,6 +1486,44 @@ CallRouter.prototype.__setUser = function (app, cb) {
     if (cb) {
         cb();
     };
+};
+
+CallRouter.prototype.__receiveFax = function (app, cb) {
+    var prop = app[OPERATION.RECEIVE_FAX],
+        _set = [],
+        email = '';
+
+    this.execApp({
+        "app": FS_COMMAND.ANSWER
+    });
+
+    this.execApp({
+        "app": FS_COMMAND.PLAYBACK,
+        "data": "silence_stream://2000"
+    });
+
+    if (prop['enable_t38'] === true) {
+        _set.push("fax_enable_t38_request=true", "fax_enable_t38=true");
+    };
+
+    if (prop['email'] instanceof Array) {
+        email = prop['email'].join(',');
+    };
+
+    _set.push("execute_on_fax_success=lua FaxUpload.lua ${uuid} ${domain_name} " + email,
+        "execute_on_fax_failure=system /bin/rm /recordings/${uuid}.tif");
+
+    this.__setVar({
+        "setVar": _set
+    });
+
+    this.execApp({
+        "app": FS_COMMAND.RX_FAX,
+        "data": "/recordings/${uuid}.tif"
+    });
+
+    if (cb)
+        return cb();
 };
 
 CallRouter.prototype.__callForward = function (app, cb) {
