@@ -851,24 +851,44 @@ CallRouter.prototype.__goto = function (app, cb) {
 };
 
 CallRouter.prototype.__recordSession = function (app, cb) {
-    if (app[OPERATION.RECORD_SESSION] == 'start' || app[OPERATION.RECORD_SESSION] == '') {
+    var prop = app[OPERATION.RECORD_SESSION];
+    var action,
+        type,
+        email = '';
+
+    if (typeof prop == 'string'){
+        action = prop === 'stop' ? 'stop' : 'start';
+        type = 'mp3';
+    } else if (typeof prop == 'object') {
+        action = prop['action'] === 'stop' ? 'stop' : 'start';
+        type = prop['type'] === 'mp4' ? 'mp4' : 'mp3';
+        email = prop['email'] instanceof Array ? prop['email'].join(',') : '';
+    } else {
+        log.error('Bad request __recordSession');
+        if (cb)
+            cb();
+        return;
+    };
+
+    if (action == 'start') {
         this.execApp({
             "app": "multiset",
             "data": "^^,RECORD_MIN_SEC=2,RECORD_STEREO=true,RECORD_BRIDGE_REQ=true," +
-                "record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name}"
+                "record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} " + type + ' ' + email
         });
 
         this.execApp({
             "app": FS_COMMAND.RECORD_SESSION,
-            "data": "/recordings/${uuid}.mp3"
+            "data": "/recordings/${uuid}." + type
         });
-    } else if (app[OPERATION.RECORD_SESSION] == 'stop') {
+    }
+    else if (action == 'stop') {
         this.execApp({
             "app": FS_COMMAND.STOP_RECORD_SESSION,
-            "data": "/recordings/${uuid}.mp3"
+            "data": "/recordings/${uuid}." + type
         });
     } else {
-        log.warn('Bad parameter ', app[OPERATION.RECORD_SESSION]);
+        log.warn('Bad parameters ', prop);
     };
 
     if (cb)
