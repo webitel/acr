@@ -854,7 +854,7 @@ CallRouter.prototype.__recordSession = function (app, cb) {
     var prop = app[OPERATION.RECORD_SESSION];
     var action,
         type,
-        email = '';
+        email = '\"\"';
 
     if (typeof prop == 'string'){
         action = prop === 'stop' ? 'stop' : 'start';
