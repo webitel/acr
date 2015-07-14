@@ -871,10 +871,15 @@ CallRouter.prototype.__recordSession = function (app, cb) {
     };
 
     if (action == 'start') {
+
+        var multiSet = '^^,RECORD_MIN_SEC=' + (prop['minSec'] || '2' )
+            + ',RECORD_STEREO=' + (prop['stereo'] == 'false' ? 'false' : 'true')
+            + ',RECORD_BRIDGE_REQ=' + (prop['bridged'] == 'false' ? 'false' : 'true')
+            + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email;
+
         this.execApp({
             "app": "multiset",
-            "data": "^^,RECORD_MIN_SEC=2,RECORD_STEREO=true,RECORD_BRIDGE_REQ=true," +
-                "record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} " + type + ' ' + email
+            "data": multiSet
         });
 
         this.execApp({
