@@ -1468,9 +1468,11 @@ CallRouter.prototype.__attXfer = function (app, cb) {
             "async": app[OPERATION.ASYNC] ? true : false
         });
 
+        var caller_id_number = scope.getChnVar('original_caller_id_number') || '';
+
         scope.execApp({
             "app": FS_COMMAND.ATT_XFER,
-            "data": '{webitel_direction=outbound,domain_name=' + scope.domain + '}' + data,
+            "data": '{webitel_direction=outbound,domain_name=' + scope.domain + ',effective_caller_id_name=' + caller_id_number +'}' + data,
             "async": app[OPERATION.ASYNC] ? true : false
         });
 
