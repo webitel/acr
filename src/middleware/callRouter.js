@@ -1463,8 +1463,14 @@ CallRouter.prototype.__attXfer = function (app, cb) {
         };
 
         scope.execApp({
+            "app": FS_COMMAND.EXPORT,
+            "data": 'recording_follow_transfer=true',
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
+
+        scope.execApp({
             "app": FS_COMMAND.ATT_XFER,
-            "data": data,
+            "data": '{webitel_direction=outbound,domain_name=' + scope.domain + '}' + data,
             "async": app[OPERATION.ASYNC] ? true : false
         });
 
