@@ -1468,11 +1468,12 @@ CallRouter.prototype.__attXfer = function (app, cb) {
             "async": app[OPERATION.ASYNC] ? true : false
         });
 
-        var caller_id_number = scope.getChnVar('original_caller_id_number') || '';
-
+        var caller_id_number = scope.getChnVar('Caller-ANI') || '';
+        //console.log(scope.connection.channelData.serialize('plain'));
         scope.execApp({
             "app": FS_COMMAND.ATT_XFER,
-            "data": '{webitel_direction=outbound,domain_name=' + scope.domain + ',effective_caller_id_name=' + caller_id_number +'}' + data,
+            "data": '{webitel_direction=outbound,domain_name=' + scope.domain + ',effective_caller_id_name=' + caller_id_number +
+                ',effective_caller_id_number=' + caller_id_number +'}' + data,
             "async": app[OPERATION.ASYNC] ? true : false
         });
 
