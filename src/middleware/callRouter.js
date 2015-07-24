@@ -69,7 +69,9 @@ var OPERATION = {
 
     SET_USER: 'setUser',
     CALL_FORWARD: 'checkCallForward',
-    RECEIVE_FAX: 'receiveFax'
+    RECEIVE_FAX: 'receiveFax',
+
+    TAGS: 'setTags'
 };
 
 var FS_COMMAND = {
@@ -121,7 +123,9 @@ var FS_COMMAND = {
 
     SET_USER: 'set_user',
 
-    RX_FAX: 'rxfax'
+    RX_FAX: 'rxfax',
+
+    PUSH: 'push'
 };
 
 
@@ -756,6 +760,37 @@ CallRouter.prototype._addVariableArrayToChannelDump = function (variables) {
             scope.setChnVar('variable_' + _tmp[0], _tmp[1]);
         });
     };
+};
+
+CallRouter.prototype.__setTags = function (app, cb) {
+    var prop = app[OPERATION.TAGS],
+        tagName = app['tagName'] || "webitel_tags",
+        async = app[OPERATION.ASYNC] ? true : false;
+
+    if (prop instanceof Array) {
+        var scope = this;
+        prop.forEach(function (item) {
+            scope.execApp({
+                "app": FS_COMMAND.PUSH,
+                "data": tagName + ',' + item,
+                "async": async
+            });
+        });
+    }
+    else if (typeof prop === 'string') {
+        this.execApp({
+            "app": FS_COMMAND.PUSH,
+            "data": tagName + ',' + prop,
+            "async": async
+        });
+    }
+    else {
+        log.warn('Bad parameters __setTags');
+    };
+
+    if (cb)
+        cb();
+
 };
 
 CallRouter.prototype.__setVar = function (app, cb) {
