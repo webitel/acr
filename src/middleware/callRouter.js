@@ -8,6 +8,7 @@ var log = require('./../lib/log')(module),
     findDomainVariables = require('./dialplan').findDomainVariables,
     updateDomainVariables = require('./dialplan').updateDomainVariables,
     findExtension = require('./dialplan').findActualExtension,
+    blackList = require('./blackList'),
     calendar = require('./calendar/index');
 
 var MEDIA_TYPE = {
@@ -71,7 +72,8 @@ var OPERATION = {
     CALL_FORWARD: 'checkCallForward',
     RECEIVE_FAX: 'receiveFax',
 
-    TAGS: 'setTags'
+    TAGS: 'setTags',
+    BLACK_LIST: 'blackList'
 };
 
 var FS_COMMAND = {
@@ -1634,3 +1636,48 @@ CallRouter.prototype.__callForward = function (app, cb) {
         cb();
     };
 };
+
+CallRouter.prototype.__blackList = function (app, cb) {
+    var prop = app[OPERATION.BLACK_LIST],
+        variableName = prop['variable'] || 'Channel-Caller-ID-Number',
+        name = prop['name'] || '',
+        scope = this,
+        actions,
+        number = this.getChnVar(variableName) || '';
+
+    if (name == '' || number == '') {
+        log.warn('Bar request __blackList');
+        if (cb) {
+            cb();
+            return;
+        };
+    };
+
+    if (prop['action'] instanceof Array) {
+        actions = prop['action'];
+    } else {
+        actions = [{
+            "hangup": "INCOMING_CALL_BARRED"
+        }];
+    };
+    actions.push({
+        "break": true
+    });
+    blackList.check(this.domain, name, number, function (err, res) {
+        if (err) {
+            log.error(err);
+            if (cb)
+                cb();
+            return;
+        };
+
+        if (res > 0) {
+            log.trace('Black list number %s execute actions.', number);
+            scope.execute(actions, cb);
+        } else {
+            log.trace('Black list skip number %s.', number);
+            if (cb)
+                cb();
+        };
+    });
+}

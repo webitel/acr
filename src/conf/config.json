@@ -10,7 +10,8 @@
     "globalCollection": "global",
     "extensionsCollection": "extension",
     "variablesCollection": "domainVariables",
-    "calendarCollection": "calendar"
+    "calendarCollection": "calendar",
+    "blackListCollection": "blackList"
   },
   "application": {
     "loglevel": "LOGLEVEL",
