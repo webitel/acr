@@ -1641,11 +1641,11 @@ CallRouter.prototype.__blackList = function (app, cb) {
         number = this.getChnVar(variableName) || '';
 
     if (name == '' || number == '') {
-        log.warn('Bar request __blackList');
+        log.warn('Bad request __blackList');
         if (cb) {
             cb();
-            return;
         };
+        return;
     };
 
     if (prop['action'] instanceof Array) {
