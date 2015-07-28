@@ -912,6 +912,7 @@ CallRouter.prototype.__recordSession = function (app, cb) {
         var multiSet = '^^,RECORD_MIN_SEC=' + (prop['minSec'] || '2' )
             + ',RECORD_STEREO=' + (prop['stereo'] == 'false' ? 'false' : 'true')
             + ',RECORD_BRIDGE_REQ=' + (prop['bridged'] == 'false' ? 'false' : 'true')
+            + ',recording_follow_transfer=' + (prop['followTransfer'] == 'false' ? 'false' : 'true')
             + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email;
 
         this.execApp({
@@ -1498,12 +1499,6 @@ CallRouter.prototype.__attXfer = function (app, cb) {
         } else {
             data = 'sofia/gateway/' + prop['gateway'] + '/' + destination;
         };
-
-        scope.execApp({
-            "app": FS_COMMAND.EXPORT,
-            "data": 'recording_follow_transfer=true',
-            "async": app[OPERATION.ASYNC] ? true : false
-        });
 
         var caller_id_number = scope.getChnVar('Caller-ANI') || '';
         //console.log(scope.connection.channelData.serialize('plain'));
