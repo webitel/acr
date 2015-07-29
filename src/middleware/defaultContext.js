@@ -24,7 +24,6 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
 
         if (resultExtension) {
             try {
-
                 // WTEL-183
                 if (notExistsDirection) {
                     var _tmpDirection = conn.channelData.getHeader('variable_user_scheme')
@@ -33,6 +32,9 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                     conn.execute('set', 'webitel_direction=' + _tmpDirection);
                     log.trace('set: webitel_direction=%s', _tmpDirection);
 
+                };
+                if (resultExtension['fs_timezone']) {
+                    conn.execute('set', 'timezone=' + resultExtension['fs_timezone']);
                 };
 
                 var callflow = resultExtension['callflow'];
@@ -87,6 +89,11 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                                     conn.execute('set', 'presence_data=' + conn.channelData.getHeader('variable_presence_id'));
                                 };
                                 log.trace('Exec: %s', result[i]['destination_number']);
+
+                                if (result[i]['fs_timezone']) {
+                                    conn.execute('set', 'timezone=' + result[i]['fs_timezone']);
+                                };
+
                                 var callflow = result[i]['callflow'];
                                 var _router = new CallRouter(conn, {
                                     "globalVar": globalVariable,

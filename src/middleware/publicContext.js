@@ -29,6 +29,10 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             conn.execute('set', 'webitel_direction=inbound');
         };
 
+        if (result[0]['fs_timezone']) {
+            conn.execute('set', 'timezone=' + result[0]['fs_timezone']);
+        };
+
         conn.execute('set', 'domain_name=' + result[0]['domain']);
         conn.execute('set', 'presence_data=' + result[0]['domain']);
         conn.execute('set', 'force_transfer_context=default');
