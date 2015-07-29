@@ -796,13 +796,45 @@ CallRouter.prototype.__setTags = function (app, cb) {
 };
 
 CallRouter.prototype.__setVar = function (app, cb) {
-    var _app, _data, _chnArrayVar;
+    var _app, _data, _chnArrayVar = [];
 
     if (app[OPERATION.SET] instanceof Array) {
         _app = FS_COMMAND.MULTISET;
         _data = '^^~' + app[OPERATION.SET].join('~');
         _chnArrayVar = app[OPERATION.SET];
-    } else {
+    }
+    else if (app[OPERATION.SET] instanceof Object) {
+        var prop = app[OPERATION.SET];
+        _data = [];
+        for (var key in prop['data']) {
+            if (prop['data'].hasOwnProperty(key)) {
+                _chnArrayVar.push(key + '=' + prop['data'][key]);
+                _data.push((prop['type'] == 'nolocal' ? 'nolocal:' + key : key) + '=' + prop['data'][key]);
+
+                if (prop['type'] == 'domain') {
+                    this.setDomainVariable(key, prop['data'][key]);
+                };
+            };
+        };
+        switch (prop['type']) {
+            case 'all':
+                _app = FS_COMMAND.EXPORT;
+                break;
+            case 'nolocal':
+                _chnArrayVar = null;
+                _app = FS_COMMAND.EXPORT;
+                break;
+            default :
+                if (_data.length > 1) {
+                    _app = FS_COMMAND.MULTISET;
+                    _data = '^^~' + _data.join('~')
+                } else {
+                    _app = FS_COMMAND.SET;
+                    _data = _data[0]
+                }
+        };
+    }
+    else {
         if (app[OPERATION.SET].indexOf('all:') == 0) {
             _app = FS_COMMAND.EXPORT;
             _data = app[OPERATION.SET].substring(4);
@@ -825,11 +857,21 @@ CallRouter.prototype.__setVar = function (app, cb) {
     };
 
     if (_app) {
-        this.execApp({
-            "app": _app,
-            "data": _data,
-            "async": app[OPERATION.ASYNC] ? true : false
-        });
+        if (_data instanceof Array){
+            for (var i = 0, len = _data.length; i < len; i++) {
+                this.execApp({
+                    "app": _app,
+                    "data": _data[i],
+                    "async": app[OPERATION.ASYNC] ? true : false
+                });
+            };
+        } else {
+            this.execApp({
+                "app": _app,
+                "data": _data,
+                "async": app[OPERATION.ASYNC] ? true : false
+            });
+        }
     } else {
         log.warn('Bad parameter ', app[OPERATION.SET]);
     };
