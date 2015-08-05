@@ -61,3 +61,9 @@ esl_server.on('connection::ready', function(conn, id) {
 esl_server.on('error', function (err) {
     log.error(err);
 });
+
+process.on('uncaughtException', function (err) {
+    log.error((new Date).toUTCString() + ' uncaughtException:', err.message);
+    log.error(err.stack);
+    process.exit(1);
+});

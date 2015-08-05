@@ -29,7 +29,7 @@ if (cluster.isMaster) {
         if (debug) cluster.settings.execArgv.push('--debug=' + (5859 + i));
         cluster.fork(new_worker_env);
         if (debug) cluster.settings.execArgv.pop();
-    }
+    };
 
     // Listen for dying workers
     cluster.on('exit', function (worker) {
