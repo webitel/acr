@@ -1267,7 +1267,7 @@ CallRouter.prototype.__bridge = function (app, cb) {
                             if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
                                 _data = _data.concat(',', endpoint['parameters'].join(','));
                             };
-                            _data = _data.concat('${verto_contact(', endpoint['name'], '@${domain_name})}');
+                            _data = _data.concat(']${verto_contact(', endpoint['name'], '@${domain_name})}');
                             break;
                         default :
                             if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
