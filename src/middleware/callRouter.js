@@ -1291,10 +1291,10 @@ CallRouter.prototype.__bridge = function (app, cb) {
         if (prop['pickup'] && prop['strategy'] != 'failover') {
             if (prop['pickup'] instanceof Array) {
                 prop['pickup'].forEach(function (item) {
-                    pickup += ',pickup/' + item + '@{domain_name}'
+                    pickup += ',pickup/' + item + '@${domain_name}'
                 });
             } else {
-                pickup += ',pickup/' + prop['pickup'] + '@{domain_name}'
+                pickup += ',pickup/' + prop['pickup'] + '@${domain_name}'
             };
         }
 
