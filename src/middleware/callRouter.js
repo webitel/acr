@@ -73,7 +73,9 @@ var OPERATION = {
     RECEIVE_FAX: 'receiveFax',
 
     TAGS: 'setTags',
-    BLACK_LIST: 'blackList'
+    BLACK_LIST: 'blackList',
+
+    PICKUP: 'pickup'
 };
 
 var FS_COMMAND = {
@@ -127,7 +129,9 @@ var FS_COMMAND = {
 
     RX_FAX: 'rxfax',
 
-    PUSH: 'push'
+    PUSH: 'push',
+
+    PICKUP: 'pickup'
 };
 
 
@@ -1283,9 +1287,20 @@ CallRouter.prototype.__bridge = function (app, cb) {
             _data = _data.concat(separator);
         });
 
+        var pickup = '';
+        if (prop['pickup'] && prop['strategy'] != 'failover') {
+            if (prop['pickup'] instanceof Array) {
+                prop['pickup'].forEach(function (item) {
+                    pickup += ',pickup/' + item + '@{domain_name}'
+                });
+            } else {
+                pickup += ',pickup/' + prop['pickup'] + '@{domain_name}'
+            };
+        }
+
         this.execApp({
             "app": FS_COMMAND.BRIDGE,
-            "data": _data.slice(0, (-1 * separator.length)),
+            "data": _data.slice(0, (-1 * separator.length)) + pickup,
             "async": prop[OPERATION.ASYNC] ? true : false
         });
     };
@@ -1429,7 +1444,6 @@ CallRouter.prototype.__voicemail = function (app, cb) {
     };
 };
 
-
 CallRouter.prototype.__bindAction = function (app, cb) {
     var prop = app[OPERATION.BIND_ACTION];
 
@@ -1489,7 +1503,6 @@ CallRouter.prototype.__clearAction = function (app, cb) {
     if (cb)
         cb();
 };
-
 
 CallRouter.prototype.__bindExtension = function (app, cb) {
     var prop = app[OPERATION.BIND_EXTENSION];
@@ -1717,4 +1730,25 @@ CallRouter.prototype.__blackList = function (app, cb) {
                 cb();
         };
     });
-}
+};
+
+CallRouter.prototype.__pickup = function (app, cb) {
+    var groupName = app[OPERATION.PICKUP];
+    if (typeof groupName !== 'string') {
+        log.error('bad request __pickup');
+        if (cb) {
+            cb();
+        };
+        return;
+    };
+
+    this.execApp({
+        "app": FS_COMMAND.PICKUP,
+        "data": groupName + '@' + this.domain,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+
+    if (cb) {
+        cb();
+    };
+};

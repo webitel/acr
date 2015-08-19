@@ -1,6 +1,6 @@
 /**
  * Created by i.navrotskyj on 27.01.2015.
- * ./sipp pre.webitel.com:5070 -i 10.10.10.161 -s 333 -d 5s -l 50 -aa -mi 10.10.10.161 -rtp_echo -nd -r 10
+ * ./sipp 10.10.10.161:5070 -i 10.10.10.161 -s 333 -d 5s -l 50 -aa -mi 10.10.10.161 -rtp_echo -nd -r 10
  */
 var Esl = require('modesl'),
     log = require('./lib/log');
