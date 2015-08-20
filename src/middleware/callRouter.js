@@ -75,7 +75,9 @@ var OPERATION = {
     TAGS: 'setTags',
     BLACK_LIST: 'blackList',
 
-    PICKUP: 'pickup'
+    PICKUP: 'pickup',
+
+    DISA: 'disa'
 };
 
 var FS_COMMAND = {
@@ -163,6 +165,8 @@ var CallRouter = module.exports = function (connection, option) {
     this.versionSchema = option['versionSchema'];
     this.setDestinationNumber(option['desNumber'], option['chnNumber']);
 };
+
+require('./disa')(CallRouter);
 
 function push(arr, e) {
     arr.push(e);
@@ -1184,11 +1188,12 @@ CallRouter.prototype.__playback = function (app, cb) {
             _min = _playAndGetDigits['min'] || 1,
             _max = _playAndGetDigits['max'] || 1,
             _tries = _playAndGetDigits['tries'] || 1,
+            _terminator = _playAndGetDigits['terminator'] || '#',
             _timeout = _playAndGetDigits['timeout'] || 3000;
 
         this.execApp({
             "app": FS_COMMAND.PLAY_AND_GET,
-            "data": [_min, _max, _tries, _timeout, '#', filePath, 'silence_stream://250', _setVar, '\\d+'].join(' '),
+            "data": [_min, _max, _tries, _timeout, _terminator, filePath, 'silence_stream://250', _setVar, '\\d+'].join(' '),
             "async": app[OPERATION.PLAYBACK][OPERATION.ASYNC] ? true : false
         }, function (res) {
             try {
