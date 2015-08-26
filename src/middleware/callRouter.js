@@ -4,6 +4,7 @@
 
 var log = require('./../lib/log')(module),
     httpReq = require('./httpRequest'),
+    sms = require('./sms'),
     dbRoute = require('./dbRoute'),
     findDomainVariables = require('./dialplan').findDomainVariables,
     updateDomainVariables = require('./dialplan').updateDomainVariables,
@@ -77,7 +78,9 @@ var OPERATION = {
 
     PICKUP: 'pickup',
 
-    DISA: 'disa'
+    DISA: 'disa',
+
+    SEND_SMS: 'sendSms'
 };
 
 var FS_COMMAND = {
@@ -1070,6 +1073,10 @@ CallRouter.prototype.__httpRequest = function (app, cb) {
     httpReq(app[OPERATION.HTTP], this, cb);
 };
 
+CallRouter.prototype.__sendSms = function (app, cb) {
+    sms(app[OPERATION.SEND_SMS], this, cb);
+};
+
 CallRouter.prototype.__sleep = function (app, cb) {
     var delay = parseInt(app[OPERATION.SLEEP]);
     this.execApp({
@@ -1220,12 +1227,15 @@ CallRouter.prototype.__playback = function (app, cb) {
 
 CallRouter.prototype.__bridge = function (app, cb) {
     var prop = app[OPERATION.BRIDGE],
-        _data,
+        _data = '',
         separator = prop['strategy'] == 'failover' // TODO переделать
             ? '|'
             : ','; // ":_:" - only for user & device; "," - for other types
 
-    _data = '{' + 'domain_name=' + this.domain;
+    if (prop.hasOwnProperty('global') && prop['global'] instanceof Array){
+        _data += '<' + prop['global'].join(',') + '>';
+    };
+    _data += '{' + 'domain_name=' + this.domain;
     if (prop.hasOwnProperty('parameters') && prop['parameters'] instanceof Array) {
         _data = _data.concat(',', prop['parameters'].join(','));
     };
