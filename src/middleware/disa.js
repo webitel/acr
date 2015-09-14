@@ -98,7 +98,8 @@ module.exports = function (CallRouter) {
                         "getDigits": {
                             "setVar": "webitel_disa_destination",
                             "min": 1,
-                            "max": 16
+                            "max": 16,
+                            "timeout": 5000
                         }
                     }
                 }, function () {
@@ -124,7 +125,8 @@ module.exports = function (CallRouter) {
                         "getDigits": {
                             "setVar": "webitel_disa_user",
                             "min": 1,
-                            "max": 10
+                            "max": 10,
+                            "timeout": 5000
                         }
                     }
                 }, function () {
@@ -154,7 +156,8 @@ module.exports = function (CallRouter) {
                                     "getDigits": {
                                         "setVar": "webitel_disa_password",
                                         "min": 1,
-                                        "max": 10
+                                        "max": 10,
+                                        "timeout": 5000
                                     }
                                 }
                             }, function () {
