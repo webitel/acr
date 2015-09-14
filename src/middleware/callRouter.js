@@ -771,6 +771,11 @@ CallRouter.prototype._addVariableArrayToChannelDump = function (variables) {
             if (typeof variableStr != 'string') return;
             _tmp = variableStr.split('=');
             scope.setChnVar('variable_' + _tmp[0], _tmp[1]);
+
+            //fix public
+            if (_tmp[0] == 'default_language' && _tmp[1] == 'ru') {
+                scope.connection.execute('set', 'sound_prefix=\/$${sounds_dir}\/ru\/RU\/elena');
+            };
         });
     };
 };
