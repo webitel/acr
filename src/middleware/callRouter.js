@@ -167,6 +167,21 @@ var CallRouter = module.exports = function (connection, option) {
 
     this.versionSchema = option['versionSchema'];
     this.setDestinationNumber(option['desNumber'], option['chnNumber']);
+
+    this.log = {
+        info: (msg) => {
+            log.info(this.uuid + ' => ' + (msg || ''));
+        },
+        error: (msg) => {
+            log.error(this.uuid + ' => ' + (msg || ''));
+        },
+        warn: (msg) => {
+            log.warn(this.uuid + ' => ' + (msg || ''));
+        },
+        debug: (msg) => {
+            log.warn(this.uuid + ' => ' + (msg || ''));
+        }
+    };
 };
 
 require('./disa')(CallRouter);
@@ -237,37 +252,6 @@ CallRouter.prototype.saveDomainVariables = function (cb) {
         log.error(e['message']);
     };
 };
-
-var _logs = {};
-
-for (var key in log.levels) {
-    if (log.levels.hasOwnProperty(key)) {
-        _logs[key] = function (msg) {
-            log[key](this.uuid + '-> ' + (msg || ''));
-        };
-    };
-};
-
-var logs = {};
-var self = null;
-var generateGetter = function(fnc){
-    return function(){
-        return function(){
-            return _logs[fnc].apply(self, arguments);
-        };
-    };
-};
-for(var prop in _logs){
-    if(_logs.hasOwnProperty(prop)){
-        logs.__defineGetter__(prop, generateGetter(prop));
-    };
-};
-
-CallRouter.prototype.__defineGetter__('log', function(){
-    self = this;
-    return logs;
-});
-
 
 CallRouter.prototype.setupDomainVariables = function (cb) {
     var scope = this;
@@ -1098,9 +1082,13 @@ CallRouter.prototype.__conference = function (app, cb) {
     if (prop['name'] /*&& /^[a-zA-Z0-9+_-]+$/.test(prop['name'] )*/) {
         _data = _data.concat(prop['name'], '_', this.domain, '@',
             prop.hasOwnProperty('profile') ? prop['profile'] : 'default',
-            prop.hasOwnProperty('pin') ? '+' + prop['pin'] : '',
-            prop.hasOwnProperty('mute') ? '+flags{mute}' : ''
+            prop.hasOwnProperty('pin') ? '+' + prop['pin'] : ''
         );
+
+        if (prop.hasOwnProperty('flags') && prop['flags'] instanceof Array) {
+            _data += '+flags{' + prop['flags'].join('|') + '}';
+        };
+
         this.execApp({
             "app": FS_COMMAND.CONFERENCE,
             "data": _data,
