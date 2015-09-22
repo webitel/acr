@@ -17,7 +17,8 @@ module.exports = function (CallRouter) {
                 password = '',
                 isCallBack = prop['callback'] || false,
                 destinationNumber = '',
-                isAuth = prop['auth']
+                isAuth = prop['auth'],
+                timeout= prop['timeout'] || 5000
                 ;
 
             scope.__answer({
@@ -99,7 +100,7 @@ module.exports = function (CallRouter) {
                             "setVar": "webitel_disa_destination",
                             "min": 1,
                             "max": 16,
-                            "timeout": 5000
+                            "timeout": timeout
                         }
                     }
                 }, function () {
@@ -126,7 +127,7 @@ module.exports = function (CallRouter) {
                             "setVar": "webitel_disa_user",
                             "min": 1,
                             "max": 10,
-                            "timeout": 5000
+                            "timeout": timeout
                         }
                     }
                 }, function () {
@@ -157,7 +158,7 @@ module.exports = function (CallRouter) {
                                         "setVar": "webitel_disa_password",
                                         "min": 1,
                                         "max": 10,
-                                        "timeout": 5000
+                                        "timeout": timeout
                                     }
                                 }
                             }, function () {
