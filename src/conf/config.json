@@ -11,7 +11,8 @@
     "extensionsCollection": "extension",
     "variablesCollection": "domainVariables",
     "calendarCollection": "calendar",
-    "blackListCollection": "blackList"
+    "blackListCollection": "blackList",
+    "locationNumberCollection": "location"
   },
   "application": {
     "loglevel": "LOGLEVEL",

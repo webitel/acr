@@ -2,6 +2,8 @@
  * Created by i.navrotskyj on 24.01.2015.
  */
 
+'use strict';
+
 var log = require('./../lib/log')(module),
     httpReq = require('./httpRequest'),
     sms = require('./sms'),
@@ -12,11 +14,13 @@ var log = require('./../lib/log')(module),
     blackList = require('./blackList'),
     calendar = require('./calendar/index');
 
-var MEDIA_TYPE = {
+const MEDIA_TYPE = {
     WAV: 'wav',
     MP3: 'mp3',
     SILENCE: 'silence',
-    LOCAL: 'local'
+    LOCAL: 'local',
+    SHOUT: 'shout',
+    TONE: 'tone'
 };
 
 var OPERATION = {
@@ -80,7 +84,10 @@ var OPERATION = {
 
     DISA: 'disa',
 
-    SEND_SMS: 'sendSms'
+    SEND_SMS: 'sendSms',
+
+    LOCATION: "geoLocation",
+    RINGBACK: "ringback"
 };
 
 var FS_COMMAND = {
@@ -157,9 +164,10 @@ var CallRouter = module.exports = function (connection, option) {
     this.domain = option['domain'];
     this.domainVariables = {};
     this.end = false;
+    this.channelDestinationNumber = option['chnNumber'];
     this.updateDomainVariable = false;
     this.uuid = connection.channelData.getHeader('variable_uuid');
-    
+
     //this.localVar = option['localVariables'] || {};
     //this._dbId = option['id'] || '';
     //this.COLLECTION_NAME = option['collectionName'];
@@ -185,6 +193,7 @@ var CallRouter = module.exports = function (connection, option) {
 };
 
 require('./disa')(CallRouter);
+require('./location/number')(CallRouter, OPERATION.LOCATION);
 
 function push(arr, e) {
     arr.push(e);
@@ -209,31 +218,31 @@ function equalsRange (_curentDay, _tmp, maxVal) {
 
 /* TODO
 
-CallRouter.prototype.getLocalVariable = function (key) {
-    return this.localVar[key];
-};
+ CallRouter.prototype.getLocalVariable = function (key) {
+ return this.localVar[key];
+ };
 
-CallRouter.prototype.setLocalVariable = function (key, value) {
-    this.localVar[key] = value;
-    this.updateLocalVariable = true;
-};
+ CallRouter.prototype.setLocalVariable = function (key, value) {
+ this.localVar[key] = value;
+ this.updateLocalVariable = true;
+ };
 
-CallRouter.prototype.updateLocalVariables = function () {
-    try {
-        if (this.updateLocalVariable) {
-            dbRoute.setLocalVariables(this._dbId, this.localVar, this.COLLECTION_NAME, function (err, res) {
-                console.log(arguments);
-            });
-            return true;
-        }
-        ;
-        return false;
-    } catch (e) {
-        log.error(e['message']);
-    };
-};
+ CallRouter.prototype.updateLocalVariables = function () {
+ try {
+ if (this.updateLocalVariable) {
+ dbRoute.setLocalVariables(this._dbId, this.localVar, this.COLLECTION_NAME, function (err, res) {
+ console.log(arguments);
+ });
+ return true;
+ }
+ ;
+ return false;
+ } catch (e) {
+ log.error(e['message']);
+ };
+ };
 
-*/
+ */
 
 CallRouter.prototype.saveDomainVariables = function (cb) {
     try {
@@ -267,7 +276,7 @@ CallRouter.prototype.setupDomainVariables = function (cb) {
                 _arr = [];
             for (var key in variables) {
                 //if (typeof variables[key] === 'string') {
-                    _arr.push(key + '=' + variables[key]);
+                _arr.push(key + '=' + variables[key]);
                 //};
             };
             scope.domainVariables = res['variables'];
@@ -313,7 +322,7 @@ CallRouter.prototype.setChnVar = function (name, value) {
 CallRouter.prototype.getChnVar = function (name) {
     var _var = this.connection.channelData.getHeader('variable_' + name)
         || this.connection.channelData.getHeader(name)
-        //|| this.getLocalVariable(name)
+            //|| this.getLocalVariable(name)
         || '';
     return _var ;
 };
@@ -472,19 +481,19 @@ CallRouter.prototype.__if = function (condition, cb) {
     condition = condition[OPERATION.IF];
     var sandbox = {
         _resultCondition: false//,
-       // sys: this
+        // sys: this
     };
     if (condition['sysExpression']) {
         var expression = condition['sysExpression'] || '';
 
         log.trace('Parse expression: %s', expression);
         // TODO переделать на новый процесс.
-       /* try {
-            var script = vm.createScript('try { _resultCondition = (' + expression + ') } catch (e) {}');
-            script.runInNewContext(sandbox);
-        } catch (e) {
-            log.error(e.message);
-        };*/
+        /* try {
+         var script = vm.createScript('try { _resultCondition = (' + expression + ') } catch (e) {}');
+         script.runInNewContext(sandbox);
+         } catch (e) {
+         log.error(e.message);
+         };*/
 
         try {
             var _fn = new Function('sys, module, process', 'try { return (' + expression + ') } catch (e) {}');
@@ -1135,27 +1144,34 @@ CallRouter.prototype.__schedule = function (app, cb) {
         cb();
 };
 
-CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh) {
+CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh, noPref) {
     var filePath = '';
+
     switch (type) {
         case MEDIA_TYPE.WAV:
             var cdrUrl = this.getGlbVar('cdr_url');
             if (cdrUrl) {
                 filePath = (refresh === true ? '{refresh=true}' : '') + "http_cache://" +
-                encodeURI(cdrUrl + '/sys/media/' + MEDIA_TYPE.WAV + '/' + fileName + '?stream=false&domain=' + this.domain + '&.wav');
+                    encodeURI(cdrUrl + '/sys/media/' + MEDIA_TYPE.WAV + '/' + fileName + '?stream=false&domain=' + this.domain + '&.wav');
             };
             break;
         case MEDIA_TYPE.LOCAL:
             filePath = fileName;
             break;
         case MEDIA_TYPE.SILENCE:
-            filePath = 'silence_stream://' + fileName;
+            filePath = noPref ? type : 'silence_stream://' + fileName;
+            break;
+        case MEDIA_TYPE.SHOUT:
+            filePath = (fileName || '').replace(/https?/, 'shout');
+            break;
+        case MEDIA_TYPE.TONE:
+            filePath = noPref ? fileName : 'tone_stream://' + fileName;
             break;
         default :
             var cdrUrl = this.getGlbVar('cdr_url');
             if (cdrUrl) {
                 filePath = encodeURI(cdrUrl.replace(/https?/, 'shout') + '/sys/media/' + MEDIA_TYPE.MP3 + '/' + fileName
-                + '?domain=' + this.domain);
+                    + '?domain=' + this.domain);
             };
     };
 
@@ -1168,11 +1184,11 @@ CallRouter.prototype.__playback = function (app, cb) {
         scope = this;
 
     if (typeof prop['name'] === 'string') {
-        filePath = this._getPlaybackFileString(prop['type'], prop['name'], prop['name']);
+        filePath = this._getPlaybackFileString(prop['type'], prop['name'], prop['refresh']);
     } else if (prop['files'] instanceof Array) {
         var files = prop['files'];
         for (var i = 0, len = files.length; i < len; i++) {
-            filePath += '!' + this._getPlaybackFileString(files[i]['type'], files[i]['name'], files[i]['name']);
+            filePath += '!' + this._getPlaybackFileString(files[i]['type'], files[i]['name'], files[i]['refresh']);
         };
         filePath = 'file_string://' + filePath.substring(1);
     } else {
@@ -1568,7 +1584,7 @@ CallRouter.prototype.__attXfer = function (app, cb) {
         scope.execApp({
             "app": FS_COMMAND.ATT_XFER,
             "data": '{webitel_direction=outbound,domain_name=' + scope.domain + ',effective_caller_id_name=' + caller_id_number +
-                ',effective_caller_id_number=' + caller_id_number +'}' + data,
+            ',effective_caller_id_number=' + caller_id_number +'}' + data,
             "async": app[OPERATION.ASYNC] ? true : false
         });
 
@@ -1759,4 +1775,31 @@ CallRouter.prototype.__pickup = function (app, cb) {
     if (cb) {
         cb();
     };
+};
+
+CallRouter.prototype.__ringback = function (app, cb) {
+    let prop = app[OPERATION.RINGBACK];
+    if (prop.hasOwnProperty('call') && prop.call['name']) {
+        let call = prop.call;
+        this.__setVar({
+            "setVar": "ringback=" + this._getPlaybackFileString(call.type, call.name, call.refresh, true)
+        });
+    };
+
+    if (prop.hasOwnProperty('hold')) {
+        let hold = prop.hold;
+        this.__setVar({
+            "setVar": "hold_music=" + this._getPlaybackFileString(hold.type, hold.name, hold.refresh, true)
+        });
+    };
+
+    if (prop.hasOwnProperty('transfer') && prop.transfer['name']) {
+        let transfer = prop.transfer;
+        this.__setVar({
+            "setVar": "transfer_ringback=" + this._getPlaybackFileString(transfer.type, transfer.name, transfer.refresh, true)
+        });
+    };
+
+    if (cb)
+        return cb();
 };
