@@ -18,7 +18,7 @@ module.exports = function (CallRouter) {
                 isCallBack = prop['callback'] || false,
                 destinationNumber = '',
                 isAuth = prop['auth'],
-                timeout= prop['timeout'] || 5000
+                timeout = prop['timeout'] || 5000
                 ;
 
             scope.__answer({

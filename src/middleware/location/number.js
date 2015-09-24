@@ -49,7 +49,7 @@ module.exports = function (CallRouter, applicationName) {
             var collection = db.getCollection(LOCATION_COLLECTION_NAME);
             collection
                 .find({ "$where": "obj.sysSearch.test('" + number +"')" })
-                .sort({"type": 1, "code": -1})
+                .sort({"sysOrder": -1})
                 .limit(1)
                 .toArray(function (err, array) {
                     if (err) {
