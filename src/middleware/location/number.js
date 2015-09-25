@@ -56,12 +56,26 @@ module.exports = function (CallRouter, applicationName) {
                         return log.error(err);
                     };
 
-                    var goecode = array[0] && array[0].goecode && array[0].goecode[0];
-                    if (goecode && goecode['latitude'] && goecode['longitude']) {
+                    var _array = array[0];
+                    var goecode =  _array && _array.goecode && _array.goecode[0];
+                    if (_array && goecode && goecode['latitude'] && goecode['longitude']) {
                         var locStr = ''.concat(goecode['latitude'], ', ', goecode['longitude']);
+                        var _vars = [
+                            'webitel_location=' + locStr,
+                            'webitel_location_country=' + _array['country'],
+                            'webitel_location_type=' + _array['type']
+                        ];
+                        if (_array['city']) {
+                            _vars.push("webitel_location_city=" + _array['city']);
+                        };
+
+                        if (goecode['countryCode']) {
+                            _vars.push('webitel_location_country_code=' + goecode['countryCode']);
+                        };
+
                         log.debug('Number %s location: %s', number, goecode.formattedAddress);
                         scope.__setVar({
-                            "setVar": 'webitel_location=' + locStr
+                            "setVar": _vars
                         }, cb);
                     } else {
                         if (cb)
