@@ -13,7 +13,7 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
     var domainName = conn.channelData.getHeader('variable_domain_name'),
         _isNotRout = true
         ;
-    conn.execute('set', 'sip_h_Call-Info=_undef_');
+    conn.execute('unset', 'sip_h_call-info');
 
     dialplan.findActualExtension(destinationNumber, domainName, function (err, resultExtension) {
         if (err) {
