@@ -9,8 +9,6 @@ var log = require('../../lib/log')(module),
     LOCATION_COLLECTION_NAME = conf.get("mongodb:locationNumberCollection")
     ;
 
-'use strict';
-
 module.exports = function (CallRouter, applicationName) {
 
     CallRouter.prototype.__geoLocation = function (app, cb) {
@@ -47,12 +45,21 @@ module.exports = function (CallRouter, applicationName) {
             };
 
             var collection = db.getCollection(LOCATION_COLLECTION_NAME);
+            number = number.replace(/\D/g, '');
+            
+            var numbers = [];
+            number.split('').reduce(function(r, v, i, a) {
+                numbers.push(a.slice(0, i).join(''));
+                return r + v
+            });
+
             collection
-                .find({ "$where": "obj.sysSearch.test('" + number +"')" })
+                .find({"sysLength": number.length,"code": { $in: numbers}})
                 .sort({"sysOrder": -1})
                 .limit(1)
                 .toArray(function (err, array) {
                     if (err) {
+                        if (cb) cb();
                         return log.error(err);
                     };
 
@@ -77,9 +84,6 @@ module.exports = function (CallRouter, applicationName) {
                         scope.__setVar({
                             "setVar": _vars
                         }, cb);
-                    } else {
-                        if (cb)
-                            return cb();
                     }
                 });
 
@@ -88,6 +92,5 @@ module.exports = function (CallRouter, applicationName) {
             if (cb)
                 cb();
         };
-
     };
 };
