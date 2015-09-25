@@ -84,6 +84,8 @@ module.exports = function (CallRouter, applicationName) {
                         scope.__setVar({
                             "setVar": _vars
                         }, cb);
+                    } else {
+                        return cb();
                     }
                 });
 
