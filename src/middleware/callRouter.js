@@ -1727,6 +1727,8 @@ CallRouter.prototype.__blackList = function (app, cb) {
         return;
     };
 
+    number = number.replace(/\D/g, '');
+
     if (prop['action'] instanceof Array) {
         actions = prop['action'];
     } else {
