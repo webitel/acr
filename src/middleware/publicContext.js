@@ -43,7 +43,7 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             "globalVar": globalVariable,
             "desNumber": result[0]['destination_number'],
             "chnNumber": destinationNumber,
-            "timeOffset": result[0]['timezone'],
+            "timeOffset": result[0]['fs_timezone'],
             "versionSchema": result[0]['version'],
             "domain": result[0]['domain']
         });

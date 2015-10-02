@@ -306,13 +306,12 @@ CallRouter.prototype.destroyLocalRegExpValues = function () {
     });
 };
 
+var moment = require('moment-timezone');
 CallRouter.prototype.DateOffset = function() {
     if (!this.offset) {
         return new Date();
     };
-    var d = new Date(),
-        utc = d.getTime() + (d.getTimezoneOffset() * 60000);
-    return new Date(utc + (60000 * Math.abs(this.offset) ));
+    return new Date(moment().tz(this.offset).format('LLLL'));
 };
 
 CallRouter.prototype.setChnVar = function (name, value) {
@@ -386,7 +385,7 @@ CallRouter.prototype.minute_of_day = function (param) {
 CallRouter.prototype.time_of_day = function (param) {
     // TODO
 };
-
+// TODO bug date offset
 CallRouter.prototype._DateParser = function (param, datetime, maxVal) {
     param = param || '';
     var datetimes = param.replace(/\s/g, '').split(','),
@@ -396,7 +395,7 @@ CallRouter.prototype._DateParser = function (param, datetime, maxVal) {
     };
 
     for (var i = 0; i < datetimes.length; i++) {
-        log.trace('Offset: %s, CurrentVal: %s, SrvVal: %s', this.offset, datetimes[i], datetime);
+        log.trace('Offset: %s, expressionValue: %s, offsetValue: %s', this.offset, datetimes[i], datetime);
         result = (datetimes[i].indexOf('-') == -1)
             ? datetime == parseInt(datetimes[i])
             : equalsRange(datetime, datetimes[i], maxVal);

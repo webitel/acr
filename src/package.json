@@ -1,5 +1,8 @@
 {
   "name": "ACR",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "moment-timezone": "^0.4.0"
+  }
 }

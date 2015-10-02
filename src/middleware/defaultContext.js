@@ -42,7 +42,7 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                     "globalVar": globalVariable,
                     "desNumber": resultExtension['destination_number'],
                     "chnNumber": destinationNumber,
-                    "timeOffset": resultExtension['timezone'],
+                    "timeOffset": resultExtension['fs_timezone'],
                     "versionSchema": resultExtension['version'],
                     "domain": resultExtension['domain']
                 });
@@ -99,7 +99,7 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                                     "globalVar": globalVariable,
                                     "desNumber": result[i]['destination_number'],
                                     "chnNumber": destinationNumber,
-                                    "timeOffset": result[i]['timezone'],
+                                    "timeOffset": result[i]['fs_timezone'],
                                     "versionSchema": result[i]['version'],
                                     "domain": result[i]['domain']
                                 });
