@@ -18,7 +18,7 @@ var dialplan = {
             return;
         }
         var dialCollection = db.getCollection(publicCollection);
-        dialCollection.find({"destination_number": number})
+        dialCollection.find({"destination_number": number, "disabled": {"$ne": true}})
             .sort({"version": -1})
             .limit(1)
             .toArray(cb);
@@ -64,7 +64,7 @@ var dialplan = {
             return;
         }
         var dialCollection = db.getCollection(defaultCollection);
-        dialCollection.find({"domain": domainName}, {read  : true})
+        dialCollection.find({"domain": domainName, "disabled": {"$ne": true}}, {read  : true})
             .sort({"order": 1})
             .toArray(cb);
     },
@@ -77,7 +77,8 @@ var dialplan = {
         var dialCollection = db.getCollection(extensionCollection);
         dialCollection.findOne({
                 "destination_number": number,
-                "domain": domain
+                "domain": domain,
+                "disabled": {"$ne": true}
             }, cb);
     }
 };
