@@ -1333,11 +1333,29 @@ CallRouter.prototype.__bridge = function (app, cb) {
 };
 
 CallRouter.prototype.__queue = function (app, cb) {
-    var _data = '', prop = app[OPERATION.QUEUE];
-    if (prop['name'] && /^[a-zA-Z0-9+_-]+$/.test(prop['name'])) {
-        _data = prop['name'] + '@${domain_name}';
-    } else {
+    var _data = '',
+        prop = app[OPERATION.QUEUE],
+        queueName = prop['name'];
+
+    if (typeof queueName != 'string') {
         log.error('Bad parameters queue.');
+        if (cb)
+            cb();
+        return;
+    };
+
+    if (queueName.indexOf('$') == 0) {
+        queueName = this._parseVariable(queueName)
+    };
+
+
+    if (queueName && /^[a-zA-Z0-9+_-]+$/.test(queueName)) {
+        _data = queueName + '@${domain_name}';
+    } else {
+        log.error('Bad parameters queue name.');
+        if (cb)
+            cb();
+        return;
     };
 
     this.execApp({
