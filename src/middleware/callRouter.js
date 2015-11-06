@@ -58,6 +58,7 @@ var OPERATION = {
     CALENDAR: "calendar",
     PARK: "park",
     QUEUE: "queue",
+    CC_POSITION: "ccPosition",
 
     EXPORT_VARS: "exportVars",
     VOICEMAIL: "voicemail",
@@ -177,6 +178,8 @@ var CallRouter = module.exports = function (connection, option) {
 
     this.versionSchema = option['versionSchema'];
     this.setDestinationNumber(option['desNumber'], option['chnNumber']);
+
+    //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
     this.log = {
         info: (msg) => {
@@ -1381,17 +1384,71 @@ CallRouter.prototype.__queue = function (app, cb) {
         }, interval);
 
     }
+    this._curentQueue = queueName + '@' + this.domain;
 
     this.execApp({
         "app": FS_COMMAND.CALLCENTER,
         "data": _data,
         "async": (app[OPERATION.ASYNC] ? true : false) || timer
     }, function() {
+        scope._curentQueue = null;
         if (timerId)
             clearTimeout(timerId);
         if (cb)
             cb();
     });
+};
+
+CallRouter.prototype.__ccPosition = function (app, cb) {
+    let prop = app[OPERATION.CC_POSITION],
+        varName = prop && prop['var'],
+        scope = this
+    ;
+
+    if (!varName) {
+        log.error('Bad parameters ccPosition');
+        if (cb)
+            cb();
+        return;
+    };
+
+    if (!this._curentQueue) {
+        log.warn('Queue empty');
+        if (cb)
+            cb();
+        return;
+    }
+
+    this.connection.bgapi('callcenter_config queue list members ' + this._curentQueue, function (res) {
+        try {
+            let body = res.body || '';
+            let position = 1;
+            let lines = body.match(/[^\r\n]+/g);
+
+            for (var line of lines) {
+                if (line.indexOf('Trying') != -1 || line.indexOf('Waiting') != -1) {
+                    if (line.indexOf(scope.uuid) != -1) {
+                        break;
+                    }
+                    ;
+                    position++;
+                };
+            };
+
+            scope.__setVar({
+                "setVar": varName + '=' + position
+            });
+            if (cb)
+                cb();
+        } catch (e) {
+            log.error(e);
+            if (cb)
+                cb();
+        }
+    })
+
+
+
 };
 
 CallRouter.prototype.__setSounds = function (app, cb) {

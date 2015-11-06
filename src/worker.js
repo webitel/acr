@@ -7,11 +7,18 @@ var esl = require('modesl'),
     DEFAULT_HANGUP_CAUSE = require('./const').DEFAULT_HANGUP_CAUSE
     ;
 
-var PUBLIC_CONTEXT = 'public';
+const PUBLIC_CONTEXT = 'public';
 
 var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10030,
         myevents: false }, function() {
     log.info("ESL server is up port " + this.port);
+
+    if (typeof gc == 'function') {
+        setInterval( () => {
+            console.log('----------------------- GC -----------------------');
+            gc();
+        }, 5000)
+    }
 });
 
 esl_server.on('connection::ready', function(conn, id) {
