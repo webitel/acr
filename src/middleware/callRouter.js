@@ -87,7 +87,9 @@ var OPERATION = {
     SEND_SMS: 'sendSms',
 
     LOCATION: "geoLocation",
-    RINGBACK: "ringback"
+    RINGBACK: "ringback",
+
+    SET_SOUNDS: "setSounds"
 };
 
 var FS_COMMAND = {
@@ -588,6 +590,7 @@ CallRouter.prototype.doExec = function (condition, cb) {
                 this['__' + fnName](condition, cb);
             } else {
                 log.error('Bad application %s.', fnName);
+                if (cb) cb();
             };
         } else {
             if (condition.hasOwnProperty(OPERATION.IF)) {
@@ -1357,15 +1360,66 @@ CallRouter.prototype.__queue = function (app, cb) {
             cb();
         return;
     };
+    var scope = this,
+        timer = prop['timer'],
+        timerId
+        ;
+    if (timer instanceof Object && timer['apps'] instanceof Array && timer['apps'].length > 0) {
+        var interval = (timer['interval'] >= 1 ? timer['interval'] : 60) * 1000,
+            apps = timer['apps']
+        ;
+
+        this.connection.once('esl::end', function () {
+            if (timerId)
+                clearTimeout(timerId);
+        });
+
+        timerId = setTimeout(function tick() {
+            scope.execute(apps, () => {
+                timerId = setTimeout(tick, interval);
+            });
+        }, interval);
+
+    }
 
     this.execApp({
         "app": FS_COMMAND.CALLCENTER,
         "data": _data,
-        "async": app[OPERATION.ASYNC] ? true : false
+        "async": (app[OPERATION.ASYNC] ? true : false) || timer
+    }, function() {
+        if (timerId)
+            clearTimeout(timerId);
+        if (cb)
+            cb();
     });
+};
 
-    if (cb)
-        cb();
+CallRouter.prototype.__setSounds = function (app, cb) {
+    let prop = app[OPERATION.SET_SOUNDS] || {},
+        voice = prop['voice'],
+        lang = prop['lang'],
+        soundPref
+        ;
+
+    if (typeof voice  != 'string' || typeof lang != 'string') {
+        log.error('Bad parameters setLanguage');
+        if (cb)
+            cb();
+        return;
+    };
+
+    let tmp = lang
+        .toLowerCase()
+        .split('_');
+
+    soundPref = '\/$${sounds_dir}\/' + tmp.join('\/') + '\/' + voice;
+
+    this.__setVar({
+        "setVar": ['sound_prefix=' + soundPref, 'default_language=' + tmp[0]]
+    }, function () {
+        if (cb)
+            return cb();
+    });
 };
 
 CallRouter.prototype.__exportVars = function (app, cb) {
