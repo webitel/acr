@@ -21,11 +21,11 @@ var esl_server = new esl.Server({host: conf.get('server:host'), port: process.en
     }
 });
 
-esl_server.on('connection::ready', function(conn, id) {
+esl_server.on('connection::ready', function(conn, id, allCountSocket) {
     conn.on('error', function (error) {
         log.warn('Call %s error: %s', id, error.message);
     });
-    log.trace('New call %s', id);
+    log.trace('New call %s [all socket: %s]', id, allCountSocket);
     //console.log(conn.channelData.serialize());
     try {
         var context = conn.channelData.getHeader('Channel-Context'),
@@ -60,13 +60,18 @@ esl_server.on('connection::ready', function(conn, id) {
         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
     };
 
-    conn.on('esl::end', function() {
-        log.trace("Call end %s", id);
-    });
 });
 
 esl_server.on('error', function (err) {
     log.error(err);
+});
+
+esl_server.on('connection::close', function(c, id, allCount) {
+    if (c.__callRouter) {
+        c.__callRouter.stop();
+        delete c.__callRouter;
+    };
+    log.trace("Call end %s [all socket: %s]", id, allCount);
 });
 
 process.on('uncaughtException', function (err) {

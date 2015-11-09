@@ -23,7 +23,7 @@ const MEDIA_TYPE = {
     TONE: 'tone'
 };
 
-var OPERATION = {
+const OPERATION = {
     IF: "if",
     THEN: "then",
     ELSE: "else",
@@ -93,7 +93,7 @@ var OPERATION = {
     SET_SOUNDS: "setSounds"
 };
 
-var FS_COMMAND = {
+const FS_COMMAND = {
     ANSWER: "answer",
     PRE_ANSWER: "pre_answer",
     RING_READY: "ring_ready",
@@ -150,11 +150,11 @@ var FS_COMMAND = {
 };
 
 
-var COMMANDS = {
+const COMMANDS = {
     REGEXP: "&reg"
 };
 
-var MAX_CYCLE_COUNT = 20;
+const MAX_CYCLE_COUNT = 20;
 
 var CallRouter = module.exports = function (connection, option) {
     option = option || {};
@@ -162,6 +162,7 @@ var CallRouter = module.exports = function (connection, option) {
     this.cycleCount = 0;
     this.globalVar = option['globalVar'] || {};
     this.connection = connection;
+    connection.__callRouter = this;
     this.regCollection = {};
     this.offset = option['timeOffset'];
     this.domain = option['domain'];
@@ -179,7 +180,7 @@ var CallRouter = module.exports = function (connection, option) {
     this.versionSchema = option['versionSchema'];
     this.setDestinationNumber(option['desNumber'], option['chnNumber']);
 
-    //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
+    //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
     this.log = {
         info: (msg) => {
@@ -677,6 +678,10 @@ CallRouter.prototype.run = function (callflows) {
     this.setupDomainVariables(function () {
         scope.start(callflows);
     });
+};
+
+CallRouter.prototype.stop = function () {
+    this.end = true;
 };
 
 CallRouter.prototype.start = function (callflows) {
@@ -1365,17 +1370,27 @@ CallRouter.prototype.__queue = function (app, cb) {
     };
     var scope = this,
         timer = prop['timer'],
-        timerId
-        ;
-    if (timer instanceof Object && timer['apps'] instanceof Array && timer['apps'].length > 0) {
-        var interval = (timer['interval'] >= 1 ? timer['interval'] : 60) * 1000,
-            apps = timer['apps']
+        timerId,
+        _removeListeners = false
         ;
 
-        this.connection.once('esl::end', function () {
-            if (timerId)
-                clearTimeout(timerId);
-        });
+    var _closeTimer = function () {
+        if (timerId) {
+            clearTimeout(timerId);
+            timerId = null;
+        }
+    };
+
+    if (timer instanceof Object && timer['actions'] instanceof Array && timer['actions'].length > 0) {
+        var interval = (timer['interval'] >= 1 ? timer['interval'] : 60) * 1000,
+            apps = timer['actions']
+        ;
+
+        this.connection.once('connection::close', _closeTimer);
+
+        this.connection.once('error', _closeTimer);
+
+        _removeListeners = true;
 
         timerId = setTimeout(function tick() {
             scope.execute(apps, () => {
@@ -1392,8 +1407,16 @@ CallRouter.prototype.__queue = function (app, cb) {
         "async": (app[OPERATION.ASYNC] ? true : false) || timer
     }, function() {
         scope._curentQueue = null;
-        if (timerId)
-            clearTimeout(timerId);
+        log.debug('Callback queue: %s', queueName);
+        if (_removeListeners) {
+            if (timerId) {
+                clearTimeout(timerId);
+                timerId = null;
+            }
+            ;
+            scope.connection.removeListener('error', _closeTimer);
+            scope.connection.removeListener('connection::close', _closeTimer);
+        };
         if (cb)
             cb();
     });
@@ -1419,7 +1442,7 @@ CallRouter.prototype.__ccPosition = function (app, cb) {
         return;
     }
 
-    this.connection.bgapi('callcenter_config queue list members ' + this._curentQueue, function (res) {
+    this.connection.api('callcenter_config queue list members ' + this._curentQueue, function (res) {
         try {
             let body = res.body || '';
             let position = 1;
@@ -1857,8 +1880,8 @@ CallRouter.prototype.__blackList = function (app, cb) {
 
     number = number.replace(/\D/g, '');
 
-    if (prop['action'] instanceof Array) {
-        actions = prop['action'];
+    if (prop['actions'] instanceof Array) {
+        actions = prop['actions'];
     } else {
         actions = [{
             "hangup": "INCOMING_CALL_BARRED"
