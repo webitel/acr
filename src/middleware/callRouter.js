@@ -1387,7 +1387,7 @@ CallRouter.prototype.__queue = function (app, cb) {
             apps = timer['actions']
         ;
 
-        this.connection.once('connection::close', _closeTimer);
+        this.connection.once('esl::end', _closeTimer);
 
         this.connection.once('error', _closeTimer);
 
@@ -1399,7 +1399,7 @@ CallRouter.prototype.__queue = function (app, cb) {
             });
         }, interval);
 
-    }
+    };
     this._curentQueue = queueName + '@' + this.domain;
 
     this.execApp({
@@ -1416,11 +1416,19 @@ CallRouter.prototype.__queue = function (app, cb) {
             }
             ;
             scope.connection.removeListener('error', _closeTimer);
-            scope.connection.removeListener('connection::close', _closeTimer);
+            scope.connection.removeListener('esl::end', _closeTimer);
         };
         if (cb)
             cb();
     });
+
+    if (prop.hasOwnProperty('startPosition') && prop['startPosition']) {
+        this.__ccPosition({
+            "ccPosition": {
+                "var": prop['startPosition'] && typeof prop['startPosition'] == 'string' ? prop['startPosition'] : 'cc_start_position'
+            }
+        })
+    }
 };
 
 CallRouter.prototype.__ccPosition = function (app, cb) {
