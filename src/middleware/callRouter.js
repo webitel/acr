@@ -180,7 +180,7 @@ var CallRouter = module.exports = function (connection, option) {
     this.versionSchema = option['versionSchema'];
     this.setDestinationNumber(option['desNumber'], option['chnNumber']);
 
-    //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
+    //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
     this.log = {
         info: (msg) => {
@@ -1077,6 +1077,7 @@ CallRouter.prototype.__echo = function (app, cb) {
         cb();
 };
 
+// TODO set var from cb...
 CallRouter.prototype.__httpRequest = function (app, cb) {
     httpReq(app[OPERATION.HTTP], this, cb);
 };

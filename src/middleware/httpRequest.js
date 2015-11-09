@@ -46,10 +46,10 @@ module.exports = function (parameters, router, cb) {
     };
     var path, current;
     
-    var _parseRequest = function (dataRequest) {
+    var _parseRequest = function (dataRequestLib) {
         try {
             var jsonData;
-
+            var dataRequest = Buffer.isBuffer(dataRequestLib) ? dataRequestLib.toString('utf8') : dataRequestLib;
             if (typeof dataRequest === 'object') {
                 jsonData = dataRequest;
             } else {
