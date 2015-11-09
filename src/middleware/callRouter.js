@@ -1470,6 +1470,9 @@ CallRouter.prototype.__ccPosition = function (app, cb) {
             scope.__setVar({
                 "setVar": varName + '=' + position
             });
+            scope.__setVar({
+                "setVar": "cc_export_vars=" + varName
+            });
             if (cb)
                 cb();
         } catch (e) {
