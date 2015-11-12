@@ -1426,9 +1426,30 @@ CallRouter.prototype.__queue = function (app, cb) {
     });
 
     if (prop.hasOwnProperty('startPosition') && prop['startPosition']) {
+        let _varName,
+            _fireEvent = false;
+        if (prop['startPosition'] instanceof Object) {
+            _varName = prop['startPosition']['var'] || 'cc_start_position';
+            _fireEvent = prop['startPosition']['event'];
+        } else if (typeof prop['startPosition'] == 'string') {
+            _varName = prop['startPosition'] || 'cc_start_position'
+        } else {
+            _varName = 'cc_start_position'
+        }
         this.__ccPosition({
             "ccPosition": {
-                "var": prop['startPosition'] && typeof prop['startPosition'] == 'string' ? prop['startPosition'] : 'cc_start_position'
+                "var": _varName
+            }
+        }, function () {
+            if (_fireEvent) {
+                let headers = {};
+                headers[_varName] = '${' + _varName + '}';
+                scope.__event({
+                    "event": {
+                        "action": typeof _fireEvent == 'string' ? _fireEvent : "cc_start_position",
+                        "headers": headers
+                    }
+                })
             }
         })
     }
@@ -1542,37 +1563,44 @@ CallRouter.prototype.__exportVars = function (app, cb) {
 
 CallRouter.prototype.__event = function (app, cb) {
     let prop = app[OPERATION.EVENT] || {},
-        name = prop['name'],
+        name = prop['action'],
+        verbose = prop['verbose'],
         headers = prop['headers']
     ;
 
-    if (!name || /\s|[^A-Za-z:]/.test(name)) {
+    if (!name) {
         log.error('Bad parameters application event');
         if (cb)
             cb();
         return;
     };
 
-    //let data = [`Event-Subclass=${name}`, 'Event-Name=CUSTOM'];
+    if (verbose) {
+        let data = ['Event-Subclass=webitel::acr', 'Event-Name=CUSTOM', `action=${name}`, 'domain=' + this.domain];
 
-    var event = new Event('CUSTOM', name);
+        this.execApp({
+            "app": FS_COMMAND.EVENT,
+            "data": (data.concat(headers)).join(','),
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
 
-    for (let key in headers) {
-        event.addHeader(key, this._parseVariable(headers[key]) || key);
+    } else {
+        let event = new Event('CUSTOM', 'webitel::acr');
+
+        for (let key in headers) {
+            event.addHeader(key, this._parseVariable(headers[key]) || key);
+        };
+
+        event.addHeader('action', name);
+        event.addHeader('domain', this.domain);
+        event.addHeader('type', 'text/plain');
+        event.addHeader('Content-Type', 'text/plain');
+        event.addBody("+OK");
+
+        this.connection.sendEvent(event, (e, r) => {
+            log.trace(`Send event "${name}": ${r["Reply-Text"]}`);
+        });
     };
-
-    event.addHeader('type', 'text/plain');
-    event.addHeader('Content-Type', 'text/plain');
-    event.addBody("+OK");
-
-    this.connection.sendEvent(event, (e, r) => {
-        log.trace(`Send event "${name}": ${r["Reply-Text"]}`);
-    });
-    //this.execApp({
-    //    "app": FS_COMMAND.EVENT,
-    //    "data": (data.concat(headers)).join(','),
-    //    "async": app[OPERATION.ASYNC] ? true : false
-    //});
 
     if (cb)
         cb();
