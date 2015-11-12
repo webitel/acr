@@ -12,6 +12,7 @@ var log = require('./../lib/log')(module),
     updateDomainVariables = require('./dialplan').updateDomainVariables,
     findExtension = require('./dialplan').findActualExtension,
     blackList = require('./blackList'),
+    Event = require('modesl').Event,
     calendar = require('./calendar/index');
 
 const MEDIA_TYPE = {
@@ -90,7 +91,8 @@ const OPERATION = {
     LOCATION: "geoLocation",
     RINGBACK: "ringback",
 
-    SET_SOUNDS: "setSounds"
+    SET_SOUNDS: "setSounds",
+    EVENT: "event"
 };
 
 const FS_COMMAND = {
@@ -146,7 +148,8 @@ const FS_COMMAND = {
 
     PUSH: 'push',
 
-    PICKUP: 'pickup'
+    PICKUP: 'pickup',
+    EVENT: "event"
 };
 
 
@@ -1469,21 +1472,21 @@ CallRouter.prototype.__ccPosition = function (app, cb) {
 
             scope.__setVar({
                 "setVar": varName + '=' + position
+            }, function () {
+                scope.__setVar({
+                    "setVar": "cc_export_vars=" + varName
+                });
+                if (cb)
+                    cb();
             });
-            scope.__setVar({
-                "setVar": "cc_export_vars=" + varName
-            });
-            if (cb)
-                cb();
+
+
         } catch (e) {
             log.error(e);
             if (cb)
                 cb();
         }
     })
-
-
-
 };
 
 CallRouter.prototype.__setSounds = function (app, cb) {
@@ -1535,6 +1538,44 @@ CallRouter.prototype.__exportVars = function (app, cb) {
     } else {
         log.error('Bad __exportVars parameters.');
     };
+};
+
+CallRouter.prototype.__event = function (app, cb) {
+    let prop = app[OPERATION.EVENT] || {},
+        name = prop['name'],
+        headers = prop['headers']
+    ;
+
+    if (!name || /\s|[^A-Za-z:]/.test(name)) {
+        log.error('Bad parameters application event');
+        if (cb)
+            cb();
+        return;
+    };
+
+    //let data = [`Event-Subclass=${name}`, 'Event-Name=CUSTOM'];
+
+    var event = new Event('CUSTOM', name);
+
+    for (let key in headers) {
+        event.addHeader(key, this._parseVariable(headers[key]) || key);
+    };
+
+    event.addHeader('type', 'text/plain');
+    event.addHeader('Content-Type', 'text/plain');
+    event.addBody("+OK");
+
+    this.connection.sendEvent(event, (e, r) => {
+        log.trace(`Send event "${name}": ${r["Reply-Text"]}`);
+    });
+    //this.execApp({
+    //    "app": FS_COMMAND.EVENT,
+    //    "data": (data.concat(headers)).join(','),
+    //    "async": app[OPERATION.ASYNC] ? true : false
+    //});
+
+    if (cb)
+        cb();
 };
 
 CallRouter.prototype.__ivr = function (app, cb) {
