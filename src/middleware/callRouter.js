@@ -1580,10 +1580,13 @@ CallRouter.prototype.__event = function (app, cb) {
 
     if (verbose) {
         let data = ['Event-Subclass=webitel::acr', 'Event-Name=CUSTOM', `action=${name}`, 'domain=' + this.domain];
+        for (let key in headers) {
+            data.push(key + '=' + (this._parseVariable(headers[key]) || key));
+        };
 
         this.execApp({
             "app": FS_COMMAND.EVENT,
-            "data": (data.concat(headers)).join(','),
+            "data": data.join(','),
             "async": app[OPERATION.ASYNC] ? true : false
         });
 
