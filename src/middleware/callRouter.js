@@ -1427,9 +1427,11 @@ CallRouter.prototype.__queue = function (app, cb) {
 
     if (prop.hasOwnProperty('startPosition') && prop['startPosition']) {
         let _varName,
+            _verbose = false,
             _fireEvent = false;
         if (prop['startPosition'] instanceof Object) {
             _varName = prop['startPosition']['var'] || 'cc_start_position';
+            _verbose = !!prop['startPosition']['verbose'];
             _fireEvent = prop['startPosition']['event'];
         } else if (typeof prop['startPosition'] == 'string') {
             _varName = prop['startPosition'] || 'cc_start_position'
@@ -1447,6 +1449,7 @@ CallRouter.prototype.__queue = function (app, cb) {
                 scope.__event({
                     "event": {
                         "action": typeof _fireEvent == 'string' ? _fireEvent : "cc_start_position",
+                        "verbose": _verbose,
                         "headers": headers
                     }
                 })
