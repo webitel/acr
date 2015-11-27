@@ -391,8 +391,31 @@ CallRouter.prototype.minute_of_day = function (param) {
     return this._DateParser(param, (now.getHours() * 60 + now.getMinutes()), 1440);
 };
 
+
+function _toInt (str) {
+    return str.split(':').reduce( (r, c, i) => {
+        if (i == 0) {
+            return +c * 10000
+        } else if ( i == 1) {
+            return r + (+c * 100)
+        }
+        return r + ( +c )
+    } , 0);
+};
+
+
 CallRouter.prototype.time_of_day = function (param) {
-    // TODO
+    param = param || "";
+    let times = param.split(','),
+        offsetDate = this.DateOffset(),
+        current = (offsetDate.getHours() * 10000) + (offsetDate.getMinutes() * 100) + offsetDate.getSeconds(),
+        _t;
+
+    for (let i = 0, len = times.length; i < len; i++) {
+        _t = times[i].split('-').map( (a) => _toInt(a));
+        if ((current >= _t[0] && current <= _t[1])) return true;
+    };
+    return false;
 };
 // TODO bug date offset
 CallRouter.prototype._DateParser = function (param, datetime, maxVal) {
