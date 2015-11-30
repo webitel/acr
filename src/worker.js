@@ -67,7 +67,7 @@ esl_server.on('error', function (err) {
 });
 
 esl_server.on('connection::close', function(c, id, allCount) {
-    if (c.__callRouter) {
+    if (c && c.__callRouter) {
         c.__callRouter.stop();
         delete c.__callRouter;
     };

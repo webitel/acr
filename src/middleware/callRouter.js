@@ -183,7 +183,7 @@ var CallRouter = module.exports = function (connection, option) {
     this.versionSchema = option['versionSchema'];
     this.setDestinationNumber(option['desNumber'], option['chnNumber']);
 
-    //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\nXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
+    //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
     this.log = {
         info: (msg) => {
@@ -1383,29 +1383,32 @@ class RouterTimer {
         this.offset = (option['offset'] * 1000) || 0;
         this.interval = (option['interval'] || 60) * 1000;
         this._tries = 1;
+        this._stop = false;
 
         var scope = this;
 
         this._timerId = setTimeout( function tick() {
-            router.execute(option['actions'], () => {
 
-                if (++scope._tries > scope.tries)
-                    return;
+                router.execute(option['actions'], () => {
 
-                console.log(`_tries: ${scope._tries}; interval: ${scope.interval}; offset: ${scope.offset}; tries: ${scope.tries};`);
+                    if (scope._stop || ++scope._tries > scope.tries)
+                        return;
 
-                if ( (scope.interval += scope.offset) < 1000) {
-                    log.error('Bad time, interval less than 1');
-                    return scope.stop();
-                };
+                    console.log(`_tries: ${scope._tries}; interval: ${scope.interval}; offset: ${scope.offset}; tries: ${scope.tries};`);
 
-                scope._timerId = setTimeout(tick, scope.interval);
-            });
+                    if ((scope.interval += scope.offset) < 1000) {
+                        log.error('Bad time, interval less than 1');
+                        return scope.stop();
+                    };
+
+                    scope._timerId = setTimeout(tick, scope.interval);
+                });
 
         },  this.interval);
     }
 
     stop () {
+        this._stop = true;
         return clearTimeout(this._timerId);
     }
 }
@@ -1435,13 +1438,15 @@ CallRouter.prototype.__queue = function (app, cb) {
             cb();
         return;
     };
+
     var scope = this,
         timer = prop['timer'],
         _removeListeners = false
         ;
 
     var _closeTimer = function () {
-        ccTimers.forEach( (item) => item.stop())
+        ccTimers.forEach( (item) => item.stop() );
+        ccTimers.length = 0;
     };
 
     var ccTimers = [];
@@ -1457,9 +1462,9 @@ CallRouter.prototype.__queue = function (app, cb) {
             ccTimers.push(new RouterTimer(timer, scope));
         };
 
-        this.connection.once('esl::end', _closeTimer);
+        this.connection.on('esl::end', _closeTimer);
 
-        this.connection.once('error', _closeTimer);
+        this.connection.on('error', _closeTimer);
 
         _removeListeners = true;
     };
