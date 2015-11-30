@@ -1394,7 +1394,7 @@ class RouterTimer {
                     if (scope._stop || ++scope._tries > scope.tries)
                         return;
 
-                    console.log(`_tries: ${scope._tries}; interval: ${scope.interval}; offset: ${scope.offset}; tries: ${scope.tries};`);
+                    //console.log(`_tries: ${scope._tries}; interval: ${scope.interval}; offset: ${scope.offset}; tries: ${scope.tries};`);
 
                     if ((scope.interval += scope.offset) < 1000) {
                         log.error('Bad time, interval less than 1');
