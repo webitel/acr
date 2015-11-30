@@ -417,7 +417,7 @@ CallRouter.prototype.time_of_day = function (param) {
     };
     return false;
 };
-// TODO bug date offset
+
 CallRouter.prototype._DateParser = function (param, datetime, maxVal) {
     param = param || '';
     var datetimes = param.replace(/\s/g, '').split(','),
@@ -1370,6 +1370,46 @@ CallRouter.prototype.__bridge = function (app, cb) {
         cb();
 };
 
+
+class RouterTimer {
+    constructor (option, router) {
+        if (!(option['actions'] instanceof Array)) {
+            //TODO log error
+            log.error('RouterTimer: bad parameters');
+            return
+        };
+
+        this.tries = option['tries'] || Infinity;
+        this.offset = (option['offset'] * 1000) || 0;
+        this.interval = (option['interval'] || 60) * 1000;
+        this._tries = 1;
+
+        var scope = this;
+
+        this._timerId = setTimeout( function tick() {
+            router.execute(option['actions'], () => {
+
+                if (++scope._tries > scope.tries)
+                    return;
+
+                console.log(`_tries: ${scope._tries}; interval: ${scope.interval}; offset: ${scope.offset}; tries: ${scope.tries};`);
+
+                if ( (scope.interval += scope.offset) < 1000) {
+                    log.error('Bad time, interval less than 1');
+                    return scope.stop();
+                };
+
+                scope._timerId = setTimeout(tick, scope.interval);
+            });
+
+        },  this.interval);
+    }
+
+    stop () {
+        return clearTimeout(this._timerId);
+    }
+}
+
 CallRouter.prototype.__queue = function (app, cb) {
     var _data = '',
         prop = app[OPERATION.QUEUE],
@@ -1397,35 +1437,33 @@ CallRouter.prototype.__queue = function (app, cb) {
     };
     var scope = this,
         timer = prop['timer'],
-        timerId,
         _removeListeners = false
         ;
 
     var _closeTimer = function () {
-        if (timerId) {
-            clearTimeout(timerId);
-            timerId = null;
-        }
+        ccTimers.forEach( (item) => item.stop())
     };
 
-    if (timer instanceof Object && timer['actions'] instanceof Array && timer['actions'].length > 0) {
-        var interval = (timer['interval'] >= 1 ? timer['interval'] : 60) * 1000,
-            apps = timer['actions']
-        ;
+    var ccTimers = [];
+
+    if (timer instanceof Object) {
+        if (timer instanceof Array) {
+
+            timer.forEach( (t) => {
+                ccTimers.push(new RouterTimer(t, scope));
+            });
+
+        } else {
+            ccTimers.push(new RouterTimer(timer, scope));
+        };
 
         this.connection.once('esl::end', _closeTimer);
 
         this.connection.once('error', _closeTimer);
 
         _removeListeners = true;
-
-        timerId = setTimeout(function tick() {
-            scope.execute(apps, () => {
-                timerId = setTimeout(tick, interval);
-            });
-        }, interval);
-
     };
+
     this._curentQueue = queueName + '@' + this.domain;
 
     this.execApp({
@@ -1436,11 +1474,7 @@ CallRouter.prototype.__queue = function (app, cb) {
         scope._curentQueue = null;
         log.debug('Callback queue: %s', queueName);
         if (_removeListeners) {
-            if (timerId) {
-                clearTimeout(timerId);
-                timerId = null;
-            }
-            ;
+            _closeTimer();
             scope.connection.removeListener('error', _closeTimer);
             scope.connection.removeListener('esl::end', _closeTimer);
         };
