@@ -1384,7 +1384,7 @@ class RouterTimer {
         this.interval = (option['interval'] || 60) * 1000;
         this._tries = 1;
         this._stop = false;
-
+        //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
         var scope = this;
 
         this._timerId = setTimeout( function tick() {
