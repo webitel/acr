@@ -4,7 +4,7 @@
     "ports": 10030
   },
   "mongodb": {
-    "uri": "mongodb://MONGODB_HOST:27017/webitel",
+    "uri": "mongodb://pre.webitel.com:27017/webitel",
     "publicCollection": "public",
     "defaultCollection": "default",
     "globalCollection": "global",
@@ -15,9 +15,9 @@
     "locationNumberCollection": "location"
   },
   "application": {
-    "loglevel": "LOGLEVEL",
+    "loglevel": "trace",
     "logstash": {
-      "enabled": LOGSTASH_ENABLE,
+      "enabled": false,
       "host": "LOGSTASH_HOST",
       "port": 28777,
       "node_name": "acr"
