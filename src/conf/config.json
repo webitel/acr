@@ -15,7 +15,7 @@
     "locationNumberCollection": "location"
   },
   "application": {
-    "loglevel": "trace",
+    "loglevel": "info",
     "logstash": {
       "enabled": false,
       "host": "LOGSTASH_HOST",
