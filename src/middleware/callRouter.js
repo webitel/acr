@@ -92,7 +92,9 @@ const OPERATION = {
     RINGBACK: "ringback",
 
     SET_SOUNDS: "setSounds",
-    EVENT: "event"
+    EVENT: "event",
+
+    IN_BAND_DTMF: 'inBandDTMF'
 };
 
 const FS_COMMAND = {
@@ -149,7 +151,9 @@ const FS_COMMAND = {
     PUSH: 'push',
 
     PICKUP: 'pickup',
-    EVENT: "event"
+    EVENT: "event",
+    START_DTMF: 'start_dtmf',
+    STOP_DTMF: 'stop_dtmf'
 };
 
 
@@ -1366,6 +1370,16 @@ CallRouter.prototype.__bridge = function (app, cb) {
         });
     };
 
+    if (cb)
+        cb();
+};
+
+CallRouter.prototype.__inBandDTMF = function (app, cb) {
+    var application = app[OPERATION.IN_BAND_DTMF] == 'stop' ? FS_COMMAND.STOP_DTMF : FS_COMMAND.START_DTMF;
+    this.execApp({
+        "app": application,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
     if (cb)
         cb();
 };
