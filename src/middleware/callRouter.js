@@ -94,7 +94,8 @@ const OPERATION = {
     SET_SOUNDS: "setSounds",
     EVENT: "event",
 
-    IN_BAND_DTMF: 'inBandDTMF'
+    IN_BAND_DTMF: 'inBandDTMF',
+    EMAIL: 'email'
 };
 
 const FS_COMMAND = {
@@ -205,6 +206,7 @@ var CallRouter = module.exports = function (connection, option) {
     };
 };
 
+require('./email')(CallRouter, OPERATION.EMAIL);
 require('./disa')(CallRouter);
 require('./location/number')(CallRouter, OPERATION.LOCATION);
 

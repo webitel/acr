@@ -12,7 +12,8 @@
     "variablesCollection": "domainVariables",
     "calendarCollection": "calendar",
     "blackListCollection": "blackList",
-    "locationNumberCollection": "location"
+    "locationNumberCollection": "location",
+    "emailCollection": "emailConfig"
   },
   "application": {
     "loglevel": "LOGLEVEL",
