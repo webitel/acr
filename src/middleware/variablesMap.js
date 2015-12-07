@@ -3,7 +3,7 @@
  */
 'use strict';
 
-const variablesMap = {
+const VARIABLES_MAP = {
     "state": "Channel-State",
     "state_number": "Channel-State-Number",
     "channel_name": "Channel-Name",
@@ -41,4 +41,4 @@ const variablesMap = {
     "sip_h_referred-by": "variable_sip_h_Referred-By",
 };
 
-module.exports = variablesMap;
+module.exports = VARIABLES_MAP;

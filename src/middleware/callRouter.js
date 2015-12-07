@@ -15,7 +15,7 @@ var log = require('./../lib/log')(module),
     Event = require('modesl').Event,
     calendar = require('./calendar/index');
 
-const variablesMap = require('./variablesMap');
+const VARIABLES_MAP = require('./variablesMap');
 
 const MEDIA_TYPE = {
     WAV: 'wav',
@@ -339,7 +339,7 @@ CallRouter.prototype.getChnVar = function (name) {
     var _var = this.connection.channelData.getHeader('variable_' + name)
         || this.connection.channelData.getHeader(name)
             //|| this.getLocalVariable(name)
-        || this.connection.channelData.getHeader(variablesMap[name])
+        || this.connection.channelData.getHeader(VARIABLES_MAP[name])
         || '';
     return _var ;
 };
