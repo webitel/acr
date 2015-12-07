@@ -15,6 +15,8 @@ var log = require('./../lib/log')(module),
     Event = require('modesl').Event,
     calendar = require('./calendar/index');
 
+const variablesMap = require('./variablesMap');
+
 const MEDIA_TYPE = {
     WAV: 'wav',
     MP3: 'mp3',
@@ -337,6 +339,7 @@ CallRouter.prototype.getChnVar = function (name) {
     var _var = this.connection.channelData.getHeader('variable_' + name)
         || this.connection.channelData.getHeader(name)
             //|| this.getLocalVariable(name)
+        || this.connection.channelData.getHeader(variablesMap[name])
         || '';
     return _var ;
 };
@@ -1370,6 +1373,24 @@ CallRouter.prototype.__bridge = function (app, cb) {
             "data": _data.slice(0, (-1 * separator.length)) + pickup,
             "async": prop[OPERATION.ASYNC] ? true : false
         });
+
+        /*
+        // TODO WTEL-263
+        this.execApp({
+            "app": FS_COMMAND.BRIDGE,
+            "data": _data.slice(0, (-1 * separator.length)) + pickup,
+            "async": prop[OPERATION.ASYNC] ? true : false
+        }, function (res) {
+            res.headers.forEach( (item) => {
+                console.log('set: ' + item.name + ' => ' + item.value);
+                this.channelData.addHeader(item.name, item.value);
+            });
+
+            if (cb)
+                cb();
+        });
+        */
+
     };
 
     if (cb)
