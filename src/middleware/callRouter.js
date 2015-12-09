@@ -2008,7 +2008,7 @@ CallRouter.prototype.__receiveFax = function (app, cb) {
         return cb();
 };
 
-CallRouter.prototype.__callForward = function (app, cb) {
+CallRouter.prototype.__checkCallForward = function (app, cb) {
     var prop = app[OPERATION.CALL_FORWARD],
         status = this.getChnVar('Caller-Account-Status'),
         number = this.getChnVar('Caller-Account-Status-Description');
@@ -2066,7 +2066,7 @@ CallRouter.prototype.__blackList = function (app, cb) {
 
     number = number.replace(/\D/g, '');
 
-    if (prop['actions'] instanceof Array) {
+    if (prop['actions'] instanceof Array && prop['actions'].length > 0) {
         actions = prop['actions'];
     } else {
         actions = [{
