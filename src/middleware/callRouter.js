@@ -43,6 +43,7 @@ const OPERATION = {
    /* GATEWAY: "gateway",
     DEVICE: "device", */
     RECORD_SESSION: "recordSession",
+    RECORD_FILE: "recordFile",
     HANGUP: "hangup",
     SCRIPT: "script",
     LOG: "log",
@@ -112,6 +113,7 @@ const FS_COMMAND = {
     EXPORT: "export",
 
     RECORD_SESSION: "record_session",
+    RECORD: "record",
     STOP_RECORD_SESSION: "stop_record_session",
 
     LUA: "lua",
@@ -993,10 +995,44 @@ CallRouter.prototype.__goto = function (app, cb) {
         cb();
 };
 
+CallRouter.prototype.__recordFile = function (app, cb) {
+    let prop = app[OPERATION.RECORD_FILE] || {},
+        name = prop['name'] || "recordFile",
+        playbackTerminators = prop['terminators'] || "#",
+        type = prop['type'] || "mp3",
+        maxSec = parseInt(prop['maxSec']) || 60,
+        silenceThresh = parseInt(prop['silenceThresh']) || 200,
+        silenceHits = parseInt(prop['silenceHits']) || 5,
+        email = prop['email'] instanceof Array ? prop['email'].join(',') : '\"\"'
+    ;
+
+    this.execApp({
+        "app": FS_COMMAND.STOP_RECORD_SESSION,
+        "data": "/recordings/${uuid}." + type
+    });
+
+    let multiSet = '^^,playback_terminators=' + playbackTerminators
+        + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email + ' ' + name;
+
+    this.execApp({
+        "app": FS_COMMAND.MULTISET,
+        "data": multiSet
+    });
+
+    this.execApp({
+        "app": FS_COMMAND.RECORD,
+        "data": "/recordings/${uuid}." + type + ' ' + maxSec + ' ' + silenceThresh + ' ' + silenceHits
+    });
+
+    return cb && cb();
+
+};
+
 CallRouter.prototype.__recordSession = function (app, cb) {
     var prop = app[OPERATION.RECORD_SESSION];
     var action,
         type,
+        name = prop['name'] || 'recordSession',
         email = '\"\"';
 
     if (typeof prop == 'string'){
@@ -1019,7 +1055,7 @@ CallRouter.prototype.__recordSession = function (app, cb) {
             + ',RECORD_STEREO=' + (prop['stereo'] == 'false' ? 'false' : 'true')
             + ',RECORD_BRIDGE_REQ=' + (prop['bridged'] == 'false' ? 'false' : 'true')
             + ',recording_follow_transfer=' + (prop['followTransfer'] == 'false' ? 'false' : 'true')
-            + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email;
+            + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email + ' ' + name;
 
         this.execApp({
             "app": "multiset",
@@ -1240,6 +1276,7 @@ CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh,
 CallRouter.prototype.__playback = function (app, cb) {
     var filePath = '',
         prop = app[OPERATION.PLAYBACK],
+        _terminator = prop['terminator'],
         scope = this;
 
     if (typeof prop['name'] === 'string') {
@@ -1263,12 +1300,11 @@ CallRouter.prototype.__playback = function (app, cb) {
             _min = _playAndGetDigits['min'] || 1,
             _max = _playAndGetDigits['max'] || 1,
             _tries = _playAndGetDigits['tries'] || 1,
-            _terminator = _playAndGetDigits['terminator'] || '#',
             _timeout = _playAndGetDigits['timeout'] || 3000;
 
         this.execApp({
             "app": FS_COMMAND.PLAY_AND_GET,
-            "data": [_min, _max, _tries, _timeout, _terminator, filePath, 'silence_stream://250', _setVar, '\\d+'].join(' '),
+            "data": [_min, _max, _tries, _timeout, _terminator || '#', filePath, 'silence_stream://250', _setVar, '\\d+'].join(' '),
             "async": app[OPERATION.PLAYBACK][OPERATION.ASYNC] ? true : false
         }, function (res) {
             try {
@@ -1283,6 +1319,13 @@ CallRouter.prototype.__playback = function (app, cb) {
         });
 
     } else {
+        if (_terminator) {
+            this.execApp({
+                "app": FS_COMMAND.SET,
+                "data": "playback_terminators=" + _terminator
+            });
+        };
+
         this.execApp({
             "app": FS_COMMAND.PLAYBACK,
             "data": filePath,
