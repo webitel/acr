@@ -1192,6 +1192,9 @@ CallRouter.prototype.__schedule = function (app, cb) {
 
 CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh, noPref) {
     var filePath = '';
+    fileName = this._parseVariable(fileName);
+    // TODO delete
+    log.debug('Parse playback file -> %s', fileName);
 
     switch (type) {
         case MEDIA_TYPE.WAV:
