@@ -16,6 +16,7 @@ var log = require('./../lib/log')(module),
     calendar = require('./calendar/index');
 
 const VARIABLES_MAP = require('./variablesMap');
+const WEBITEL_RECORD_FILE_NAME = 'webitel_record_file_name';
 
 const MEDIA_TYPE = {
     WAV: 'wav',
@@ -997,7 +998,7 @@ CallRouter.prototype.__goto = function (app, cb) {
 
 CallRouter.prototype.__recordFile = function (app, cb) {
     let prop = app[OPERATION.RECORD_FILE] || {},
-        name = prop['name'] || "recordFile",
+        name = encodeURI(prop['name'] || "recordFile"),
         playbackTerminators = prop['terminators'] || "#",
         type = prop['type'] || "mp3",
         maxSec = parseInt(prop['maxSec']) || 60,
@@ -1006,9 +1007,11 @@ CallRouter.prototype.__recordFile = function (app, cb) {
         email = prop['email'] instanceof Array ? prop['email'].join(',') : '\"\"'
     ;
 
+    var prevRecordFile = this.getChnVar(WEBITEL_RECORD_FILE_NAME);
+
     this.execApp({
         "app": FS_COMMAND.STOP_RECORD_SESSION,
-        "data": "/recordings/${uuid}." + type
+        "data": "/recordings/" + prevRecordFile
     });
 
     let multiSet = '^^,playback_terminators=' + playbackTerminators
@@ -1021,7 +1024,7 @@ CallRouter.prototype.__recordFile = function (app, cb) {
 
     this.execApp({
         "app": FS_COMMAND.RECORD,
-        "data": "/recordings/${uuid}." + type + ' ' + maxSec + ' ' + silenceThresh + ' ' + silenceHits
+        "data": "/recordings/${uuid}_" + name +  "." + type + ' ' + maxSec + ' ' + silenceThresh + ' ' + silenceHits
     });
 
     return cb && cb();
@@ -1032,7 +1035,7 @@ CallRouter.prototype.__recordSession = function (app, cb) {
     var prop = app[OPERATION.RECORD_SESSION];
     var action,
         type,
-        name = prop['name'] || 'recordSession',
+        name = encodeURI(prop['name'] || 'recordSession'),
         email = '\"\"';
 
     if (typeof prop == 'string'){
@@ -1049,7 +1052,12 @@ CallRouter.prototype.__recordSession = function (app, cb) {
         return;
     };
 
+    let varFileName = "${uuid}_" + name + "." + type;
+
     if (action == 'start') {
+        this.__setVar({
+            "setVar": WEBITEL_RECORD_FILE_NAME + '=' + varFileName
+        });
 
         var multiSet = '^^,RECORD_MIN_SEC=' + (prop['minSec'] || '2' )
             + ',RECORD_STEREO=' + (prop['stereo'] == 'false' ? 'false' : 'true')
@@ -1058,19 +1066,19 @@ CallRouter.prototype.__recordSession = function (app, cb) {
             + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email + ' ' + name;
 
         this.execApp({
-            "app": "multiset",
+            "app": FS_COMMAND.MULTISET,
             "data": multiSet
         });
 
         this.execApp({
             "app": FS_COMMAND.RECORD_SESSION,
-            "data": "/recordings/${uuid}." + type
+            "data": "/recordings/" + varFileName
         });
     }
     else if (action == 'stop') {
         this.execApp({
             "app": FS_COMMAND.STOP_RECORD_SESSION,
-            "data": "/recordings/${uuid}." + type
+            "data": "/recordings/" + varFileName
         });
     } else {
         log.warn('Bad parameters ', prop);
