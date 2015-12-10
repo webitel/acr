@@ -611,7 +611,7 @@ function getFnName(cond) {
         return null;
     } else {
         for (var i = 0, len = propKeys.length; i < len; i++) {
-            if (propKeys[i] !== 'break' && propKeys[i] !== 'async') {
+            if (propKeys[i] != 'break' && propKeys[i] != 'async' && propKeys[i] != 'tag') {
                 return propKeys[i];
             };
         };
@@ -952,15 +952,25 @@ CallRouter.prototype.__break = function (app, cb) {
     cb();
 };
 
+function findPositionByTagName (callFlows, tagName) {
+    try {
+        for (let i = 0, len = callFlows.length; i < len; i++) {
+            if (callFlows[i]['tag'] === tagName) return i;
+        };
+    } catch(e) {
+        log.error(e);
+    }
+}
+
 CallRouter.prototype.__goto = function (app, cb) {
     var _app = FS_COMMAND.TRANSFER;
     if (app[OPERATION.GOTO] && app[OPERATION.GOTO].indexOf('local:') === 0) {
-        var _i = parseInt(app[OPERATION.GOTO].substring(6));
+        let _gotoIndexName = app[OPERATION.GOTO].substring(6);
+        var _i = isFinite(+_gotoIndexName) ? parseInt(_gotoIndexName) : findPositionByTagName(this.callflows, _gotoIndexName);
         if (!isNaN(_i) && this.index !== _i) {
             log.trace('GOTO ' + _i);
             this.index = _i;
-            this.cycleCount++;
-            if (this.cycleCount === MAX_CYCLE_COUNT) {
+            if (++this.cycleCount === MAX_CYCLE_COUNT) {
                 throw 'Cycle max count';
             };
             this.start(this.callflows);
