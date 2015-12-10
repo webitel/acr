@@ -1004,15 +1004,16 @@ CallRouter.prototype.__recordFile = function (app, cb) {
         maxSec = parseInt(prop['maxSec']) || 60,
         silenceThresh = parseInt(prop['silenceThresh']) || 200,
         silenceHits = parseInt(prop['silenceHits']) || 5,
-        email = prop['email'] instanceof Array ? prop['email'].join(',') : '\"\"'
+        email = prop['email'] instanceof Array ? prop['email'].join(',') : 'none'
     ;
 
     var prevRecordFile = this.getChnVar(WEBITEL_RECORD_FILE_NAME);
-
-    this.execApp({
-        "app": FS_COMMAND.STOP_RECORD_SESSION,
-        "data": "/recordings/" + prevRecordFile
-    });
+    if (prevRecordFile) {
+        this.execApp({
+            "app": FS_COMMAND.STOP_RECORD_SESSION,
+            "data": "/recordings/" + prevRecordFile
+        });
+    };
 
     let multiSet = '^^,playback_terminators=' + playbackTerminators
         + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email + ' ' + name;
@@ -1036,7 +1037,7 @@ CallRouter.prototype.__recordSession = function (app, cb) {
     var action,
         type,
         name = encodeURI(prop['name'] || 'recordSession'),
-        email = '\"\"';
+        email = 'none';
 
     if (typeof prop == 'string'){
         action = prop === 'stop' ? 'stop' : 'start';
@@ -1044,7 +1045,7 @@ CallRouter.prototype.__recordSession = function (app, cb) {
     } else if (typeof prop == 'object') {
         action = prop['action'] === 'stop' ? 'stop' : 'start';
         type = prop['type'] === 'mp4' ? 'mp4' : 'mp3';
-        email = prop['email'] instanceof Array ? prop['email'].join(',') : '';
+        email = prop['email'] instanceof Array ? prop['email'].join(',') : 'none';
     } else {
         log.error('Bad request __recordSession');
         if (cb)
