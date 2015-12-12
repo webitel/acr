@@ -15,7 +15,7 @@ const Provider = {
 
 module.exports = function (CallRouter, APPLICATION_NAME) {
     // WTEL-270
-    CallRouter.prototype.__email = function (app, cb) {
+    CallRouter.prototype.__sendEmail = function (app, cb) {
         let prop = app[APPLICATION_NAME];
         if (!prop) {
             log.error('Bad application parameters');

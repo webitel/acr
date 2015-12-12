@@ -99,7 +99,7 @@ const OPERATION = {
     EVENT: "event",
 
     IN_BAND_DTMF: 'inBandDTMF',
-    EMAIL: 'email'
+    EMAIL: 'sendEmail'
 };
 
 const FS_COMMAND = {
@@ -829,7 +829,8 @@ CallRouter.prototype.__setArray = function (app, cb) {
 
     if (prop instanceof Array) {
         var scope = this;
-        prop.forEach(function (item) {
+        prop.forEach(function (item, index) {
+            scope.setChnVar('variable_' + tagName + '[' + index + ']', item);
             scope.execApp({
                 "app": FS_COMMAND.PUSH,
                 "data": tagName + ',' + item,
@@ -841,7 +842,8 @@ CallRouter.prototype.__setArray = function (app, cb) {
         var scope = this;
         for (let tag in prop) {
             if (prop.hasOwnProperty(tag) && prop[tag] instanceof Array) {
-                prop[tag].forEach((item) =>{
+                prop[tag].forEach((item, index) =>{
+                    scope.setChnVar('variable_' + tag + '[' + index + ']', item);
                     scope.execApp({
                         "app": FS_COMMAND.PUSH,
                         "data": tag + ',' + item,
@@ -851,6 +853,7 @@ CallRouter.prototype.__setArray = function (app, cb) {
             }
         }
     } else if (typeof prop === 'string') {
+        scope.setChnVar('variable_' + tagName + '[0]', prop);
         this.execApp({
             "app": FS_COMMAND.PUSH,
             "data": tagName + ',' + prop,
