@@ -83,7 +83,7 @@ const OPERATION = {
     CALL_FORWARD: 'checkCallForward',
     RECEIVE_FAX: 'receiveFax',
 
-    TAGS: 'setTags',
+    TAGS: 'setArray',
     BLACK_LIST: 'blackList',
 
     PICKUP: 'pickup',
@@ -714,6 +714,7 @@ CallRouter.prototype.execute = function (callflows, cb) {
 CallRouter.prototype.run = function (callflows) {
     var scope = this;
     this.setupDomainVariables(function () {
+        // TODO add scope.index = 0 (callback !!!!;)
         scope.start(callflows);
     });
 };
@@ -821,7 +822,7 @@ CallRouter.prototype._addVariableArrayToChannelDump = function (variables) {
     };
 };
 
-CallRouter.prototype.__setTags = function (app, cb) {
+CallRouter.prototype.__setArray = function (app, cb) {
     var prop = app[OPERATION.TAGS],
         tagName = app['tagName'] || "webitel_tags",
         async = app[OPERATION.ASYNC] ? true : false;
@@ -836,7 +837,20 @@ CallRouter.prototype.__setTags = function (app, cb) {
             });
         });
     }
-    else if (typeof prop === 'string') {
+    else if (prop instanceof Object) {
+        var scope = this;
+        for (let tag in prop) {
+            if (prop.hasOwnProperty(tag) && prop[tag] instanceof Array) {
+                prop[tag].forEach((item) =>{
+                    scope.execApp({
+                        "app": FS_COMMAND.PUSH,
+                        "data": tag + ',' + item,
+                        "async": async
+                    });
+                });
+            }
+        }
+    } else if (typeof prop === 'string') {
         this.execApp({
             "app": FS_COMMAND.PUSH,
             "data": tagName + ',' + prop,
