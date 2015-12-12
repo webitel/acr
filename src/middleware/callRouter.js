@@ -184,6 +184,7 @@ var CallRouter = module.exports = function (connection, option) {
     this.channelDestinationNumber = option['chnNumber'];
     this.updateDomainVariable = false;
     this.uuid = connection.channelData.getHeader('variable_uuid');
+    this._dumpArrayIndex = {};
 
     //this.localVar = option['localVariables'] || {};
     //this._dbId = option['id'] || '';
@@ -830,7 +831,9 @@ CallRouter.prototype.__setArray = function (app, cb) {
     if (prop instanceof Array) {
         var scope = this;
         prop.forEach(function (item, index) {
-            scope.setChnVar('variable_' + tagName + '[' + index + ']', (scope._parseVariable(item) || item));
+            var _stIndex = isFinite(scope._dumpArrayIndex[tagName]) ? scope._dumpArrayIndex[tagName] : 0;
+            scope.setChnVar('variable_' + tagName + '[' + (_stIndex++) + ']', (scope._parseVariable(item) || item));
+            scope._dumpArrayIndex[tagName] = _stIndex;
             scope.execApp({
                 "app": FS_COMMAND.PUSH,
                 "data": tagName + ',' + item,
@@ -842,18 +845,22 @@ CallRouter.prototype.__setArray = function (app, cb) {
         var scope = this;
         for (let tag in prop) {
             if (prop.hasOwnProperty(tag) && prop[tag] instanceof Array) {
+                var _stIndex = isFinite(scope._dumpArrayIndex[tag]) ? scope._dumpArrayIndex[tag] : 0;
                 prop[tag].forEach((item, index) =>{
-                    scope.setChnVar('variable_' + tag + '[' + index + ']', (scope._parseVariable(item) || item));
+                    scope.setChnVar('variable_' + tag + '[' + (_stIndex++) + ']', (scope._parseVariable(item) || item));
                     scope.execApp({
                         "app": FS_COMMAND.PUSH,
                         "data": tag + ',' + item,
                         "async": async
                     });
                 });
+                scope._dumpArrayIndex[tag] = _stIndex;
             }
         }
     } else if (typeof prop === 'string') {
-        scope.setChnVar('variable_' + tagName + '[0]', (scope._parseVariable(prop) || prop));
+        var _stIndex = isFinite(scope._dumpArrayIndex[tagName]) ? scope._dumpArrayIndex[tagName] : 0;
+        scope.setChnVar('variable_' + tagName + '[' + (_stIndex++) +']', (scope._parseVariable(prop) || prop));
+        scope._dumpArrayIndex[tagName] = _stIndex;
         this.execApp({
             "app": FS_COMMAND.PUSH,
             "data": tagName + ',' + prop,
