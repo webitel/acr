@@ -830,7 +830,7 @@ CallRouter.prototype.__setArray = function (app, cb) {
     if (prop instanceof Array) {
         var scope = this;
         prop.forEach(function (item, index) {
-            scope.setChnVar('variable_' + tagName + '[' + index + ']', item);
+            scope.setChnVar('variable_' + tagName + '[' + index + ']', (scope._parseVariable(item) || item));
             scope.execApp({
                 "app": FS_COMMAND.PUSH,
                 "data": tagName + ',' + item,
@@ -843,7 +843,7 @@ CallRouter.prototype.__setArray = function (app, cb) {
         for (let tag in prop) {
             if (prop.hasOwnProperty(tag) && prop[tag] instanceof Array) {
                 prop[tag].forEach((item, index) =>{
-                    scope.setChnVar('variable_' + tag + '[' + index + ']', item);
+                    scope.setChnVar('variable_' + tag + '[' + index + ']', (scope._parseVariable(item) || item));
                     scope.execApp({
                         "app": FS_COMMAND.PUSH,
                         "data": tag + ',' + item,
@@ -853,7 +853,7 @@ CallRouter.prototype.__setArray = function (app, cb) {
             }
         }
     } else if (typeof prop === 'string') {
-        scope.setChnVar('variable_' + tagName + '[0]', prop);
+        scope.setChnVar('variable_' + tagName + '[0]', (scope._parseVariable(prop) || prop));
         this.execApp({
             "app": FS_COMMAND.PUSH,
             "data": tagName + ',' + prop,
