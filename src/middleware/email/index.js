@@ -25,7 +25,7 @@ module.exports = function (CallRouter, APPLICATION_NAME) {
         let to = prop['to'],
             from = prop['from'],
             message = this._parseVariable(prop['message']),
-            subject = this._parseVariable(prop['subject']), //prop['subject'] || '',
+            subject = this._parseVariable(prop['subject']),
             domain = this.domain
         ;
 

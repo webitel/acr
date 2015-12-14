@@ -99,6 +99,7 @@ const OPERATION = {
     EVENT: "event",
 
     IN_BAND_DTMF: 'inBandDTMF',
+    FLUSH_DTMF: 'flushDTMF',
     EMAIL: 'sendEmail'
 };
 
@@ -159,7 +160,8 @@ const FS_COMMAND = {
     PICKUP: 'pickup',
     EVENT: "event",
     START_DTMF: 'start_dtmf',
-    STOP_DTMF: 'stop_dtmf'
+    STOP_DTMF: 'stop_dtmf',
+    FLUSH_DTMF: 'flush_dtmf'
 };
 
 
@@ -1496,6 +1498,14 @@ CallRouter.prototype.__inBandDTMF = function (app, cb) {
         cb();
 };
 
+CallRouter.prototype.__flushDTMF = function (app, cb) {
+    this.execApp({
+        "app": FS_COMMAND.FLUSH_DTMF,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+    if (cb)
+        cb();
+};
 
 class RouterTimer {
     constructor (option, router) {
