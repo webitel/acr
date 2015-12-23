@@ -1087,9 +1087,9 @@ CallRouter.prototype.__recordSession = function (app, cb) {
         });
 
         var multiSet = '^^,RECORD_MIN_SEC=' + (prop['minSec'] || '2' )
-            + ',RECORD_STEREO=' + (prop['stereo'] == 'false' ? 'false' : 'true')
-            + ',RECORD_BRIDGE_REQ=' + (prop['bridged'] == 'false' ? 'false' : 'true')
-            + ',recording_follow_transfer=' + (prop['followTransfer'] == 'false' ? 'false' : 'true')
+            + ',RECORD_STEREO=' + (String(prop['stereo']) == 'false' ? 'false' : 'true')
+            + ',RECORD_BRIDGE_REQ=' + (String(prop['bridged']) == 'false' ? 'false' : 'true')
+            + ',recording_follow_transfer=' + (String(prop['followTransfer']) == 'false' ? 'false' : 'true')
             + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email + ' ' + name;
 
         this.execApp({
