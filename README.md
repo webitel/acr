@@ -1,6 +1,8 @@
 Advanced Call Router (ACR)
 ====
 
+[![Build Status](https://dev.webitel.com/buildStatus/icon?job=build_acr)](https://dev.webitel.com/job/build_acr)
+
 Advanced Call Router - route calls that match configured rules.
 
 ## Default ports
