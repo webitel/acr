@@ -171,6 +171,26 @@ const COMMANDS = {
 
 const MAX_CYCLE_COUNT = 20;
 
+
+const _APP_ARRAY = (function () {
+    var a = [];
+    for (var key in OPERATION) {
+        if (OPERATION.hasOwnProperty(key))
+            a.push(OPERATION[key])
+    };
+    return a;
+})();
+
+function isApplication (obj) {
+    if (obj instanceof Object) {
+        for (let key in obj) {
+            if (obj.hasOwnProperty(key) && _APP_ARRAY.indexOf(key) != -1)
+                return key
+        }
+    };
+    return false;
+};
+
 var CallRouter = module.exports = function (connection, option) {
     option = option || {};
     this.index = 0;
@@ -523,7 +543,7 @@ CallRouter.prototype.__switch = function (condition, cb) {
     };
 };
 
-CallRouter.prototype.__if = function (condition, cb) {
+CallRouter.prototype.__if = function (condition, cb, state) {
     condition = condition[OPERATION.IF];
     var sandbox = {
         _resultCondition: false//,
@@ -552,13 +572,13 @@ CallRouter.prototype.__if = function (condition, cb) {
             : false);
         if (sandbox._resultCondition) {
             if (condition[OPERATION.THEN]) {
-                this.execute(condition[OPERATION.THEN], cb);
+                cb(null, null, state.id + '.if.then[0]')
             } else {
                 cb();
             };
         } else {
             if (condition[OPERATION.ELSE]) {
-                this.execute(condition[OPERATION.ELSE], cb);
+                cb(null, null, state.id + '.if.else[0]')
             } else {
                 cb();
             };
@@ -617,14 +637,14 @@ function getFnName(cond) {
         return null;
     } else {
         for (var i = 0, len = propKeys.length; i < len; i++) {
-            if (propKeys[i] != 'break' && propKeys[i] != 'async' && propKeys[i] != 'tag') {
+            if (propKeys[i] != 'break' && propKeys[i] != '_hash' && propKeys[i] != 'async' && propKeys[i] != 'tag') {
                 return propKeys[i];
             };
         };
     };
 };
 
-CallRouter.prototype.doExec = function (condition, cb) {
+CallRouter.prototype.doExec = function (condition, cb, state) {
     if (condition instanceof Object) {
 
         if (this.versionSchema === 2) {
@@ -632,14 +652,14 @@ CallRouter.prototype.doExec = function (condition, cb) {
             var fnName = getFnName(condition);
             if (fnName && typeof this['__' + fnName] === 'function') {
                 log.debug('execute application __' + fnName);
-                this['__' + fnName](condition, cb);
+                this['__' + fnName](condition, cb, state);
             } else {
                 log.error('Bad application %s.', fnName);
                 if (cb) cb();
             };
         } else {
             if (condition.hasOwnProperty(OPERATION.IF)) {
-                this.__if(condition, cb);
+                this.__if(condition, cb, state);
             } else if (condition.hasOwnProperty(OPERATION.APPLICATION)) {
                 this.execApp(condition);
                 if (cb) {
@@ -714,6 +734,77 @@ CallRouter.prototype.execute = function (callflows, cb) {
     };
 };
 
+
+String.prototype.hashCode = function() {
+    var hash = 0, i, chr, len;
+    if (this.length === 0) return hash;
+    for (i = 0, len = this.length; i < len; i++) {
+        chr   = this.charCodeAt(i);
+        hash  = ((hash << 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+};
+
+function getStatesRoute(data) {
+    var validId = /^[a-z_$][a-z0-9_$]*$/i;
+    var result = [];
+    doIt(data, "");
+
+    var nodes = [];
+    var edges = [];
+    for (let i in result) {
+        console.log('NAME:  ', result[i].name, '     STATE:', result[i].state,'    NEXT ->>>', result[i].next);
+
+        nodes.push({
+            "id": result[i].state.hashCode(),
+            "_hash": result[i].state,
+            "label": result[i].name + '(' + result[i].state +')'
+        });
+        edges.push({
+            "from": result[i].state.hashCode(),
+            "to": (result[i].next || '').hashCode()
+        });
+    };
+
+    console.log(JSON.stringify(nodes));
+    console.log(JSON.stringify(edges));
+    return result;
+
+    function doIt(data, s, prev) {
+        if (data && typeof data === "object") {
+            if (Array.isArray(data)) {
+                for (var i = 0; i < data.length; i++) {
+                    var app = isApplication(data[i]);
+                    if (app) {
+                        var next = (data[i + 1])
+                            ? s + "[" + (i + 1) + "]"
+                            : prev ? prev + '._skip' : null;
+
+                        result.push({
+                            "state": s + "[" + i + "]",
+                            "next": next,
+                            "name": app,
+                            "application": data[i]
+                        });
+                    } else {
+                        log.warn('Skip application', data[i]);
+                    };
+                    doIt(data[i], s + "[" + i + "]", app == 'if' || app == 'switch'  ? s + "[" + i + "]" : prev || null);
+                }
+            } else {
+                for (var p in data) {
+                    if (validId.test(p)) {
+                        doIt(data[p], s + "." + p, prev);
+                    } else {
+                        doIt(data[p], s + "[\"" + p + "\"]", prev);
+                    }
+                }
+            }
+        }
+    }
+};
+
 CallRouter.prototype.run = function (callflows) {
     var scope = this;
     this.setupDomainVariables(function () {
@@ -726,35 +817,55 @@ CallRouter.prototype.stop = function () {
     this.end = true;
 };
 
+class RouteProcess {
+    constructor (rout, callflows, cb) {
+        this.callflows = callflows;
+        console.time('getStatesRoute');
+        var routeApplications = getStatesRoute(callflows),
+            hashRouteApplications = {},
+            pointer = ''
+        ;
+        routeApplications.forEach((item) => {
+            if (hashRouteApplications.hasOwnProperty(item.state))
+                log.error('Duplicate state', item.state);
+            hashRouteApplications[item.state] = {
+                "application": item.application,
+                "id": item.state,
+                "next": item.next
+            }
+        });
+        pointer = routeApplications[0].state;
+        console.timeEnd('getStatesRoute');
+        this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
+        rout.doExec(hashRouteApplications[pointer].application, next.bind(rout), hashRouteApplications[pointer]);
+        function next(err, res, goPointer) {
+            console.log(pointer);
+            pointer = hashRouteApplications.hasOwnProperty(goPointer)
+                    ? goPointer
+                    : /._skip$/.test(hashRouteApplications[pointer].next)
+                        ?  hashRouteApplications[hashRouteApplications[pointer].next.replace(/._skip$/, '')]  && hashRouteApplications[hashRouteApplications[pointer].next.replace(/._skip$/, '')].next
+                        : hashRouteApplications[pointer].next;
+
+            if (!hashRouteApplications.hasOwnProperty(pointer)) {
+                if (cb) cb();
+                return log.trace('EXIT');
+            }
+            rout.doExec(hashRouteApplications[pointer].application, next.bind(rout), hashRouteApplications[pointer])
+        };
+    }
+}
+
 CallRouter.prototype.start = function (callflows) {
     this.callflows = callflows;
-    var scope = this;
-
-    var postExec = function (err, res) {
-        scope.index++;
-        scope.end = (callflows[scope.index - 1] && callflows[scope.index - 1] instanceof  Object &&
-            callflows[scope.index - 1]['break'] === true) || scope.end;
-
-        if (scope.index == callflows.length || scope.end) {
-            //scope.updateLocalVariables();
-            scope.saveDomainVariables();
-            scope.connection.disconnect();
-            return;
+    var routProcess = new RouteProcess(this, callflows, (err) => {
+        if (err) {
+            log.error(err);
         };
-        scope.doExec(callflows[scope.index], postExec);
-    };
 
-    if (callflows instanceof Array && callflows.length > 0) {
-        //callflows.forEach(function (callflow) {
-        //    scope.destroyLocalRegExpValues();
-        //    scope.execute([callflow]);
-        //});
-        try {
-            this.execute([callflows[this.index]], postExec);
-        } catch (e) {
-            log.error(e);
-        }
-    };
+        this.saveDomainVariables();
+        this.connection.disconnect();
+    });
+
 };
 
 CallRouter.prototype.__answer = function (app, cb) {
