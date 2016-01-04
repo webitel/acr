@@ -1552,7 +1552,9 @@ class RouterTimer {
 CallRouter.prototype.__queue = function (app, cb) {
     var _data = '',
         prop = app[OPERATION.QUEUE],
-        queueName = prop['name'];
+        queueName = prop['name'],
+        continueOnAnswered = prop.continueOnAnswered
+        ;
 
     if (typeof queueName != 'string') {
         log.error('Bad parameters queue.');
@@ -1611,7 +1613,10 @@ CallRouter.prototype.__queue = function (app, cb) {
         "app": FS_COMMAND.CALLCENTER,
         "data": _data,
         "async": (app[OPERATION.ASYNC] ? true : false) || timer
-    }, function() {
+    }, function(res) {
+        if (!continueOnAnswered && res.getHeader('variable_cc_cause') == 'answered')
+            app.break = true;
+
         scope._curentQueue = null;
         log.debug('Callback queue: %s', queueName);
         if (_removeListeners) {
