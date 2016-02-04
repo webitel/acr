@@ -100,7 +100,8 @@ const OPERATION = {
 
     IN_BAND_DTMF: 'inBandDTMF',
     FLUSH_DTMF: 'flushDTMF',
-    EMAIL: 'sendEmail'
+    EMAIL: 'sendEmail',
+    MATH: 'math'
 };
 
 const FS_COMMAND = {
@@ -545,7 +546,7 @@ CallRouter.prototype.__if = function (condition, cb) {
             var _fn = new Function('sys, module, process', 'try { return (' + expression + ') } catch (e) {}');
             sandbox._resultCondition = _fn(this);
         } catch (e) {
-            log.error(e.message);
+            log.error(e);
         }
         log.trace('Condition %s : %s', expression, sandbox._resultCondition
             ? true
@@ -2246,3 +2247,50 @@ CallRouter.prototype.__ringback = function (app, cb) {
     if (cb)
         return cb();
 };
+
+CallRouter.prototype.__math = function (app, cb) {
+    let prop = app[OPERATION.MATH],
+        data = prop.data,
+        varName = prop.var,
+        fn = prop.fn || 'random',
+        result
+        ;
+    if (!varName) {
+        log.error('Bad varName');
+        return cb && cb();
+    };
+
+    if (!data) {
+        data = []
+    } else if (typeof  data == 'string') {
+        let _parseData = this._parseVariable(data);
+        data = (_parseData && _parseData.split('')) || '';
+    } else if ( !(data instanceof Array) ) {
+        data = [data]
+    }
+
+    if (MathOperation.hasOwnProperty(fn)) {
+        result = MathOperation[fn](data);
+    } else if (typeof  Math[fn] == "function") {
+        result = Math[fn].apply(null, data);
+    } else if (Math.hasOwnProperty(fn)) {
+        result = Math[fn];
+    } else {
+        log.error('Bad fn name: ', fn);
+        return cb && cb();
+    };
+
+    this.__setVar({
+        "setVar": varName + '=' + (result || '')
+    }, cb);
+
+};
+
+var MathOperation = {
+    'random': function (array) {
+        let min = 0,
+            max = array.length - 1;
+
+        return array[Math.floor(Math.random() * (max - min) + min)]
+    }
+}
