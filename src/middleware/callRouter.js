@@ -2251,7 +2251,7 @@ CallRouter.prototype.__ringback = function (app, cb) {
 CallRouter.prototype.__math = function (app, cb) {
     let prop = app[OPERATION.MATH],
         data = prop.data,
-        varName = prop.var,
+        varName = prop.setVar,
         fn = prop.fn || 'random',
         result
         ;
@@ -2289,8 +2289,8 @@ CallRouter.prototype.__math = function (app, cb) {
 var MathOperation = {
     'random': function (array) {
         let min = 0,
-            max = array.length - 1;
-
-        return array[Math.floor(Math.random() * (max - min) + min)]
+            max = array.length - 1
+        ;
+        return array[Math.floor(Math.random() * (max - min + 1) + min)]
     }
-}
+};
