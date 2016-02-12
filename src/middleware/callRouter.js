@@ -2334,6 +2334,10 @@ CallRouter.prototype.__eavesdrop = function (app, cb) {
         "answer": ""
     });
 
+    this.__setVar({
+        "setVar": "webitel_direction=eavesdrop"
+    });
+
     if (user === 'all') {
         this.__setVar({
             "setVar": "eavesdrop_require_group=" + this.domain
