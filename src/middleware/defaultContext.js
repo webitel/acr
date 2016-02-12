@@ -11,9 +11,13 @@ var log = require('../lib/log')(module),
 
 module.exports = function (conn, destinationNumber, globalVariable, notExistsDirection) {
     var domainName = conn.channelData.getHeader('variable_domain_name'),
-        _isNotRout = true
+        _isNotRout = true,
+        _callerIdNumber = conn.channelData.getHeader('Channel-Caller-ID-Number')
         ;
     conn.execute('unset', 'sip_h_call-info');
+
+    if (_callerIdNumber)
+        conn.execute('hash', 'insert/spymap/${domain_name}-' + _callerIdNumber + '/${uuid}');
 
     dialplan.findActualExtension(destinationNumber, domainName, function (err, resultExtension) {
         if (err) {

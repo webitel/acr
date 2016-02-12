@@ -101,7 +101,9 @@ const OPERATION = {
     IN_BAND_DTMF: 'inBandDTMF',
     FLUSH_DTMF: 'flushDTMF',
     EMAIL: 'sendEmail',
-    MATH: 'math'
+    MATH: 'math',
+
+    EAVESDROP: 'eavesdrop'
 };
 
 const FS_COMMAND = {
@@ -162,7 +164,11 @@ const FS_COMMAND = {
     EVENT: "event",
     START_DTMF: 'start_dtmf',
     STOP_DTMF: 'stop_dtmf',
-    FLUSH_DTMF: 'flush_dtmf'
+    FLUSH_DTMF: 'flush_dtmf',
+
+    HASH: 'hash',
+    EAVESDROP: 'eavesdrop',
+    USERSPY: 'userspy'
 };
 
 
@@ -198,6 +204,10 @@ var CallRouter = module.exports = function (connection, option) {
     this.setDestinationNumber(option['desNumber'], option['chnNumber']);
 
     //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
+
+    this.__setVar({
+        "setVar": "eavesdrop_group=" + this.domain
+    });
 
     this.log = {
         info: (msg) => {
@@ -1375,6 +1385,7 @@ CallRouter.prototype.__playback = function (app, cb) {
 CallRouter.prototype.__bridge = function (app, cb) {
     var prop = app[OPERATION.BRIDGE],
         _data = '',
+        scope = this,
         separator = prop['strategy'] == 'failover' // TODO переделать
             ? '|'
             : ','; // ":_:" - only for user & device; "," - for other types
@@ -1412,12 +1423,24 @@ CallRouter.prototype.__bridge = function (app, cb) {
                         '/', endpoint['name'], '%', endpoint['domainName'], '^', endpoint['dialString']);
                     break;
                 case 'device':
+
+                    scope.execApp({
+                        "app": FS_COMMAND.HASH,
+                        "data": "insert/spymap/${domain_name}-" + endpoint['name'] +  "/${uuid}"
+                    });
+
                     if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
                         _data = _data.concat('[', endpoint['parameters'].join(','), ']')
                     };
                     _data = _data.concat('user/', endpoint['name'], '@${domain_name}');
                     break;
                 case 'user':
+                    //TODO move to fn
+                    scope.execApp({
+                        "app": FS_COMMAND.HASH,
+                        "data": "insert/spymap/${domain_name}-" + endpoint['name'] +  "/${uuid}"
+                    });
+
                     switch (endpoint['proto']) {
                         case "sip":
                             _data = _data.concat('[', 'webitel_call_uuid=${create_uuid()},sip_invite_domain=${domain_name},' +
@@ -2293,4 +2316,51 @@ var MathOperation = {
         ;
         return array[Math.floor(Math.random() * (max - min + 1) + min)]
     }
+};
+
+
+CallRouter.prototype.__eavesdrop = function (app, cb) {
+    var prop = app[OPERATION.EAVESDROP],
+        user = prop.user,
+        spy = !!prop.spy
+        ;
+
+    if (!user || user.length < 1) {
+        log.error('Bad eavesdrop parameters');
+        return cb && cb();
+    };
+
+    this.__answer({
+        "answer": ""
+    });
+
+    if (user === 'all') {
+        this.__setVar({
+            "setVar": "eavesdrop_require_group=" + this.domain
+        });
+
+        this.execApp({
+            "app": FS_COMMAND.EAVESDROP,
+            "data": this.domain,
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
+    } else {
+        let data,
+            number = this._parseVariable(user),
+            fsApp = FS_COMMAND.EAVESDROP;
+        if (spy) {
+            fsApp = FS_COMMAND.USERSPY;
+            data = number + '@${domain_name}';
+        } else {
+            data = '${hash(select/spymap/${domain_name}-' + number + ')}';
+        };
+
+        this.execApp({
+            "app": fsApp,
+            "data": data,
+            "async": app[OPERATION.ASYNC] ? true : false
+        });
+    };
+
+    return cb && cb();
 };
