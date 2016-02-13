@@ -103,7 +103,8 @@ const OPERATION = {
     EMAIL: 'sendEmail',
     MATH: 'math',
 
-    EAVESDROP: 'eavesdrop'
+    EAVESDROP: 'eavesdrop',
+    SIP_REDIRECT: 'sipRedirect'
 };
 
 const FS_COMMAND = {
@@ -168,7 +169,10 @@ const FS_COMMAND = {
 
     HASH: 'hash',
     EAVESDROP: 'eavesdrop',
-    USERSPY: 'userspy'
+    USERSPY: 'userspy',
+
+    DEFLECT: 'deflect',
+    REDIRECT: 'redirect'
 };
 
 
@@ -2368,3 +2372,17 @@ CallRouter.prototype.__eavesdrop = function (app, cb) {
 
     return cb && cb();
 };
+
+CallRouter.prototype.__sipRedirect = function (app, cb) {
+    var prop = app[OPERATION.SIP_REDIRECT],
+        app  = FS_COMMAND.REDIRECT;
+     if (+this.getChnVar('') > 0)
+        app = FS_COMMAND.DEFLECT;
+
+    this.execApp({
+        "app": app,
+        "data": '' + prop,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+    return cb && cb();
+}
