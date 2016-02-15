@@ -2376,7 +2376,7 @@ CallRouter.prototype.__eavesdrop = function (app, cb) {
 CallRouter.prototype.__sipRedirect = function (app, cb) {
     var prop = app[OPERATION.SIP_REDIRECT],
         app  = FS_COMMAND.REDIRECT;
-     if (+this.getChnVar('') > 0)
+     if (+this.getChnVar('answer_epoch') > 0)
         app = FS_COMMAND.DEFLECT;
 
     this.execApp({
