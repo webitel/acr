@@ -9,6 +9,17 @@ var log = require('../lib/log')(module),
     internalExtension = require('./dialplan/internalExtansion')
     ;
 
+function setupPickupParameters(conn, userId, domain) {
+    if (!userId || !domain || !conn) {
+        return log.error('Bad parameters setupPickupParameters');
+    };
+
+    conn.execute('export', 'dialed_extension=' + userId);
+    conn.execute('hash', 'insert/' + domain + '-call_return/' + userId + '/${caller_id_number}');
+    conn.execute('hash', 'insert/' + domain + '-last_dial_ext/' + userId + '/${uuid}');
+    conn.execute('hash', 'insert/' + domain + '-last_dial_ext/global/${uuid}');
+}
+
 module.exports = function (conn, destinationNumber, globalVariable, notExistsDirection) {
     var domainName = conn.channelData.getHeader('variable_domain_name'),
         _isNotRout = true,
@@ -40,6 +51,8 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                 if (resultExtension['fs_timezone']) {
                     conn.execute('set', 'timezone=' + resultExtension['fs_timezone']);
                 };
+
+                setupPickupParameters(conn, resultExtension['destination_number'], resultExtension['domain']);
 
                 var callflow = resultExtension['callflow'];
                 var _router = new CallRouter(conn, {
@@ -126,6 +139,7 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                     };
                 };
                 if (_isNotRout) {
+                    setupPickupParameters(conn, destinationNumber, domainName);
                     internalExtension(conn, destinationNumber, domainName);
                 };
 
