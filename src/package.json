@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "async": "^1.5.2",
     "moment-timezone": "^0.4.0",
     "mongodb": "^2.1.7"
   }

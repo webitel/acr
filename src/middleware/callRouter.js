@@ -8,6 +8,7 @@ var log = require('./../lib/log')(module),
     httpReq = require('./httpRequest'),
     sms = require('./sms'),
     dbRoute = require('./dbRoute'),
+    async = require('async'),
     findDomainVariables = require('./dialplan').findDomainVariables,
     updateDomainVariables = require('./dialplan').updateDomainVariables,
     findExtension = require('./dialplan').findActualExtension,
@@ -104,7 +105,8 @@ const OPERATION = {
     MATH: 'math',
 
     EAVESDROP: 'eavesdrop',
-    SIP_REDIRECT: 'sipRedirect'
+    SIP_REDIRECT: 'sipRedirect',
+    AGENT: 'agent'
 };
 
 const FS_COMMAND = {
@@ -2385,4 +2387,26 @@ CallRouter.prototype.__sipRedirect = function (app, cb) {
         "async": app[OPERATION.ASYNC] ? true : false
     });
     return cb && cb();
-}
+};
+
+CallRouter.prototype.__agent = function (app, cb) {
+    var prop = app[OPERATION.AGENT],
+        name = this._parseVariable(prop.name || '${caller_id_number}')
+    ;
+
+    if (!name) {
+        log.error('Bad __agent options');
+        return cb && cb();
+    };
+    name += '@' + this.domain;
+    let status = prop.status || "Available";
+    let state = prop.state || "Waiting";
+    this.api('callcenter_config agent set status ' + name + " '" + status + "'");
+    this.api('callcenter_config agent set state ' + name + " '" + state + "'");
+    return cb && cb();
+};
+
+CallRouter.prototype.api = function (str, cb) {
+    log.trace('Exec %s', str);
+    return this.connection.api(str, cb);
+};
