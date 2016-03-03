@@ -1,6 +1,7 @@
 /**
  * Created by i.navrotskyj on 17.02.2015.
  */
+'use strict';
 
 var Client = require('node-rest-client').Client,
     client = new Client(),
