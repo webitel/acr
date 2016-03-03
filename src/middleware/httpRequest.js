@@ -93,13 +93,27 @@ module.exports = function (parameters, router, cb) {
     };
     method = method.toLowerCase();
 
-    for (var key in webArgs.data) {
-        if (!webArgs.data.hasOwnProperty(key)) continue;
+    var contentType = (webArgs.headers && webArgs.headers['Content-Type']) || '';
+    if (contentType.toLowerCase() == "application/x-www-form-urlencoded") {
+        if (webArgs.data instanceof Object) {
+            let _data = [];
+            for (let key in webArgs.data) {
+                _data.push(key + '=' + webArgs.data);
+            };
+            webArgs.data = router._parseVariable(_data.join('&')).replace(/\s/g, '+');
+        } else {
+            webArgs.data = router._parseVariable('' + webArgs.data).replace(/\s/g, '+');
+        }
+    } else {
+        // TODO
+        for (var key in webArgs.data) {
+            if (!webArgs.data.hasOwnProperty(key)) continue;
 
-        if (/^\$\$\{\W*\w*/.test(webArgs.data[key])) {
-            webArgs.data[key] = router.getGlbVar(webArgs.data[key].replace(/\$|\{|}/g, ''));
-        } else if (/^\$\{\W*\w*/.test(webArgs.data[key])) {
-            webArgs.data[key] = router.getChnVar(webArgs.data[key].replace(/\$|\{|}/g, ''));
+            if (/^\$\$\{\W*\w*/.test(webArgs.data[key])) {
+                webArgs.data[key] = router.getGlbVar(webArgs.data[key].replace(/\$|\{|}/g, ''));
+            } else if (/^\$\{\W*\w*/.test(webArgs.data[key])) {
+                webArgs.data[key] = router.getChnVar(webArgs.data[key].replace(/\$|\{|}/g, ''));
+            };
         };
     };
 
