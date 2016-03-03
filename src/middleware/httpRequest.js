@@ -99,7 +99,7 @@ module.exports = function (parameters, router, cb) {
         if (webArgs.data instanceof Object) {
             let _data = [];
             for (let key in webArgs.data) {
-                _data.push(key + '=' + webArgs.data);
+                _data.push(key + '=' + webArgs.data[key]);
             };
             webArgs.data = router._parseVariable(_data.join('&')).replace(/\s/g, '+');
         } else {
