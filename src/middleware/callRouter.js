@@ -103,6 +103,7 @@ const OPERATION = {
     FLUSH_DTMF: 'flushDTMF',
     EMAIL: 'sendEmail',
     MATH: 'math',
+    STRING: 'string',
 
     EAVESDROP: 'eavesdrop',
     SIP_REDIRECT: 'sipRedirect',
@@ -2264,6 +2265,40 @@ CallRouter.prototype.__ringback = function (app, cb) {
 
     if (cb)
         return cb();
+};
+
+CallRouter.prototype.__string = function (app, cb) {
+    try {
+        let prop = app[OPERATION.STRING] || {},
+            data = this._parseVariable(prop.data),
+            fn = prop.fn,
+            varName = prop.setVar,
+            args = prop.args
+            ;
+
+        if (!data || !varName || typeof data[fn] != 'function') {
+            log.error('Bad __string parameters');
+            return cb && cb();
+        };
+
+        if (args instanceof Array)
+            for (let i = 0, len = args.length; i < len; i++) {
+                if (typeof args[i] == 'string') {
+                    var match = args[i].match(new RegExp('^/(.*?)/([gimy]*)$'));
+                    if (match)
+                        args[i] = new RegExp(match[1], match[2]);
+                };
+            };
+
+        let res = data[fn].apply(data, args);
+        this.__setVar({
+            "setVar": varName + '=' + (res || '')
+        }, cb);
+
+    } catch (e) {
+        log.error(e);
+        return cb && cb();
+    }
 };
 
 CallRouter.prototype.__math = function (app, cb) {
