@@ -1489,13 +1489,6 @@ CallRouter.prototype.__bridge = function (app, cb) {
             };
         }
 
-        this.execApp({
-            "app": FS_COMMAND.BRIDGE,
-            "data": _data.slice(0, (-1 * separator.length)) + pickup,
-            "async": prop[OPERATION.ASYNC] ? true : false
-        });
-
-        /*
         // TODO WTEL-263
         this.execApp({
             "app": FS_COMMAND.BRIDGE,
@@ -1503,19 +1496,15 @@ CallRouter.prototype.__bridge = function (app, cb) {
             "async": prop[OPERATION.ASYNC] ? true : false
         }, function (res) {
             res.headers.forEach( (item) => {
-                console.log('set: ' + item.name + ' => ' + item.value);
+               // console.log('set: ' + item.name + ' => ' + item.value);
                 this.channelData.addHeader(item.name, item.value);
             });
 
             if (cb)
                 cb();
         });
-        */
 
     };
-
-    if (cb)
-        cb();
 };
 
 CallRouter.prototype.__inBandDTMF = function (app, cb) {
