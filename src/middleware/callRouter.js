@@ -673,35 +673,8 @@ CallRouter.prototype.doExec = function (condition, cb) {
     };
 };
 
-CallRouter.prototype.__calendar = function (condition, cb) {
-    var exportVariable = condition[OPERATION.CALENDAR]['exportVariable'],
-        scope = this
-        ;
-    if (!exportVariable) {
-        log.trace('_calendar: Bad parameters.');
-        if (cb) {
-            cb(new Error('Bad parameters.'))
-        };
-        return;
-    };
-    calendar(this, condition[OPERATION.CALENDAR], function (err, res) {
-        try {
-            if (err) {
-                log.error(err['message']);
-                if (cb)
-                    cb(err);
-                return;
-            };
-            scope.__setVar({
-                "setVar": ''.concat(exportVariable, '=', res.length)
-            }, cb);
-        } catch (e) {
-            log.error(e['message']);
-            if (cb)
-                cb(e);
-        };
-    });
-};
+CallRouter.prototype.__calendar = calendar;
+
 
 CallRouter.prototype.execute = function (callflows, cb) {
     var scope = this;
@@ -1497,12 +1470,20 @@ CallRouter.prototype.__bridge = function (app, cb) {
             "async": prop[OPERATION.ASYNC] ? true : false
         }, function (res) {
             res.headers.forEach( (item) => {
-               // console.log('set: ' + item.name + ' => ' + item.value);
+                //console.log('set: ' + item.name + ' => ' + item.value);
                 this.channelData.addHeader(item.name, item.value);
             });
+            // TODO continue_on_fail=?
+            //
+            if (res.getHeader('variable_bridge_hangup_cause') === 'NORMAL_CLEARING' && res.getHeader('variable_hangup_after_bridge') === 'true') {
+                scope.stop();
+                if (cb)
+                    cb();
+            } else {
+                if (cb)
+                    cb();
+            }
 
-            if (cb)
-                cb();
         });
 
     };
@@ -2281,14 +2262,20 @@ CallRouter.prototype.__string = function (app, cb) {
             return cb && cb();
         };
 
-        if (args instanceof Array)
+        if (args instanceof Array) {
+            // TODO
             for (let i = 0, len = args.length; i < len; i++) {
                 if (typeof args[i] == 'string') {
                     var match = args[i].match(new RegExp('^/(.*?)/([gimy]*)$'));
                     if (match)
                         args[i] = new RegExp(match[1], match[2]);
-                };
-            };
+                }
+                ;
+            }
+            ;
+        } else {
+            args = [args];
+        }
 
         let res = data[fn].apply(data, args);
         this.__setVar({
