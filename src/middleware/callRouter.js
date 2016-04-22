@@ -2411,9 +2411,13 @@ CallRouter.prototype.__agent = function (app, cb) {
     };
     name += '@' + this.domain;
     let status = prop.status || "Available";
-    let state = prop.state || "Waiting";
-    this.api('callcenter_config agent set status ' + name + " '" + status + "'");
-    this.api('callcenter_config agent set state ' + name + " '" + state + "'");
+    let state = prop.state;// || "Waiting";
+
+    this.api(`callcenter_config agent set status ${name} '${status}'`, (res) => log.debug(`${name} '${status}' => ${res.body}`));
+
+    if (state)
+        this.api(`callcenter_config agent set state ${name} '${state}'`, (res) => log.debug(`${name} '${state}' => ${res.body}`));
+
     return cb && cb();
 };
 
