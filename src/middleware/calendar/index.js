@@ -9,14 +9,10 @@ var db = require('../../lib/mongoDrv'),
     moment = require('moment-timezone'),
     CALENDAR_COLLECTION = config.get('mongodb:calendarCollection');
 
-var METHOD = {
-    IN: "in",
-    NIN: "nin"
-};
-
 module.exports = function (application, cb) {
     try {
-        let prop = application && application.calendar;
+        let prop = application && application.calendar,
+            scope = this;
 
         if (!prop) {
             log.error("Bad calendar application");
@@ -31,18 +27,24 @@ module.exports = function (application, cb) {
             return cb && cb();
         };
 
+        var callback = function (err, ok) {
+            if(err)
+                log.error(err);
+
+            scope.__setVar({
+                "setVar": `${varName}=${ok || false}`
+            }, cb);
+        };
+
         let calendarCollection = db.getCollection(CALENDAR_COLLECTION);
         calendarCollection.findOne(
             {name: name, domain: this.domain},
             (err, calendar) => {
-                if (err) {
-                    log.error(err);
-                    return cb && cb(err);
-                };
+                if (err)
+                    return callback(err);
 
                 if (!calendar) {
-                    log.trace(`Not found calendar ${name}`);
-                    return cb && cb();
+                    return callback(new Error(`Not found calendar ${name}`), false);
                 };
 
                 let current;
@@ -51,21 +53,14 @@ module.exports = function (application, cb) {
                 else if (res.timeZone && res.timeZone.id)
                     current = moment().tz(res.timeZone.id);
                 else current = moment();
-                
-                var callback = function (err, ok) {
-                    if(err)
-                        log.error(err);
-
-                    return cb && cb(err);
-                };
 
                 let currentTime = current.valueOf();
 
                 // Check range date;
                 if (calendar.startDate && currentTime < calendar.startDate)
-                    return callback();
+                    return callback(null, false);
                 else if (calendar.endDate && currentTime > calendar.endDate)
-                    return callback();
+                    return callback(null, false);
 
                 //Check work
                 let isAccept = false;
@@ -76,7 +71,7 @@ module.exports = function (application, cb) {
                         ;
 
                     for (let i = 0, len = calendar.accept.length; i < len; i++) {
-                        isAccept = between(currentTimeOfDay, calendar.accept[i].startTime, calendar.accept[i].endTime);
+                        isAccept = currentWeek === calendar.accept[i].weekDay && between(currentTimeOfDay, calendar.accept[i].startTime, calendar.accept[i].endTime);
                         if (isAccept)
                             break;
                     };
@@ -84,7 +79,10 @@ module.exports = function (application, cb) {
                 } else {
                     // TODO ERROR ???
                     return callback(new Error('Bad record ?'));
-                }
+                };
+
+                if (!isAccept)
+                    return callback(null, false);
 
                 // Check holiday
                 if (calendar.except instanceof Array) {
@@ -98,11 +96,11 @@ module.exports = function (application, cb) {
                         exceptDate = moment(calendar.except[i].date);
                         if (exceptDate.get('date') == currentDay && exceptDate.get('month') == currentMonth &&
                                 (calendar.except[i].repeat === 1 || (calendar.except[i].repeat === 0 && exceptDate.get('year') == currentYear)) )
-                            return callback();
+                            return callback(null, false);
                     }
                 };
 
-                log.info('OK')
+                return callback(null, true);
             }
         );
 
