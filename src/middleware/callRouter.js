@@ -1613,7 +1613,7 @@ CallRouter.prototype.__queue = function (app, cb) {
     this.execApp({
         "app": FS_COMMAND.CALLCENTER,
         "data": _data,
-        "async": (app[OPERATION.ASYNC] ? true : false) || timer
+        "async": (app[OPERATION.ASYNC] ? true : false) || !!timer
     }, function(res) {
         if (!continueOnAnswered && res.getHeader('variable_cc_cause') == 'answered')
             app.break = true;

@@ -1,6 +1,6 @@
 /**
  * Created by i.navrotskyj on 27.01.2015.
- * ./sipp 10.10.10.200:5070 -i 192.168.88.100 -s 334 -d 60s -l 50 -aa -mi 192.168.88.100 -rtp_echo -nd -r 10
+ * ./sipp 10.10.10.200:5070 -i 10.10.10.25 -s 334 -d 2s -l 50000 -aa -mi 10.10.10.25 -rtp_echo -nd -r 20
  */
 
 var Esl = require('modesl'),

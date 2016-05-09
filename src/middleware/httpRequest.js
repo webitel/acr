@@ -120,7 +120,7 @@ module.exports = function (parameters, router, cb) {
 
     var req;
     if (method == METHODS.GET) {
-        delete webArgs.data;
+        webArgs.parameters = webArgs.data;
         req = client.get(parameters['url'], webArgs, _parseRequest);
     } else if (method == METHODS.POST) {
         req = client.post(parameters['url'], webArgs, _parseRequest);
