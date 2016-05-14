@@ -33,9 +33,9 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
         }
 
         // TODO caller ?
-        let dn = conn.getHeader('Caller-Caller-ID-Number') || destinationNumber,
-            uuid = conn.getHeader('variable_uuid'),
-            answeredTime = conn.getHeader('Caller-Channel-Answered-Time')
+        let dn = conn.channelData.getHeader('Caller-Caller-ID-Number') || destinationNumber,
+            uuid = conn.channelData.getHeader('variable_uuid'),
+            answeredTime = conn.channelData.getHeader('Caller-Channel-Answered-Time')
             ;
         conn.execute('set', 'webitel_direction=dialer');
 
