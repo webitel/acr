@@ -5,7 +5,9 @@
 var db = require('../../lib/mongoDrv'),
     log = require('../../lib/log')(module),
     config = require('../../conf'),
+    ObjectID = require('mongodb').ObjectID,
     publicCollection = config.get('mongodb:publicCollection'),
+    dialerCollection = config.get('mongodb:dialerCollection'),
     defaultCollection = config.get('mongodb:defaultCollection'),
     extensionCollection = config.get('mongodb:extensionsCollection'),
     variablesCollection = config.get('mongodb:variablesCollection')
@@ -56,6 +58,15 @@ var dialplan = {
         } catch (e) {
             cb(e);
         }
+    },
+
+    findDialerDialplan: function (id, domainName, cb) {
+        if (ObjectID.isValid(id))
+            id = new ObjectID(id);
+
+        var dialCollection = db.getCollection(dialerCollection);
+
+        dialCollection.findOne({"_id": id}, {_cf: 1}, cb);
     },
     
     findActualDefaultDialplan: function (domainName, cb) {

@@ -3,6 +3,7 @@ var esl = require('modesl'),
     conf = require('./conf'),
     publicContext = require('./middleware/publicContext'),
     defaultContext = require('./middleware/defaultContext'),
+    dialerContext = require('./middleware/dialerContext'),
     globalCollection = require('./middleware/system'),
     DEFAULT_HANGUP_CAUSE = require('./const').DEFAULT_HANGUP_CAUSE
     ;
@@ -29,6 +30,7 @@ esl_server.on('connection::ready', function(conn, id, allCountSocket) {
     //console.log(conn.channelData.serialize());
     try {
         var context = conn.channelData.getHeader('Channel-Context'),
+            dialerId = conn.channelData.getHeader('variable_dlr_queue'),
             destinationNumber = conn.channelData.getHeader('Channel-Destination-Number') ||
                 conn.channelData.getHeader('Caller-Destination-Number');
         log.debug('Call %s -> %s', id, destinationNumber);
@@ -49,6 +51,8 @@ esl_server.on('connection::ready', function(conn, id, allCountSocket) {
 
             if (context == PUBLIC_CONTEXT) {
                 publicContext(conn, destinationNumber, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
+            } else if (dialerId) {
+                dialerContext(conn, dialerId, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
             } else {
                 defaultContext(conn, destinationNumber, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
             };

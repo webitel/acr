@@ -13,7 +13,8 @@
     "calendarCollection": "calendar",
     "blackListCollection": "blackList",
     "locationNumberCollection": "location",
-    "emailCollection": "emailConfig"
+    "emailCollection": "emailConfig",
+    "dialerCollection": "dialer"
   },
   "application": {
     "loglevel": "LOGLEVEL",

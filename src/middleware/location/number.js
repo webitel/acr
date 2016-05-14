@@ -17,7 +17,7 @@ module.exports = function (CallRouter, applicationName) {
             pattern = prop['regex'],
             result = prop['result'],
             scope = this,
-            number = this.channelDestinationNumber;
+            number = scope.channelDestinationNumber;
         ;
 
         if (varName) {
