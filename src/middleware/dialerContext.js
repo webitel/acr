@@ -26,30 +26,51 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             return
         }
 
-        conn.subscribe('CHANNEL_ANSWER');
-        // TODO Channel not answer
-//originate {origination_uuid=b55f4a2f-7953-4964-b536-79203314a2e3,dlr_queue=572a170e576151df0d6b164a,domain_name=10.10.10.144,origination_caller_id_number=1234567,origination_caller_id_name=Igor2,gatewayPositionMap=0>0}sofia/gateway/test/380730367300 &socket(10.10.10.25:10030 async full)
-        conn.on('esl::event::CHANNEL_ANSWER::*', (res) => {
-            console.log(res);
-            log.trace('onAnswer');
-            let callflow = res._cf;
-            var _router = new CallRouter(conn, {
-                "globalVar": globalVariable,
-                "desNumber": destinationNumber,
-                "chnNumber": destinationNumber,
-                "timeOffset": null,
-                "versionSchema": 2,
-                "domain": domainName
-            });
+        if (!domainName) {
+            log.error(`Not found domain ${domainName} -> ${destinationNumber} context`);
+            conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
+            return
+        }
 
+        // TODO caller ?
+        let dn = conn.getHeader('Caller-Caller-ID-Number') || destinationNumber,
+            uuid = conn.getHeader('variable_uuid'),
+            answeredTime = conn.getHeader('Caller-Channel-Answered-Time')
+            ;
+        conn.execute('set', 'webitel_direction=dialer');
+
+        let callflow = res._cf;
+
+        let _router = new CallRouter(conn, {
+            "globalVar": globalVariable,
+            "desNumber": dn,
+            "chnNumber": dn,
+            "timeOffset": null,
+            "versionSchema": 2,
+            "domain": domainName
+        });
+
+        let exec = function () {
             try {
-                log.trace('Exec: %s', destinationNumber);
+                log.trace('Exec: %s', dn);
                 _router.run(callflow);
             } catch (e) {
                 log.error(e.message);
                 //TODO узнать что ответить на ошибку
                 conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-            };
-        });
+            }
+        };
+
+        if (+answeredTime > 0) {
+            log.trace(`Channel ${uuid}  answered ${answeredTime}`);
+            exec();
+        } else {
+            log.trace(`Channel not answered, subscribe CHANNEL_ANSWER`);
+            conn.subscribe('CHANNEL_ANSWER');
+            conn.once('esl::event::CHANNEL_ANSWER::*', (resEsl) => {
+                log.trace(`On CHANNEL_ANSWER ${uuid}`);
+                exec();
+            });
+        }
     });
 };
