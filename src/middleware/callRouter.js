@@ -718,6 +718,7 @@ CallRouter.prototype.stop = function () {
 };
 
 CallRouter.prototype.start = function (callflows) {
+    console.log(callflows);
     this.callflows = callflows;
     var scope = this;
 
