@@ -1171,7 +1171,7 @@ CallRouter.prototype.__echo = function (app, cb) {
 
     if (!delay)
         delay = +this._parseVariable(app[OPERATION.ECHO]);
-    
+
     if (delay > 0) {
         _app = FS_COMMAND.DELAY_ECHO;
         _data = app[OPERATION.ECHO];

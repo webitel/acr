@@ -67,7 +67,8 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
         } else {
             log.trace(`Channel not answered, subscribe CHANNEL_ANSWER`);
             conn.subscribe('CHANNEL_ANSWER');
-            conn.once('esl::event::CHANNEL_ANSWER::*', (resEsl) => {
+            conn.on('esl::event::CHANNEL_ANSWER::*', (resEsl) => {
+                console.log(resEsl);
                 log.trace(`On CHANNEL_ANSWER ${uuid}`);
                 exec();
             });
