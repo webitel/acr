@@ -1168,6 +1168,10 @@ CallRouter.prototype.__log = function (app, cb) {
 
 CallRouter.prototype.__echo = function (app, cb) {
     var _app, _data = '', delay = parseInt(app[OPERATION.ECHO]);
+
+    if (!delay)
+        delay = +this._parseVariable(app[OPERATION.ECHO]);
+    
     if (delay > 0) {
         _app = FS_COMMAND.DELAY_ECHO;
         _data = app[OPERATION.ECHO];
@@ -1195,6 +1199,9 @@ CallRouter.prototype.__sendSms = function (app, cb) {
 
 CallRouter.prototype.__sleep = function (app, cb) {
     var delay = parseInt(app[OPERATION.SLEEP]);
+    if (!delay)
+        delay = this._parseVariable(app[OPERATION.SLEEP]);
+
     this.execApp({
         "app": FS_COMMAND.SLEEP,
         "data": delay,
