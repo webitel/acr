@@ -1,7 +1,7 @@
 Advanced Call Router (ACR)
 ====
 
-[![Build Status](https://dev.webitel.com/buildStatus/icon?job=build_acr)](https://dev.webitel.com/job/build_acr)
+[![Build Status](https://travis-ci.org/webitel/acr.svg?branch=master)](https://travis-ci.org/webitel/acr) [![Docker Pulls](https://img.shields.io/docker/pulls/webitel/acr.svg?maxAge=2592000)](https://hub.docker.com/r/webitel/acr) [![Documentation Status](https://readthedocs.org/projects/webitel/badge/?version=latest)](http://api.webitel.com/en/latest/?badge=latest)
 
 Advanced Call Router - route calls that match configured rules.
 
