@@ -2416,7 +2416,7 @@ CallRouter.prototype.__agent = function (app, cb) {
         log.error('Bad __agent options');
         return cb && cb();
     }
-    name = name.replace(/@.*/, `@${this.domain}`);
+    name = name.replace(/@.*/, '') + `@${this.domain}`;
     let status = prop.status || "Available";
     let state = prop.state;// || "Waiting";
 
