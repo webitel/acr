@@ -141,7 +141,10 @@ const FS_COMMAND = {
     SCHEDULE_TRANSFER: "sched_transfer",
 
     BRIDGE: "bridge",
+
     PLAYBACK: "playback",
+    BROADCAST: "uuid_broadcast",
+
     PLAY_AND_GET: "play_and_get_digits",
     PARK: "valet_park",
     CALLCENTER: "callcenter",
@@ -1309,6 +1312,7 @@ CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh,
 CallRouter.prototype.__playback = function (app, cb) {
     var filePath = '',
         prop = app[OPERATION.PLAYBACK],
+        broadcast = prop['broadcast'],
         _terminator = prop['terminator'],
         scope = this;
 
@@ -1352,21 +1356,29 @@ CallRouter.prototype.__playback = function (app, cb) {
         });
 
     } else {
-        if (_terminator) {
-            this.execApp({
-                "app": FS_COMMAND.SET,
-                "data": "playback_terminators=" + _terminator
-            });
-        };
+        if (broadcast) {
+            if (!~['aleg', 'bleg', 'both'].indexOf(broadcast))
+                broadcast = 'both';
 
-        this.execApp({
-            "app": FS_COMMAND.PLAYBACK,
-            "data": filePath,
-            "async": app[OPERATION.PLAYBACK][OPERATION.ASYNC] ? true : false
-        });
+            this.connection.bgapi(`uuid_broadcast ${this.uuid} ${filePath} ${broadcast}`);
+        } else {
+            if (_terminator) {
+                this.execApp({
+                    "app": FS_COMMAND.SET,
+                    "data": "playback_terminators=" + _terminator
+                });
+            }
+
+            this.execApp({
+                "app": FS_COMMAND.PLAYBACK,
+                "data": filePath,
+                "async": app[OPERATION.PLAYBACK][OPERATION.ASYNC] ? true : false
+            });
+        }
+
         if (cb)
             cb();
-    };
+    }
 };
 
 CallRouter.prototype.__bridge = function (app, cb) {
@@ -1606,7 +1618,7 @@ CallRouter.prototype.__queue = function (app, cb) {
 
         } else {
             ccTimers.push(new RouterTimer(timer, scope));
-        };
+        }
 
         this.connection.on('esl::end', _closeTimer);
 

@@ -17,12 +17,6 @@
     "dialerCollection": "dialer"
   },
   "application": {
-    "loglevel": "LOGLEVEL",
-    "logstash": {
-      "enabled": LOGSTASH_ENABLE,
-      "host": "LOGSTASH_HOST",
-      "port": 28777,
-      "node_name": "acr"
-    }
+    "loglevel": "LOGLEVEL"
   }
 }
