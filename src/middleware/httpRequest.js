@@ -94,29 +94,37 @@ module.exports = function (parameters, router, cb) {
     };
     method = method.toLowerCase();
 
+    let parseObject = (o) => {
+        let n = {};
+        for (var key in o) {
+            if (!o.hasOwnProperty(key)) continue;
+
+            if (/^\$\$\{\W*\w*/.test(o[key])) {
+                n[key] = router.getGlbVar(o[key].replace(/\$|\{|}/g, ''));
+            } else if (/^\$\{\W*\w*/.test(o[key])) {
+                n[key] = router.getChnVar(o[key].replace(/\$|\{|}/g, ''));
+            }
+        }
+        return n;
+    };
+
     var contentType = (webArgs.headers && webArgs.headers['Content-Type']) || '';
     if (contentType.toLowerCase() == "application/x-www-form-urlencoded") {
         if (webArgs.data instanceof Object) {
             let _data = [];
             for (let key in webArgs.data) {
                 _data.push(key + '=' + webArgs.data[key]);
-            };
+            }
             webArgs.data = router._parseVariable(_data.join('&')).replace(/\s/g, '+');
         } else {
             webArgs.data = router._parseVariable('' + webArgs.data).replace(/\s/g, '+');
         }
     } else {
-        // TODO
-        for (var key in webArgs.data) {
-            if (!webArgs.data.hasOwnProperty(key)) continue;
-
-            if (/^\$\$\{\W*\w*/.test(webArgs.data[key])) {
-                webArgs.data[key] = router.getGlbVar(webArgs.data[key].replace(/\$|\{|}/g, ''));
-            } else if (/^\$\{\W*\w*/.test(webArgs.data[key])) {
-                webArgs.data[key] = router.getChnVar(webArgs.data[key].replace(/\$|\{|}/g, ''));
-            };
-        };
-    };
+        webArgs.data = parseObject(webArgs.data);
+        if (parameters.path) {
+            webArgs.path = parseObject(parameters.path);
+        }
+    }
 
     var req;
     if (method == METHODS.GET) {
