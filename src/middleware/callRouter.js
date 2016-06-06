@@ -1035,8 +1035,8 @@ CallRouter.prototype.__recordFile = function (app, cb) {
         });
     };
 
-    let multiSet = '^^,playback_terminators=' + playbackTerminators
-        + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email + ' ' + name;
+    let multiSet = '^^~playback_terminators=' + playbackTerminators
+        + '~record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email + ' ' + name;
 
     this.execApp({
         "app": FS_COMMAND.MULTISET,
@@ -1080,11 +1080,11 @@ CallRouter.prototype.__recordSession = function (app, cb) {
             "setVar": WEBITEL_RECORD_FILE_NAME + '=' + varFileName
         });
 
-        var multiSet = '^^,RECORD_MIN_SEC=' + (prop['minSec'] || '2' )
-            + ',RECORD_STEREO=' + (String(prop['stereo']) == 'false' ? 'false' : 'true')
-            + ',RECORD_BRIDGE_REQ=' + (String(prop['bridged']) == 'false' ? 'false' : 'true')
-            + ',recording_follow_transfer=' + (String(prop['followTransfer']) == 'false' ? 'false' : 'true')
-            + ',record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email + ' ' + name;
+        var multiSet = '^^~RECORD_MIN_SEC=' + (prop['minSec'] || '2' )
+            + '~RECORD_STEREO=' + (String(prop['stereo']) == 'false' ? 'false' : 'true')
+            + '~RECORD_BRIDGE_REQ=' + (String(prop['bridged']) == 'false' ? 'false' : 'true')
+            + '~recording_follow_transfer=' + (String(prop['followTransfer']) == 'false' ? 'false' : 'true')
+            + '~record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} ' + type + ' ' + email + ' ' + name;
 
         this.execApp({
             "app": FS_COMMAND.MULTISET,
