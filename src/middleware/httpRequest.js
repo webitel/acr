@@ -47,7 +47,7 @@ module.exports = function (parameters, router, cb) {
     };
     var path, current;
     
-    var _parseRequest = function (dataRequestLib) {
+    var _parseRequest = function (dataRequestLib, a, b) {
         try {
             var jsonData;
             var dataRequest = Buffer.isBuffer(dataRequestLib) ? dataRequestLib.toString('utf8') : dataRequestLib;
@@ -103,6 +103,8 @@ module.exports = function (parameters, router, cb) {
                 n[key] = router.getGlbVar(o[key].replace(/\$|\{|}/g, ''));
             } else if (/^\$\{\W*\w*/.test(o[key])) {
                 n[key] = router.getChnVar(o[key].replace(/\$|\{|}/g, ''));
+            } else {
+                n[key] = o[key];
             }
         }
         return n;
