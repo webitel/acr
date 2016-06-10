@@ -25,7 +25,8 @@ const MEDIA_TYPE = {
     SILENCE: 'silence',
     LOCAL: 'local',
     SHOUT: 'shout',
-    TONE: 'tone'
+    TONE: 'tone',
+    SAY: 'say'
 };
 
 const OPERATION = {
@@ -1272,7 +1273,8 @@ CallRouter.prototype.__schedule = function (app, cb) {
         cb();
 };
 
-CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh, noPref) {
+// TODO delete type, fileName, refresh
+CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh, noPref, allProp = {}) {
     var filePath = '';
     fileName = this._parseVariable(fileName);
     // TODO delete
@@ -1298,6 +1300,12 @@ CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh,
         case MEDIA_TYPE.TONE:
             filePath = noPref ? fileName : 'tone_stream://' + fileName;
             break;
+        case MEDIA_TYPE.SAY:
+
+            let [lang = "en", method = "number pronounced"] = [allProp.lang, allProp.method];
+            lang = this._parseVariable(lang);
+            filePath = "${" + `say_string ${lang} ${lang} ${method} ${fileName}` + "}";
+            break;
         default :
             var cdrUrl = this.getGlbVar('cdr_url');
             if (cdrUrl) {
@@ -1317,11 +1325,11 @@ CallRouter.prototype.__playback = function (app, cb) {
         scope = this;
 
     if (typeof prop['name'] === 'string') {
-        filePath = this._getPlaybackFileString(prop['type'], prop['name'], prop['refresh']);
+        filePath = this._getPlaybackFileString(prop['type'], prop['name'], prop['refresh'], prop);
     } else if (prop['files'] instanceof Array) {
         var files = prop['files'];
         for (var i = 0, len = files.length; i < len; i++) {
-            filePath += '!' + this._getPlaybackFileString(files[i]['type'], files[i]['name'], files[i]['refresh']);
+            filePath += '!' + this._getPlaybackFileString(files[i]['type'], files[i]['name'], files[i]['refresh'], prop);
         };
         filePath = 'file_string://' + filePath.substring(1);
     } else {
@@ -2245,21 +2253,21 @@ CallRouter.prototype.__ringback = function (app, cb) {
     if (prop.hasOwnProperty('call') && prop.call['name']) {
         let call = prop.call;
         this.__setVar({
-            "setVar": "ringback=" + this._getPlaybackFileString(call.type, call.name, call.refresh, true)
+            "setVar": "ringback=" + this._getPlaybackFileString(call.type, call.name, call.refresh, true, call)
         });
     };
 
     if (prop.hasOwnProperty('hold')) {
         let hold = prop.hold;
         this.__setVar({
-            "setVar": "hold_music=" + this._getPlaybackFileString(hold.type, hold.name, hold.refresh, true)
+            "setVar": "hold_music=" + this._getPlaybackFileString(hold.type, hold.name, hold.refresh, true, hold)
         });
     };
 
     if (prop.hasOwnProperty('transfer') && prop.transfer['name']) {
         let transfer = prop.transfer;
         this.__setVar({
-            "setVar": "transfer_ringback=" + this._getPlaybackFileString(transfer.type, transfer.name, transfer.refresh, true)
+            "setVar": "transfer_ringback=" + this._getPlaybackFileString(transfer.type, transfer.name, transfer.refresh, true, transfer)
         });
     };
 
