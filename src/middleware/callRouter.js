@@ -1325,11 +1325,11 @@ CallRouter.prototype.__playback = function (app, cb) {
         scope = this;
 
     if (typeof prop['name'] === 'string') {
-        filePath = this._getPlaybackFileString(prop['type'], prop['name'], prop['refresh'], prop);
+        filePath = this._getPlaybackFileString(prop['type'], prop['name'], prop['refresh'], false, prop);
     } else if (prop['files'] instanceof Array) {
         var files = prop['files'];
         for (var i = 0, len = files.length; i < len; i++) {
-            filePath += '!' + this._getPlaybackFileString(files[i]['type'], files[i]['name'], files[i]['refresh'], prop);
+            filePath += '!' + this._getPlaybackFileString(files[i]['type'], files[i]['name'], files[i]['refresh'], false, files[i]);
         };
         filePath = 'file_string://' + filePath.substring(1);
     } else {
