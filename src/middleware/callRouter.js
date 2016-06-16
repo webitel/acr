@@ -806,18 +806,20 @@ CallRouter.prototype.__park = function (app, cb) {
 
 CallRouter.prototype._addVariableArrayToChannelDump = function (variables) {
     if (variables instanceof  Array) {
-        var scope = this, _tmp;
+        let scope = this;
         variables.forEach(function(variableStr) {
             if (typeof variableStr != 'string') return;
-            _tmp = variableStr.split('=');
-            scope.setChnVar('variable_' + _tmp[0], _tmp[1]);
+            let id = variableStr.indexOf('='),
+                varName = variableStr.substring(0, id),
+                varVal = variableStr.substring(id + 1, variableStr.length);
+            scope.setChnVar('variable_' + varName, varVal);
 
             //fix public
-            if (_tmp[0] == 'default_language' && _tmp[1] == 'ru') {
+            if (varName == 'default_language' && varVal == 'ru') {
                 scope.connection.execute('set', 'sound_prefix=\/$${sounds_dir}\/ru\/RU\/elena');
-            };
+            }
         });
-    };
+    }
 };
 
 CallRouter.prototype.__setArray = function (app, cb) {

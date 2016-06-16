@@ -44,19 +44,28 @@ module.exports = function (parameters, router, cb) {
     if (!parameters['url']) {
         cb(new Error('Bad request'));
         return;
-    };
+    }
     var path, current;
     
     var _parseRequest = function (dataRequestLib, a, b) {
         try {
+            if (typeof parameters.exportCookie == 'string' && a.headers['set-cookie']) {
+                router.__setVar({
+                    "setVar": `${parameters.exportCookie}=${a.headers['set-cookie'].join(';')}`
+                })
+            }
             var jsonData;
             var dataRequest = Buffer.isBuffer(dataRequestLib) ? dataRequestLib.toString('utf8') : dataRequestLib;
+            if (a.headers["content-type"] && !~a.headers["content-type"].indexOf('application/json')) {
+                log.error(`No support response content type ${a.headers["content-type"]}`);
+                return;
+            }
+            log.debug(dataRequest);
             if (typeof dataRequest === 'object') {
                 jsonData = dataRequest;
             } else {
                 jsonData = JSON.parse(dataRequest);
-            };
-            //log.debug(jsonData);
+            }
             for (var key in exportVariables) {
                 path = exportVariables[key] || '';
                 current = jsonData;
@@ -68,12 +77,18 @@ module.exports = function (parameters, router, cb) {
                 router.__setVar({
                     "setVar": "all:" + key + "=" + current
                 });
-            };
+            }
         } catch (e) {
             log.error(e);
         } finally {
             cb();
-        };
+        }
+    };
+
+    let parseObject = (o) => {
+        let n = JSON.stringify(o);
+        // TODO ...
+        return JSON.parse(router._parseVariable(n));
     };
 
     var method = parameters['method'] || 'post',
@@ -83,7 +98,7 @@ module.exports = function (parameters, router, cb) {
 
     var webArgs = {
         data: parameters['data'] || DEF_DATA(),
-        headers: headers,
+        headers: parseObject(headers),
         requestConfig: {
             timeout: 1000, //request timeout in milliseconds
             keepAlive: false //Enable/disable keep-alive functionalityidle socket.
@@ -93,22 +108,6 @@ module.exports = function (parameters, router, cb) {
         }
     };
     method = method.toLowerCase();
-
-    let parseObject = (o) => {
-        let n = {};
-        for (var key in o) {
-            if (!o.hasOwnProperty(key)) continue;
-
-            if (/^\$\$\{\W*\w*/.test(o[key])) {
-                n[key] = router.getGlbVar(o[key].replace(/\$|\{|}/g, ''));
-            } else if (/^\$\{\W*\w*/.test(o[key])) {
-                n[key] = router.getChnVar(o[key].replace(/\$|\{|}/g, ''));
-            } else {
-                n[key] = o[key];
-            }
-        }
-        return n;
-    };
 
     var contentType = (webArgs.headers && webArgs.headers['Content-Type']) || '';
     if (contentType.toLowerCase() == "application/x-www-form-urlencoded") {
@@ -128,6 +127,8 @@ module.exports = function (parameters, router, cb) {
         }
     }
 
+    // console.dir(webArgs, {depth: 5, color: true});
+
     var req;
     if (method == METHODS.GET) {
         webArgs.parameters = webArgs.data;
@@ -138,7 +139,7 @@ module.exports = function (parameters, router, cb) {
         log.error('Bad parameters method');
         cb();
         return;
-    };
+    }
 
     req.on('requestTimeout',function(req){
         log.warn("request has expired");
