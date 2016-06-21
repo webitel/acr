@@ -32,7 +32,7 @@ esl_server.on('connection::ready', function(conn, id, allCountSocket) {
         var context = conn.channelData.getHeader('Channel-Context'),
             dialerId = conn.channelData.getHeader('variable_dlr_queue'),
             destinationNumber = conn.channelData.getHeader('Channel-Destination-Number') ||
-                conn.channelData.getHeader('Caller-Destination-Number');
+                conn.channelData.getHeader('Caller-Destination-Number') || conn.channelData.getHeader('variable_destination_number');
         log.debug('Call %s -> %s', id, destinationNumber);
 
         globalCollection.getGlobalVariables(conn, conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
@@ -40,12 +40,12 @@ esl_server.on('connection::ready', function(conn, id, allCountSocket) {
                 log.error(err.message);
                 conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                 return
-            };
+            }
 
             var soundPref = '\/$${sounds_dir}\/en\/us\/callie';
             if (conn.channelData.getHeader('variable_default_language') == 'ru') {
                 soundPref = '\/$${sounds_dir}\/ru\/RU\/elena';
-            };
+            }
 
             conn.execute('set', 'sound_prefix=' + soundPref);
 
@@ -55,14 +55,14 @@ esl_server.on('connection::ready', function(conn, id, allCountSocket) {
                 dialerContext(conn, dialerId, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
             } else {
                 defaultContext(conn, destinationNumber, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
-            };
+            }
 
         });
 
     } catch (e) {
         log.error(e.message);
         conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-    };
+    }
 
 });
 
@@ -74,7 +74,7 @@ esl_server.on('connection::close', function(c, id, allCount) {
     if (c && c.__callRouter) {
         c.__callRouter.stop();
         delete c.__callRouter;
-    };
+    }
     log.trace("Call end %s [all socket: %s]", id, allCount);
 });
 

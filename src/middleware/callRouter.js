@@ -108,7 +108,8 @@ const OPERATION = {
 
     EAVESDROP: 'eavesdrop',
     SIP_REDIRECT: 'sipRedirect',
-    AGENT: 'agent'
+    AGENT: 'agent',
+    AVMD: "avmd"
 };
 
 const FS_COMMAND = {
@@ -179,7 +180,9 @@ const FS_COMMAND = {
     USERSPY: 'userspy',
 
     DEFLECT: 'deflect',
-    REDIRECT: 'redirect'
+    REDIRECT: 'redirect',
+    AVMD_START: "avmd_start",
+    AVMD_STOP: "avmd_stop",
 };
 
 
@@ -735,7 +738,7 @@ CallRouter.prototype.start = function (callflows) {
             scope.saveDomainVariables();
             scope.connection.disconnect();
             return;
-        };
+        }
         scope.doExec(callflows[scope.index], postExec);
     };
 
@@ -749,7 +752,7 @@ CallRouter.prototype.start = function (callflows) {
         } catch (e) {
             log.error(e);
         }
-    };
+    }
 };
 
 CallRouter.prototype.__answer = function (app, cb) {
@@ -1360,7 +1363,7 @@ CallRouter.prototype.__playback = function (app, cb) {
                 log.trace('Set %s = %s', _setVar, _r);
             } catch (e) {
                 log.error(e.message);
-            };
+            }
             if (cb)
                 cb();
         });
@@ -2453,4 +2456,51 @@ CallRouter.prototype.__agent = function (app, cb) {
 CallRouter.prototype.api = function (str, cb) {
     log.trace('Exec %s', str);
     return this.connection.api(str, cb);
+};
+
+CallRouter.prototype.__avmd = function (app, cb) {
+    let prop = app[OPERATION.AVMD] || {},
+        _app = '',
+        data = '';
+
+    if (prop.action == "start") {
+        let params = [];
+        if (prop.simplifiedEstimation) {
+            params.push(`simplified_estimation=${prop.simplifiedEstimation}`);
+        }
+        if (prop.inboundChannel) {
+            params.push(`inbound_channel=${prop.inboundChannel}`);
+        }
+        if (prop.outboundChannel) {
+            params.push(`outbound_channel=${prop.outboundChannel}`);
+        }
+        if (prop.continuousStreak) {
+            params.push(`sample_n_continuous_streak=${prop.continuousStreak}`);
+        }
+        if (prop.toSkip) {
+            params.push(`sample_n_to_skip=${prop.toSkip}`);
+        }
+        if (prop.debug) {
+            params.push(`debug=${prop.debug}`);
+        }
+        if (prop.reportStatus) {
+            params.push(`report_status=${prop.reportStatus}`);
+        }
+
+        data = params.join(',');
+        _app = FS_COMMAND.AVMD_START;
+    } else if (prop.action == "stop") {
+        _app = FS_COMMAND.AVMD_STOP;
+    } else {
+        log.error(`Bad __avmd action parameters.`);
+        return cb && cb();
+    }
+
+    this.execApp({
+        "app": _app,
+        "data": data,
+        "async": app[OPERATION.ASYNC] ? true : false
+    });
+
+    return cb && cb();
 };

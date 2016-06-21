@@ -61,6 +61,16 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             }
         };
 
+        // conn.subscribe('CUSTOM avmd::beep');
+        //
+        // conn.once(`esl::event::CUSTOM::${uuid}`, (e) => {
+        //     console.log(e.serialize());
+        // });
+        //
+        // conn.execute(`avmd_start`, "simplified_estimation=0,inbound_channel=1,outbound_channel=1,sample_n_continuous_streak=13,sample_n_to_skip=18,debug=1,report_status=0,fast_math=1", (res) => {
+        //     console.log(res.serialize())
+        // });
+
         if (+answeredTime > 0) {
             log.trace(`Channel ${uuid}  answered ${answeredTime}`);
             exec();
