@@ -109,7 +109,8 @@ const OPERATION = {
     EAVESDROP: 'eavesdrop',
     SIP_REDIRECT: 'sipRedirect',
     AGENT: 'agent',
-    AVMD: "avmd"
+    AVMD: "avmd",
+    TELEGRAM: "telegram"
 };
 
 const FS_COMMAND = {
@@ -2289,10 +2290,10 @@ CallRouter.prototype.__string = function (app, cb) {
             args = prop.args
             ;
 
-        if (!data || !varName || typeof data[fn] != 'function') {
+        if (!data || !varName) {
             log.error('Bad __string parameters');
             return cb && cb();
-        };
+        }
 
         if (args instanceof Array) {
             // TODO
@@ -2302,14 +2303,21 @@ CallRouter.prototype.__string = function (app, cb) {
                     if (match)
                         args[i] = new RegExp(match[1], match[2]);
                 }
-                ;
             }
-            ;
         } else {
             args = [args];
         }
 
-        let res = data[fn].apply(data, args);
+        let res;
+
+        if (typeof StringOperation[fn] == 'function') {
+            res = StringOperation[fn](data, args);
+        } else if (typeof data[fn] == 'function') {
+            res = data[fn].apply(data, args);
+        } else {
+            log.error('Bad __string fn name');
+            return cb && cb();
+        }
         this.__setVar({
             "setVar": varName + '=' + (res || '')
         }, cb);
@@ -2317,6 +2325,15 @@ CallRouter.prototype.__string = function (app, cb) {
     } catch (e) {
         log.error(e);
         return cb && cb();
+    }
+};
+
+let StringOperation = {
+    reverse: (s) => {
+        if (!s)
+            return '';
+
+        return reverseString(s);
     }
 };
 
@@ -2406,14 +2423,14 @@ CallRouter.prototype.__eavesdrop = function (app, cb) {
             data = number + '@${domain_name}';
         } else {
             data = '${hash(select/spymap/${domain_name}-' + number + ')}';
-        };
+        }
 
         this.execApp({
             "app": fsApp,
             "data": data,
             "async": app[OPERATION.ASYNC] ? true : false
         });
-    };
+    }
 
     return cb && cb();
 };
