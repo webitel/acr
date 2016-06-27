@@ -1787,7 +1787,7 @@ CallRouter.prototype.__exportVars = function (app, cb) {
         });
 
         scope.__setVar({
-            "setVar": 'webitel_data=' + JSON.stringify(_item)
+            "setVar": 'all:webitel_data=' + JSON.stringify(_item)
         }, function () {
             scope.__setVar({
                 "setVar": 'cc_export_vars=webitel_data'
