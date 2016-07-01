@@ -102,9 +102,6 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                                 _reg = null;
                             };
                             if (_reg) {
-                                if (!conn.channelData.getHeader('variable_presence_data')) {
-                                    conn.execute('set', 'presence_data=' + conn.channelData.getHeader('variable_presence_id'));
-                                };
                                 log.trace('Exec: %s', result[i]['destination_number']);
 
                                 if (result[i]['fs_timezone']) {

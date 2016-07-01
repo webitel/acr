@@ -221,7 +221,7 @@ var CallRouter = module.exports = function (connection, option) {
     //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
     this.__setVar({
-        "setVar": "eavesdrop_group=" + this.domain
+        "setVar": [`eavesdrop_group=${this.domain}`, `presence_data=${this.domain}`]
     });
 
     this.log = {
@@ -241,6 +241,7 @@ var CallRouter = module.exports = function (connection, option) {
 };
 
 require('./email')(CallRouter, OPERATION.EMAIL);
+require('./telegram')(CallRouter, OPERATION.TELEGRAM);
 require('./disa')(CallRouter);
 require('./location/number')(CallRouter, OPERATION.LOCATION);
 

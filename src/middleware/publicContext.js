@@ -34,7 +34,6 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
         };
 
         conn.execute('set', 'domain_name=' + result[0]['domain']);
-        conn.execute('set', 'presence_data=' + result[0]['domain']);
         conn.execute('set', 'force_transfer_context=default');
         conn.execute('hash', 'insert/' + result[0]['domain']+'-last_dial/global/${uuid}');
 
