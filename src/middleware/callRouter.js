@@ -210,6 +210,8 @@ var CallRouter = module.exports = function (connection, option) {
     this.uuid = connection.channelData.getHeader('variable_uuid');
     this._dumpArrayIndex = {};
 
+    this.onDisconnectCallflow = option.onDisconnect;
+
     //this.localVar = option['localVariables'] || {};
     //this._dbId = option['id'] || '';
     //this.COLLECTION_NAME = option['collectionName'];
@@ -218,7 +220,7 @@ var CallRouter = module.exports = function (connection, option) {
     this.versionSchema = option['versionSchema'];
     this.setDestinationNumber(option['desNumber'], option['chnNumber']);
 
-    //this.xData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
+    // this.xData = new Array(1e4).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
     this.__setVar({
         "setVar": [`eavesdrop_group=${this.domain}`, `presence_data=${this.domain}`]
@@ -738,7 +740,7 @@ CallRouter.prototype.start = function (callflows) {
         if (scope.index == callflows.length || scope.end) {
             //scope.updateLocalVariables();
             scope.saveDomainVariables();
-            scope.connection.disconnect();
+            // scope.connection.disconnect();
             return;
         }
         scope.doExec(callflows[scope.index], postExec);

@@ -35,7 +35,7 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             log.error(err.message);
             conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
             return;
-        };
+        }
 
         if (resultExtension) {
             try {
@@ -47,10 +47,10 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                     conn.execute('set', 'webitel_direction=' + _tmpDirection);
                     log.trace('set: webitel_direction=%s', _tmpDirection);
 
-                };
+                }
                 if (resultExtension['fs_timezone']) {
                     conn.execute('set', 'timezone=' + resultExtension['fs_timezone']);
-                };
+                }
 
                 setupPickupParameters(conn, resultExtension['destination_number'], resultExtension['domain']);
 
@@ -61,13 +61,14 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                     "chnNumber": destinationNumber,
                     "timeOffset": resultExtension['fs_timezone'],
                     "versionSchema": resultExtension['version'],
-                    "domain": resultExtension['domain']
+                    "domain": resultExtension['domain'],
+                    "onDisconnect": resultExtension['onDisconnect']
                 });
                 _router.run(callflow);
             } catch (e) {
                 log.error(e.message);
                 conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-            };
+            }
         } else {
             dialplan.findActualDefaultDialplan(domainName, function (err, result) {
 
@@ -75,17 +76,17 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                     log.error(err.message);
                     conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                     return;
-                };
+                }
 
                 if (result.length == 0) {
                     log.warn("Not found route DEFAULT");
-                };
+                }
 
                 // WTEL-183
                 if (notExistsDirection) {
                     conn.execute('set', 'webitel_direction=outbound');
                     log.trace('set: webitel_direction=outbound');
-                };
+                }
 
                 if (result instanceof Array) {
                     var _r, _reg;
@@ -95,18 +96,18 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                             // Bad destination reg exp value
                             if (!_r) {
                                 _r = [null, result[i]['destination_number']]
-                            };
+                            }
                             try {
                                 _reg = new RegExp(_r[1], _r[2]).exec(destinationNumber);
                             } catch (e) {
                                 _reg = null;
-                            };
+                            }
                             if (_reg) {
                                 log.trace('Exec: %s', result[i]['destination_number']);
 
                                 if (result[i]['fs_timezone']) {
                                     conn.execute('set', 'timezone=' + result[i]['fs_timezone']);
-                                };
+                                }
 
                                 var callflow = result[i]['callflow'];
                                 var _router = new CallRouter(conn, {
@@ -115,7 +116,8 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                                     "chnNumber": destinationNumber,
                                     "timeOffset": result[i]['fs_timezone'],
                                     "versionSchema": result[i]['version'],
-                                    "domain": result[i]['domain']
+                                    "domain": result[i]['domain'],
+                                    "onDisconnect": result[i]['onDisconnect']
                                 });
 
                                 try {
@@ -127,18 +129,18 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                                     // TODO узнать что ответить на ошибку
                                     conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
                                     break;
-                                };
-                            };
+                                }
+                            }
                             log.trace('Break: %s', result[i]['destination_number']);
                         } else {
                             log.warn('Bad destination_number parameters');
-                        };
-                    };
-                };
+                        }
+                    }
+                }
                 if (_isNotRout) {
                     setupPickupParameters(conn, destinationNumber, domainName);
                     internalExtension(conn, destinationNumber, domainName);
-                };
+                }
 
             });
         }

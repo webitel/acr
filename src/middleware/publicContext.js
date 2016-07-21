@@ -15,23 +15,23 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             log.error(err.message);
             conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
             return
-        };
+        }
 
         if (result.length == 0) {
             log.warn("Not found route PUBLIC");
             conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
             return;
-        };
+        }
 
         // WTEL-183
         if (notExistsDirection) {
             log.trace('set: webitel_direction=inbound');
             conn.execute('set', 'webitel_direction=inbound');
-        };
+        }
 
         if (result[0]['fs_timezone']) {
             conn.execute('set', 'timezone=' + result[0]['fs_timezone']);
-        };
+        }
 
         conn.execute('set', 'domain_name=' + result[0]['domain']);
         conn.execute('set', 'force_transfer_context=default');
@@ -44,7 +44,8 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             "chnNumber": destinationNumber,
             "timeOffset": result[0]['fs_timezone'],
             "versionSchema": result[0]['version'],
-            "domain": result[0]['domain']
+            "domain": result[0]['domain'],
+            "onDisconnect": result[0]['onDisconnect']
         });
 
         try {
@@ -54,6 +55,6 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             log.error(e.message);
             //TODO узнать что ответить на ошибку
             conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-        };
+        }
     });
 };
