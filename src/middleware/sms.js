@@ -58,9 +58,12 @@ module.exports = function (parameters, rout, cb) {
         };
 
         var req = client.post('http://sms.barex.com.ua/websend/', webArgs, function (dataRequest) {
-            rout.__setVar({
-                "setVar": "sendSmsResponse=" + dataRequest.toString()
-            });
+            if (rout.connection.socket) {
+                rout.__setVar({
+                    "setVar": "sendSmsResponse=" + dataRequest.toString()
+                });
+            }
+
             if (cb && !_cb) {
                 // todo
                 _cb = true;

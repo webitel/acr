@@ -49,7 +49,7 @@ module.exports = function (parameters, router, cb) {
     
     var _parseRequest = function (dataRequestLib, a, b) {
         try {
-            if (typeof parameters.exportCookie == 'string' && a.headers['set-cookie']) {
+            if (typeof parameters.exportCookie == 'string' && a.headers['set-cookie'] && router.connection.socket) {
                 router.__setVar({
                     "setVar": `${parameters.exportCookie}=${a.headers['set-cookie'].join(';')}`
                 })
@@ -74,9 +74,11 @@ module.exports = function (parameters, router, cb) {
                 });
 
                 if (!current) continue;
-                router.__setVar({
-                    "setVar": "all:" + key + "=" + current
-                });
+                if (router.connection.socket) {
+                    router.__setVar({
+                        "setVar": "all:" + key + "=" + current
+                    });
+                }
             }
         } catch (e) {
             log.error(e);

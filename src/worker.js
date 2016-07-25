@@ -73,15 +73,22 @@ esl_server.on('error', function (err) {
 esl_server.on('connection::close', function(c, id, allCount) {
     if (c && c.__callRouter) {
         var end = () => {
-            c.__callRouter.stop();
-            delete c.__callRouter;
+            if (c.__callRouter) {
+                c.__callRouter.stop();
+                delete c.__callRouter;
+            }
         };
 
         if (c.__callRouter.onDisconnectCallflow instanceof Array && c.__callRouter.onDisconnectCallflow.length > 0) {
-            c.__callRouter.execute(c.__callRouter.onDisconnectCallflow, () => {
-                console.log('END');
+            try {
+                c.__callRouter.execute(c.__callRouter.onDisconnectCallflow, () => {
+                    console.log('END');
+                    end();
+                })
+            } catch (e) {
+                log.error(e);
                 end();
-            })
+            }
         } else {
             end();
         }
