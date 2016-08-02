@@ -13,7 +13,7 @@ var log = require('./../lib/log')(module),
     updateDomainVariables = require('./dialplan').updateDomainVariables,
     findExtension = require('./dialplan').findActualExtension,
     blackList = require('./blackList'),
-    Event = require('modesl').Event,
+    Event = require('../lib/modesl').Event,
     calendar = require('./calendar/index');
 
 const VARIABLES_MAP = require('./variablesMap');

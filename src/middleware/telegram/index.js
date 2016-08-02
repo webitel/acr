@@ -5,7 +5,7 @@
 "use strict";
 
 const log = require('../../lib/log')(module),
-    Event = require('modesl').Event
+    Event = require('../../lib/modesl').Event
     ;
 
 module.exports = (CallRouter, appName) => {

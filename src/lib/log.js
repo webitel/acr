@@ -1,6 +1,5 @@
 var winston = require('winston');
 var conf = require('../conf');
-require('winston-logstash');
 
 function getLogger(module) {
 
@@ -34,15 +33,8 @@ function getLogger(module) {
             })
         ]
     });
-    if (conf.get('application:logstash:enabled')) {
-        logger.add(winston.transports.Logstash, {
-            port: conf.get('application:logstash:port'),
-            node_name: conf.get('application:logstash:node_name'),
-            host: conf.get('application:logstash:host'),
-            level: conf.get('application:loglevel')
-        });
-    };
+
     return logger;
-};
+}
 
 module.exports = getLogger;

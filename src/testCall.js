@@ -3,7 +3,7 @@
  * ./sipp pre.webitel.com:5070 -i 10.10.10.25 -s 334 -d 2s -l 50000 -aa -mi 10.10.10.25 -rtp_echo -nd -r 20
  */
 
-var Esl = require('modesl'),
+var Esl = require('./lib/modesl'),
     log = require('./lib/log');
 
 var calle = '101@10.10.10.144',

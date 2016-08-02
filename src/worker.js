@@ -1,4 +1,4 @@
-var esl = require('modesl'),
+var esl = require('./lib/modesl'),
     log = require('./lib/log')(module),
     conf = require('./conf'),
     publicContext = require('./middleware/publicContext'),
