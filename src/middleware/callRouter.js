@@ -110,7 +110,8 @@ const OPERATION = {
     SIP_REDIRECT: 'sipRedirect',
     AGENT: 'agent',
     AVMD: "avmd",
-    TELEGRAM: "telegram"
+    TELEGRAM: "telegram",
+    LIMIT: "limit"
 };
 
 const FS_COMMAND = {
@@ -184,6 +185,7 @@ const FS_COMMAND = {
     REDIRECT: 'redirect',
     AVMD_START: "avmd_start",
     AVMD_STOP: "avmd_stop",
+    LIMIT: "limit"
 };
 
 
@@ -420,6 +422,19 @@ CallRouter.prototype.mweek = function (param) {
 
 CallRouter.prototype.wday = function (param) {
     return this._DateParser(param, (this.DateOffset().getDay() + 1), 7);
+};
+
+CallRouter.prototype.limit = function (params) {
+    let data = params.replace(/'/g, '').split(',');
+    if (!data && !data[0]) {
+        log.error('Bad parameters limit');
+    }
+
+    let result = this.getChnVar(`limit_usage_${this.domain}_${data[0]}`) || 0;
+    if (data[1])
+        return +result <= data[1];
+    else
+        return +result;
 };
 
 CallRouter.prototype.hour = function (param) {
@@ -2531,3 +2546,38 @@ function reverseString(s) {
         o += s[i];
     return o;
 }
+
+
+CallRouter.prototype.__limit = function (app, cb) {
+    let prop = app[OPERATION.LIMIT],
+        name,
+        setVar;
+
+    if (typeof prop == 'string') {
+        name = prop
+    } else if (prop instanceof Object && prop.name) {
+        name = prop.name;
+        setVar = prop.setVar;
+    }
+
+    if (name) {
+        this.execApp({
+            "app": OPERATION.LIMIT,
+            "data": `hash ${this.domain} '${name}'`
+        }, (data) => {
+            data.headers.forEach( (item) => {
+                // console.log('set: ' + item.name + ' => ' + item.value);
+                this.connection.channelData.addHeader(item.name, item.value);
+            });
+            if (setVar) {
+                this.__setVar({
+                    "setVar": `${setVar}=${this.limit(name)}`
+                })
+            }
+            return cb && cb();
+        });
+    } else {
+        log.error(`Bad parameters limit`);
+        return cb && cb();
+    }
+};
