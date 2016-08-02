@@ -2,39 +2,40 @@ var winston = require('winston');
 var conf = require('../conf');
 
 function getLogger(module) {
+    let pathDirectory = module.filename.split(/\/+/).slice(-3);
+    let path = pathDirectory.join('\\') + '(' + process.pid + ')';
 
-    var path = process.pid + ':' + module.filename.split('//').slice(-2).join('//');
-
-    var logLevels = {
+    let logLevels = {
         levels: {
-            trace: 0,
-            debug: 1,
+            trace: 4,
+            debug: 3,
             warn: 2,
-            error: 3,
-            info: 4
+            error: 1,
+            info: 0
         },
         colors: {
-            trace: 'yellow',
-            debug: 'yellow',
+            trace: 'cyan',
+            debug: 'white',
             info: 'green',
             warn: 'yellow',
             error: 'red'
         }
     };
-    winston.addColors(logLevels.colors);
-    var logger = new (winston.Logger)({
+
+    let log = new (winston.Logger)({
         levels: logLevels.levels,
+        colors: logLevels.colors,
         transports: [
             new winston.transports.Console({
-                colorize: true,
+                colorize: 'all',
                 level: conf.get('application:loglevel'),
                 label: path,
-                'timestamp': true
+                timestamp: false
             })
         ]
     });
 
-    return logger;
+    return log;
 }
 
 module.exports = getLogger;

@@ -1,10 +1,12 @@
 {
   "name": "ACR",
+  "description": "Webitel Advanced Call Router",
   "version": "1.0.0",
+  "main": "app.js",
   "private": true,
   "dependencies": {
     "async": "^1.5.2",
-    "winston": "^1.0.0",
+    "winston": "^2.2.0",
     "nconf": "^0.7.1",
     "moment-timezone": "^0.4.0",
     "mongodb": "^2.1.18",
