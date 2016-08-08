@@ -67,7 +67,7 @@ module.exports = function (application, cb) {
 
                 if (calendar.accept instanceof Array) {
                     let currentTimeOfDay = current.get('hours') * 60 + current.get('minutes'),
-                        currentWeek = current.day()
+                        currentWeek = current.isoWeekday()
                         ;
 
                     for (let i = 0, len = calendar.accept.length; i < len; i++) {
