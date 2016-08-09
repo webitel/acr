@@ -92,6 +92,7 @@ esl_server.on('connection::close', function(c, id, allCount) {
 
         if (c.__callRouter.onDisconnectCallflow instanceof Array && c.__callRouter.onDisconnectCallflow.length > 0) {
             try {
+                c.__callRouter._updateChannelDump();
                 c.__callRouter.execute(c.__callRouter.onDisconnectCallflow, () => {
                     console.log('END');
                     end();

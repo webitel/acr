@@ -755,7 +755,9 @@ CallRouter.prototype.start = function (callflows) {
         if (scope.index == callflows.length || scope.end) {
             //scope.updateLocalVariables();
             scope.saveDomainVariables();
-            // scope.connection.disconnect();
+            if ( !(scope.onDisconnectCallflow instanceof Array) || scope.onDisconnectCallflow.length === 0) {
+                scope.connection.disconnect();
+            }
             return;
         }
         scope.doExec(callflows[scope.index], postExec);
@@ -2579,5 +2581,18 @@ CallRouter.prototype.__limit = function (app, cb) {
     } else {
         log.error(`Bad parameters limit`);
         return cb && cb();
+    }
+};
+
+CallRouter.prototype._updateChannelDump = function (event) {
+    if (event) {
+        event.headers.forEach((item) => {
+            this.connection.channelData.addHeader(item.name, item.value);
+        });
+    } else if (this.connection._lastChannelExecuteDump) {
+        this.connection._lastChannelExecuteDump.headers.forEach((item) => {
+            // console.log(`set: ${item.name} => ${item.value}`);
+            this.connection.channelData.addHeader(item.name, item.value);
+        });
     }
 };
