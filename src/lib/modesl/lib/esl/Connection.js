@@ -86,7 +86,8 @@ var Connection = module.exports = function() {
         this.connecting = false;
         this._onConnect();
 
-        this.send('connect');
+        // TODO bug library...
+        // this.send('connect');
 
         this.once('esl::event::CHANNEL_DATA::**', function() {
             self.subscribe(self.reqEvents, function() {
@@ -181,6 +182,10 @@ Connection.prototype.getInfo = function() {
 //NOTE: This is a FAF method of sending a command
 Connection.prototype.send = function(command, args) {
     var self = this;
+
+    if (!self.socket) {
+        return self._onError(new Error('No live connect'));
+    }
 
     //write raw command to socket
     try {
@@ -728,6 +733,9 @@ Connection.prototype._doExec = function(uuid, cmd, args, cb) {
 //called on socket/generic error, simply echo the error
 //to the user
 Connection.prototype._onError = function(err) {
+    if (!this.listenerTree.hasOwnProperty('error')) {
+        console.dir('No listeners.');
+    }
     this.emit('error', err);
 };
 

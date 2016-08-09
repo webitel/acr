@@ -61,7 +61,7 @@ Server.prototype.close = function(callback) {
 
 Server.prototype._onConnection = function(socket) {
     var conn = new Connection(socket),
-    id = this._generateId();
+        id = this._generateId();
 
     this.connections[id] = conn;
     this.connections[id]._id = id;
@@ -69,6 +69,7 @@ Server.prototype._onConnection = function(socket) {
 
     this.emit('connection::open', conn, id);
 
+    conn.send('connect');
     conn.on('esl::ready', function(id) {
         if(this.bindEvents) {
             conn.sendRecv('myevents', function() {

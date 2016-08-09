@@ -22,11 +22,22 @@ var esl_server = new esl.Server({host: conf.get('server:host'), port: process.en
     }
 });
 
-esl_server.on('connection::ready', function(conn, id, allCountSocket) {
+esl_server.on('connection::open', (conn, id) => {
     conn.on('error', function (error) {
         log.warn('Call %s error: %s', id, error.message);
     });
+});
+
+esl_server.on('connection::ready', function(conn, id, allCountSocket) {
     log.trace('New call %s [all socket: %s]', id, allCountSocket);
+
+    conn.on('esl::end', () => {
+        "use strict";
+        if (conn.__callRouter) {
+            conn.__callRouter.stop();
+            delete conn.__callRouter;
+        }
+    });
     //console.log(conn.channelData.serialize());
     try {
         var context = conn.channelData.getHeader('Channel-Context'),
