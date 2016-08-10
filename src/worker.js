@@ -11,7 +11,7 @@ var esl = require('./lib/modesl'),
 const PUBLIC_CONTEXT = 'public';
 
 var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10030,
-        myevents: false }, function() {
+        myevents: true }, function() {
     log.info("ESL server is up port " + this.port);
 
     if (typeof gc == 'function') {
@@ -31,14 +31,37 @@ esl_server.on('connection::open', (conn, id) => {
 esl_server.on('connection::ready', function(conn, id, allCountSocket) {
     log.trace('New call %s [all socket: %s]', id, allCountSocket);
 
+    let lastExecuteDump;
     conn.on('esl::end', () => {
-        "use strict";
-        if (conn.__callRouter) {
-            conn.__callRouter.stop();
-            delete conn.__callRouter;
+        if (conn && conn.__callRouter) {
+            var end = () => {
+                if (conn.__callRouter) {
+                    conn.__callRouter.stop();
+                    delete conn.__callRouter;
+                }
+            };
+
+            if (conn.__callRouter.onDisconnectCallflow instanceof Array && conn.__callRouter.onDisconnectCallflow.length > 0) {
+                try {
+                    conn.__callRouter._updateChannelDump(lastExecuteDump);
+                    conn.__callRouter.execute(conn.__callRouter.onDisconnectCallflow, () => {
+                        console.log('END');
+                        end();
+                    })
+                } catch (e) {
+                    log.error(e);
+                    end();
+                }
+            } else {
+                end();
+            }
         }
     });
-    //console.log(conn.channelData.serialize());
+
+    conn.on(`esl::event::CHANNEL_EXECUTE_COMPLETE::*`, (e) => {
+        lastExecuteDump = e;
+    });
+
     try {
         var context = conn.channelData.getHeader('Channel-Context'),
             dialerId = conn.channelData.getHeader('variable_dlr_queue'),
@@ -82,29 +105,6 @@ esl_server.on('error', function (err) {
 });
 
 esl_server.on('connection::close', function(c, id, allCount) {
-    if (c && c.__callRouter) {
-        var end = () => {
-            if (c.__callRouter) {
-                c.__callRouter.stop();
-                delete c.__callRouter;
-            }
-        };
-
-        if (c.__callRouter.onDisconnectCallflow instanceof Array && c.__callRouter.onDisconnectCallflow.length > 0) {
-            try {
-                c.__callRouter._updateChannelDump();
-                c.__callRouter.execute(c.__callRouter.onDisconnectCallflow, () => {
-                    console.log('END');
-                    end();
-                })
-            } catch (e) {
-                log.error(e);
-                end();
-            }
-        } else {
-            end();
-        }
-    }
     log.trace("Call end %s [all socket: %s]", id, allCount);
 });
 

@@ -56,8 +56,6 @@ var Connection = module.exports = function() {
     this.apiCallbackQueue = [];
     this.executeCallbacks = {};
     this.executeHandlers = {};
-    
-    this._lastChannelExecuteDump = null;
 
     //events required for the module to operate properly
     this.reqEvents = ['BACKGROUND_JOB', 'CHANNEL_EXECUTE_COMPLETE'];
@@ -803,7 +801,6 @@ Connection.prototype._onEvent = function(event, headers, body) {
     case 'text/event-json':
     case 'text/event-plain':
     case 'text/event-xml':
-        this._lastChannelExecuteDump = event;
         emit += '::' + event.getHeader('Event-Name') + (!!uuid ? '::' + uuid : '');
         break;
 
