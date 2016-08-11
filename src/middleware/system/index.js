@@ -2,8 +2,7 @@
  * Created by i.navrotskyj on 30.01.2015.
  */
 
-var db = require('../../lib/mongoDrv'),
-    log = require('../../lib/log')(module),
+var log = require('../../lib/log')(module),
     conf = require('../../conf'),
     globalVariables = {};
 
@@ -13,7 +12,7 @@ var sys = {
         if (globalVariables[uuid]) {
             cb(null, globalVariables[uuid]);
             return;
-        };
+        }
 
         conn.api('global_getvar', function (globalVarObject) {
             try {
@@ -27,7 +26,7 @@ var sys = {
                         _json[_param[0]] = _param[1];
                     });
                 }
-                ;
+                
                 globalVariables[uuid] = _json;
                 log.info('Add hash global variable. Core uuid: ' + uuid);
                 cb(null, globalVariables[uuid]);

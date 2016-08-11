@@ -2,14 +2,14 @@
  * Created by i.n. on 24.04.2015.
  */
 
-var log = require('./../lib/log')(module),
+let log = require('./../lib/log')(module),
     DB = require('./../lib/mongoDrv')
     ;
 
-var API = {
+let API = {
     setLocalVariables: function (id, variables, collectionName, cb) {
         try {
-            var collection = DB.getCollection(collectionName),
+            let collection = DB.getCollection(collectionName),
                 q =  {
                     "$set": {
                         "variables": variables

@@ -1,9 +1,9 @@
 /**
  * Created by i.navrotskyj on 10.02.2015.
  */
-var log = require('../../lib/log')(module);
+let log = require('../../lib/log')(module);
 
-var execSyncApp = function (conn, app, data) {
+let execSyncApp = function (conn, app, data) {
     conn.setEventLock(true);
     conn.execute(app, data || '');
     log.trace('Execute app: %s, with data: %s', app, data || '');
@@ -37,16 +37,16 @@ module.exports = function (conn, userId, domainName) {
                             execSyncApp(conn, "sleep", "1500");
                             execSyncApp(conn, "playback", "voicemail/vm-not_available_no_voicemail.wav");
                             execSyncApp(conn, "hangup", "USER_NOT_REGISTERED");
-                        };
+                        }
                     } catch (e) {
                         log.warn(e.message);
                     } finally {
                         conn.disconnect();
-                    };
+                    }
                 });
-            };
+            }
         } catch (e) {
             log.error(e.message);
-        };
+        }
     });
 };

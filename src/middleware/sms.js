@@ -4,14 +4,14 @@
 
 'use strict';
 
-var Client = require('node-rest-client').Client,
+let Client = require('node-rest-client').Client,
     client = new Client(),
 //EventEmitter2 = require('eventemitter2').EventEmitter2,
     log = require('./../lib/log')(module);
 
 module.exports = function (parameters, rout, cb) {
     parameters = parameters || {};
-    var login = parameters['login'] || '',
+    let login = parameters['login'] || '',
         pass = parameters['password'] || '',
         id = parameters['id'] || '1',
         sender = parameters['name'] || '',
@@ -23,7 +23,7 @@ module.exports = function (parameters, rout, cb) {
         isBulk = (phone instanceof Array && phone.length > 1)
         ;
     try {
-        var xml = '<?xml version="1.0" encoding="UTF-8" ?>\n' +
+        let xml = '<?xml version="1.0" encoding="UTF-8" ?>\n' +
                 '<request method="send-sms" login="' + login + '" passw="' + pass + '">\n' +
                 '\t<msg id="' + id + '"' +
                 (!isBulk ? ' phone="' + phone.toString() + '"' : '') +
@@ -36,14 +36,13 @@ module.exports = function (parameters, rout, cb) {
                 xml += '<phone number="' + number + '" />\n';
             });
         }
-        ;
 
         xml += '</request>';
         log.trace('SMS XML: ' + xml);
 
         xml = rout._parseVariable(xml);
 
-        var webArgs = {
+        let webArgs = {
             data: xml,
             headers: {
                 'Content-Type': 'application/xml'
@@ -57,7 +56,7 @@ module.exports = function (parameters, rout, cb) {
             }
         };
 
-        var req = client.post('http://sms.barex.com.ua/websend/', webArgs, function (dataRequest) {
+        let req = client.post('http://sms.barex.com.ua/websend/', webArgs, function (dataRequest) {
             if (rout.connection.socket) {
                 rout.__setVar({
                     "setVar": "sendSmsResponse=" + dataRequest.toString()
@@ -69,7 +68,7 @@ module.exports = function (parameters, rout, cb) {
                 _cb = true;
                 return cb();
             }
-            ;
+
         });
 
         req.on('requestTimeout', function (req) {
@@ -80,7 +79,6 @@ module.exports = function (parameters, rout, cb) {
                 _cb = true;
                 return cb();
             }
-            ;
         });
 
         req.on('error', function (err) {
@@ -90,7 +88,6 @@ module.exports = function (parameters, rout, cb) {
                 _cb = true;
                 return cb();
             }
-            ;
         });
 
         req.on('responseTimeout', function () {
@@ -98,5 +95,5 @@ module.exports = function (parameters, rout, cb) {
         });
     } catch (e) {
         log.error(e);
-    };
+    }
 };

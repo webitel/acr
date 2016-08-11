@@ -3,32 +3,32 @@
  */
 'use strict';
 
-var Client = require('node-rest-client').Client,
+let Client = require('node-rest-client').Client,
     client = new Client(),
     //EventEmitter2 = require('eventemitter2').EventEmitter2,
     log = require('./../lib/log')(module);
 
-var METHODS = {
+const METHODS = {
     GET: "get",
     POST: "post",
     PUT: "put",
     DELETE: "delete"
 };
 
-var DEF_EXPORT_VAR = function () {
+let DEF_EXPORT_VAR = function () {
     return {
         "effective_caller_id_name": "callerIdName",
         "owner_caller_id_number": "callerIdOwner"
     };
 };
 
-var DEF_HEADERS = function () {
+let DEF_HEADERS = function () {
     return {
         "Content-Type":"application/json"
     }
 };
 
-var DEF_DATA = function() {
+let DEF_DATA = function() {
     return {
         "callerIdNumber": "${Caller-Caller-ID-Number}"
     };
@@ -45,17 +45,17 @@ module.exports = function (parameters, router, cb) {
         cb(new Error('Bad request'));
         return;
     }
-    var path, current;
+    let path, current;
     
-    var _parseRequest = function (dataRequestLib, a, b) {
+    let _parseRequest = function (dataRequestLib, a) {
         try {
             if (typeof parameters.exportCookie == 'string' && a.headers['set-cookie'] && router.connection.socket) {
                 router.__setVar({
                     "setVar": `${parameters.exportCookie}=${a.headers['set-cookie'].join(';')}`
                 })
             }
-            var jsonData;
-            var dataRequest = Buffer.isBuffer(dataRequestLib) ? dataRequestLib.toString('utf8') : dataRequestLib;
+            let jsonData;
+            let dataRequest = Buffer.isBuffer(dataRequestLib) ? dataRequestLib.toString('utf8') : dataRequestLib;
             if (a.headers["content-type"] && !~a.headers["content-type"].indexOf('application/json')) {
                 log.error(`No support response content type ${a.headers["content-type"]}`);
                 return;
@@ -66,7 +66,7 @@ module.exports = function (parameters, router, cb) {
             } else {
                 jsonData = JSON.parse(dataRequest);
             }
-            for (var key in exportVariables) {
+            for (let key in exportVariables) {
                 path = exportVariables[key] || '';
                 current = jsonData;
                 path.split('.').forEach(function(token) {
@@ -93,12 +93,12 @@ module.exports = function (parameters, router, cb) {
         return JSON.parse(router._parseVariable(n));
     };
 
-    var method = parameters['method'] || 'post',
+    let method = parameters['method'] || 'post',
         exportVariables = parameters['exportVariables'] || DEF_EXPORT_VAR(),
         headers = parameters['headers'] || DEF_HEADERS();
 
 
-    var webArgs = {
+    let webArgs = {
         data: parameters['data'] || DEF_DATA(),
         headers: parseObject(headers),
         requestConfig: {
@@ -111,7 +111,7 @@ module.exports = function (parameters, router, cb) {
     };
     method = method.toLowerCase();
 
-    var contentType = (webArgs.headers && webArgs.headers['Content-Type']) || '';
+    let contentType = (webArgs.headers && webArgs.headers['Content-Type']) || '';
     if (contentType.toLowerCase() == "application/x-www-form-urlencoded") {
         if (webArgs.data instanceof Object) {
             let _data = [];
@@ -131,7 +131,7 @@ module.exports = function (parameters, router, cb) {
 
     // console.dir(webArgs, {depth: 5, color: true});
 
-    var req;
+    let req;
     if (method == METHODS.GET) {
         webArgs.parameters = webArgs.data;
         req = client.get(parameters['url'], webArgs, _parseRequest);

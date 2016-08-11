@@ -2,7 +2,7 @@
  * Created by i.navrotskyj on 28.04.2015.
  */
 
-var log = require('../lib/log')(module),
+let log = require('../lib/log')(module),
     dialplan = require('./dialplan'),
     CallRouter = require('./callRouter'),
     DEFAULT_HANGUP_CAUSE = require('../const').DEFAULT_HANGUP_CAUSE,
@@ -12,7 +12,7 @@ var log = require('../lib/log')(module),
 function setupPickupParameters(conn, userId, domain) {
     if (!userId || !domain || !conn) {
         return log.error('Bad parameters setupPickupParameters');
-    };
+    }
 
     conn.execute('export', 'dialed_extension=' + userId);
     conn.execute('hash', 'insert/' + domain + '-call_return/' + userId + '/${caller_id_number}');
@@ -21,7 +21,7 @@ function setupPickupParameters(conn, userId, domain) {
 }
 
 module.exports = function (conn, destinationNumber, globalVariable, notExistsDirection) {
-    var domainName = conn.channelData.getHeader('variable_domain_name'),
+    let domainName = conn.channelData.getHeader('variable_domain_name'),
         _isNotRout = true,
         _callerIdNumber = conn.channelData.getHeader('Channel-Caller-ID-Number')
         ;
@@ -41,7 +41,7 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             try {
                 // WTEL-183
                 if (notExistsDirection) {
-                    var _tmpDirection = conn.channelData.getHeader('variable_user_scheme')
+                    let _tmpDirection = conn.channelData.getHeader('variable_user_scheme')
                         ? 'internal'
                         : 'outbound';
                     conn.execute('set', 'webitel_direction=' + _tmpDirection);
@@ -54,8 +54,8 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
 
                 setupPickupParameters(conn, resultExtension['destination_number'], resultExtension['domain']);
 
-                var callflow = resultExtension['callflow'];
-                var _router = new CallRouter(conn, {
+                let callflow = resultExtension['callflow'];
+                let _router = new CallRouter(conn, {
                     "globalVar": globalVariable,
                     "desNumber": resultExtension['destination_number'],
                     "chnNumber": destinationNumber,
@@ -89,8 +89,8 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                 }
 
                 if (result instanceof Array) {
-                    var _r, _reg;
-                    for (var i = 0, len = result.length; i < len; i++) {
+                    let _r, _reg;
+                    for (let i = 0, len = result.length; i < len; i++) {
                         if (result[i]['destination_number'] && typeof result[i]['destination_number'] === 'string') {
                             _r = result[i]['destination_number'].match(new RegExp('^/(.*?)/([gimy]*)$'));
                             // Bad destination reg exp value
@@ -109,8 +109,8 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
                                     conn.execute('set', 'timezone=' + result[i]['fs_timezone']);
                                 }
 
-                                var callflow = result[i]['callflow'];
-                                var _router = new CallRouter(conn, {
+                                let callflow = result[i]['callflow'];
+                                let _router = new CallRouter(conn, {
                                     "globalVar": globalVariable,
                                     "desNumber": result[i]['destination_number'],
                                     "chnNumber": destinationNumber,

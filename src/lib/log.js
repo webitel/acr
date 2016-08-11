@@ -22,7 +22,7 @@ function getLogger(module) {
         }
     };
 
-    let log = new (winston.Logger)({
+    return new (winston.Logger)({
         levels: logLevels.levels,
         colors: logLevels.colors,
         transports: [
@@ -34,8 +34,6 @@ function getLogger(module) {
             })
         ]
     });
-
-    return log;
 }
 
 module.exports = getLogger;

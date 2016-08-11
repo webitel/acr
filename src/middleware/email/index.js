@@ -3,7 +3,7 @@
  */
 'use strict';
 
-var log = require('../../lib/log')(module),
+let log = require('../../lib/log')(module),
     nodemailer = require('nodemailer'),
     smtpPool = require('nodemailer-smtp-pool'),
     helper = require('./helper')
@@ -20,7 +20,7 @@ module.exports = function (CallRouter, APPLICATION_NAME) {
         if (!prop) {
             log.error('Bad application parameters');
             return cb && cb();
-        };
+        }
 
         let to = prop['to'],
             from = prop['from'],
@@ -32,7 +32,7 @@ module.exports = function (CallRouter, APPLICATION_NAME) {
         if (!to || !message) {
             log.error('Bad email parameters');
             return cb && cb();
-        };
+        }
 
         let mailOption = {
             to: to,
@@ -49,15 +49,15 @@ module.exports = function (CallRouter, APPLICATION_NAME) {
 
                     if (!res) {
                         return log.error('Not found parameters in %s.', domain);
-                    };
+                    }
 
                     if (typeof Provider[res.provider] != 'function') {
                         return log.error('Bad provider name in %s.', domain);
-                    };
+                    }
 
                     if (!res || !res['options']) {
                         return log.error("Not settings EMail provider from domain " + domain);
-                    };
+                    }
 
                     mailOption.from = from || res.from || '';
 
@@ -74,7 +74,7 @@ module.exports = function (CallRouter, APPLICATION_NAME) {
                         );
                     } catch (e) {
                         log.error(e);
-                    };
+                    }
                 }
             );
 

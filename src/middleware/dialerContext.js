@@ -5,12 +5,12 @@
 'use strict';
 
 
-var log = require('./../lib/log')(module),
+let log = require('./../lib/log')(module),
     dialplan = require('./dialplan'),
     DEFAULT_HANGUP_CAUSE = require('../const').DEFAULT_HANGUP_CAUSE,
     CallRouter = require('./callRouter');
 
-module.exports = function (conn, destinationNumber, globalVariable, notExistsDirection) {
+module.exports = function (conn, destinationNumber, globalVariable) {
     let domainName = conn.channelData.getHeader('variable_domain_name');
 
     dialplan.findDialerDialplan(destinationNumber, domainName, (err, res) => {

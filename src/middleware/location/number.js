@@ -3,7 +3,7 @@
  */
 
 'use strict';
-var log = require('../../lib/log')(module),
+let log = require('../../lib/log')(module),
     conf = require('../../conf'),
     db = require('../../lib/mongoDrv'),
     LOCATION_COLLECTION_NAME = conf.get("mongodb:locationNumberCollection")
@@ -12,42 +12,42 @@ var log = require('../../lib/log')(module),
 module.exports = function (CallRouter, applicationName) {
 
     CallRouter.prototype.__geoLocation = function (app, cb) {
-        var prop = app[applicationName],
+        let prop = app[applicationName],
             varName = prop['variable'],
             pattern = prop['regex'],
             result = prop['result'],
             scope = this,
             number = scope.channelDestinationNumber;
-        ;
+
 
         if (varName) {
             number = this.getChnVar(varName);
-        };
+        }
 
         if (!number) {
             log.error('Number not found.');
             if (cb)
                 return cb();
-        };
+        }
 
         try {
             if (pattern && result) {
-                var _r = pattern.match(new RegExp('^/(.*?)/([gimy]*)$'));
+                let _r = pattern.match(new RegExp('^/(.*?)/([gimy]*)$'));
                 // Bad destination reg exp value
                 if (!_r) {
                     _r = [null, pattern]
-                };
+                }
                 try {
                     number = number.replace(new RegExp(_r[1], _r[2]), result);
                 } catch (e) {
                     log.warn(e.message);
-                };
-            };
+                }
+            }
 
-            var collection = db.getCollection(LOCATION_COLLECTION_NAME);
+            let collection = db.getCollection(LOCATION_COLLECTION_NAME);
             number = number.replace(/\D/g, '');
             
-            var numbers = [];
+            let numbers = [];
             number.split('').reduce(function(r, v, i, a) {
                 numbers.push(a.slice(0, i).join(''));
                 return r + v
@@ -61,24 +61,24 @@ module.exports = function (CallRouter, applicationName) {
                     if (err) {
                         if (cb) cb();
                         return log.error(err);
-                    };
+                    }
 
-                    var _array = array[0];
-                    var goecode =  _array && _array.goecode && _array.goecode[0];
+                    let _array = array[0];
+                    let goecode =  _array && _array.goecode && _array.goecode[0];
                     if (_array && goecode && goecode['latitude'] && goecode['longitude']) {
-                        var locStr = ''.concat(goecode['latitude'], ', ', goecode['longitude']);
-                        var _vars = [
+                        let locStr = ''.concat(goecode['latitude'], ', ', goecode['longitude']);
+                        let _vars = [
                             'webitel_location=' + locStr,
                             'webitel_location_country=' + _array['country'],
                             'webitel_location_type=' + _array['type']
                         ];
                         if (_array['city']) {
                             _vars.push("webitel_location_city=" + _array['city']);
-                        };
+                        }
 
                         if (goecode['countryCode']) {
                             _vars.push('webitel_location_country_code=' + goecode['countryCode']);
-                        };
+                        }
 
                         log.debug('Number %s location: %s', number, goecode.formattedAddress);
                         scope.__setVar({
@@ -93,6 +93,6 @@ module.exports = function (CallRouter, applicationName) {
             log.error(e);
             if (cb)
                 cb();
-        };
+        }
     };
 };

@@ -38,7 +38,7 @@ const VARIABLES_MAP = {
     "profile_created": "Caller-Profile-Created-Time",
     // Var
     "sip_h_p-key-flags": "variable_sip_h_P-Key-Flags",
-    "sip_h_referred-by": "variable_sip_h_Referred-By",
+    "sip_h_referred-by": "variable_sip_h_Referred-By"
 };
 
 module.exports = VARIABLES_MAP;

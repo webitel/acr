@@ -10,7 +10,7 @@ var esl = require('./lib/modesl'),
 
 const PUBLIC_CONTEXT = 'public';
 
-var esl_server = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10030,
+const eslServer = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10030,
         myevents: true }, function() {
     log.info("ESL server is up port " + this.port);
 
@@ -22,13 +22,13 @@ var esl_server = new esl.Server({host: conf.get('server:host'), port: process.en
     }
 });
 
-esl_server.on('connection::open', (conn, id) => {
+eslServer.on('connection::open', (conn, id) => {
     conn.on('error', function (error) {
         log.warn('Call %s error: %s', id, error.message);
     });
 });
 
-esl_server.on('connection::ready', function(conn, id, allCountSocket) {
+eslServer.on('connection::ready', function(conn, id, allCountSocket) {
     log.trace('New call %s [all socket: %s]', id, allCountSocket);
 
     let lastExecuteDump;
@@ -45,7 +45,7 @@ esl_server.on('connection::ready', function(conn, id, allCountSocket) {
                 try {
                     conn.__callRouter._updateChannelDump(lastExecuteDump);
                     conn.__callRouter.execute(conn.__callRouter.onDisconnectCallflow, () => {
-                        console.log('END');
+                        log.trace(`end onDisconnectCallflow`);
                         end();
                     })
                 } catch (e) {
@@ -100,11 +100,11 @@ esl_server.on('connection::ready', function(conn, id, allCountSocket) {
 
 });
 
-esl_server.on('error', function (err) {
+eslServer.on('error', function (err) {
     log.error(err);
 });
 
-esl_server.on('connection::close', function(c, id, allCount) {
+eslServer.on('connection::close', function(c, id, allCount) {
     log.trace("Call end %s [all socket: %s]", id, allCount);
 });
 

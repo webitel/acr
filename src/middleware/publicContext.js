@@ -2,7 +2,7 @@
  * Created by i.navrotskyj on 28.04.2015.
  */
 
-var log = require('../lib/log')(module),
+let log = require('../lib/log')(module),
     dialplan = require('./dialplan'),
     CallRouter = require('./callRouter'),
     DEFAULT_HANGUP_CAUSE = require('../const').DEFAULT_HANGUP_CAUSE
@@ -37,8 +37,8 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
         conn.execute('set', 'force_transfer_context=default');
         conn.execute('hash', 'insert/' + result[0]['domain']+'-last_dial/global/${uuid}');
 
-        var callflow = result[0]['callflow'];
-        var _router = new CallRouter(conn, {
+        let callflow = result[0]['callflow'];
+        let _router = new CallRouter(conn, {
             "globalVar": globalVariable,
             "desNumber": result[0]['destination_number'],
             "chnNumber": destinationNumber,

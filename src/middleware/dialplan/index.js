@@ -2,7 +2,7 @@
  * Created by i.navrotskyj on 26.01.2015.
  */
 
-var db = require('../../lib/mongoDrv'),
+let db = require('../../lib/mongoDrv'),
     log = require('../../lib/log')(module),
     config = require('../../conf'),
     ObjectID = require('mongodb').ObjectID,
@@ -13,13 +13,13 @@ var db = require('../../lib/mongoDrv'),
     variablesCollection = config.get('mongodb:variablesCollection')
     ;
 
-var dialplan = {
+const dialplan = {
     findActualPublicDialplan: function (number, cb) {
         if (!number || number == '') {
             cb(new Error('destination_number is undefined'));
             return;
         }
-        var dialCollection = db.getCollection(publicCollection);
+        let dialCollection = db.getCollection(publicCollection);
         dialCollection.find({"destination_number": number, "disabled": {"$ne": true}})
             .sort({"version": -1})
             .limit(1)
@@ -27,13 +27,13 @@ var dialplan = {
     },
 
     findDomainVariables: function (domainName, cb) {
-        var collection = db.getCollection(variablesCollection);
+        let collection = db.getCollection(variablesCollection);
         collection.findOne({
             "domain": domainName
         }, function (err, res) {
             if (err) {
                 log.error(err['message']);
-            };
+            }
             if (cb)
                 cb(err, res);
         });
@@ -41,12 +41,11 @@ var dialplan = {
 
     updateDomainVariables: function (domainName, variables, cb) {
         try {
-            var doc = {
+            let doc = {
                     "variables": variables,
                     "domain": domainName
                 },
-                collection = db.getCollection(variablesCollection)
-                ;
+                collection = db.getCollection(variablesCollection);
 
             collection.update({
                     "domain": domainName
@@ -64,7 +63,7 @@ var dialplan = {
         if (ObjectID.isValid(id))
             id = new ObjectID(id);
 
-        var dialCollection = db.getCollection(dialerCollection);
+        let dialCollection = db.getCollection(dialerCollection);
 
         dialCollection.findOne({"_id": id}, {_cf: 1}, cb);
     },
@@ -74,7 +73,7 @@ var dialplan = {
             cb(new Error('domain is undefined'));
             return;
         }
-        var dialCollection = db.getCollection(defaultCollection);
+        let dialCollection = db.getCollection(defaultCollection);
         dialCollection.find({"domain": domainName, "disabled": {"$ne": true}}, {read  : true})
             .sort({"order": 1})
             .toArray(cb);
@@ -84,8 +83,8 @@ var dialplan = {
         if (!number || number == '') {
             cb(new Error('destination_number is undefined'));
             return;
-        };
-        var dialCollection = db.getCollection(extensionCollection);
+        }
+        let dialCollection = db.getCollection(extensionCollection);
         dialCollection.findOne({
                 "destination_number": number,
                 "domain": domain,

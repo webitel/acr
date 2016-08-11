@@ -2,16 +2,16 @@
  * Created by Igor Navrotskyj on 20.08.2015.
  */
 
-var log = require('../lib/log')(module);
-
 'use strict';
+
+let log = require('../lib/log')(module);
 
 module.exports = function (CallRouter) {
 
     CallRouter.prototype.__disa = function (app, cb) {
         try {
-            var scope = this;
-            var prop = app['disa'],
+            let scope = this;
+            let prop = app['disa'],
                 callerID = '',
                 channelCallerIdNumber = scope.getChnVar('Channel-Caller-ID-Number'),
                 password = '',
@@ -25,20 +25,20 @@ module.exports = function (CallRouter) {
                 "answer": ""
             });
 
-            var call = function () {
+            let call = function () {
                 setDestinationNumber(function () {
                     try {
                         if (destinationNumber == '') {
                             log.warn('Bar destination number.');
                             return cb && cb();
-                        };
+                        }
                         if (isCallBack) {
-                            var gateway = prop['gateway'];
+                            var gateway = prop['gateway'],
+                                dialString = '';
                             if (gateway) {
                                 var gwMask = gateway['mask'],
                                     gwName = gateway['name'],
                                     gwDialString = gateway['dialString'] || '',
-                                    dialString = '',
                                     _reg
                                     ;
                                 if (gwMask) {
@@ -46,25 +46,25 @@ module.exports = function (CallRouter) {
                                     // Bad destination reg exp value
                                     if (!_r) {
                                         _r = [null, gwMask]
-                                    };
+                                    }
                                     try {
                                         _reg = new RegExp(_r[1], _r[2]).exec(channelCallerIdNumber);
                                     } catch (e) {
                                         _reg = null;
-                                    };
-                                };
+                                    }
+                                }
 
                                 if (_reg) {
                                     gwDialString = gwDialString.replace(/\$(\d+)/g, function (a) {
                                         return _reg[parseInt(a.substring(1))] || '';
                                     });
-                                };
+                                }
 
                                 dialString = 'sofia/gateway/' + gwName + '/' + gwDialString;
 
                             } else {
                                 dialString = 'user/' + callerID;
-                            };
+                            }
 
                             dialString = '[origination_caller_id_number=' + destinationNumber + ']' + dialString;
 
@@ -72,7 +72,7 @@ module.exports = function (CallRouter) {
                                 "hangup": "NORMAL_CLEARING"
                             });
 
-                            var api = ''.concat("sched_api +1 none originate '", dialString, "' '", callerID != '' ? 'set_user:' + callerID + ',' : '',
+                            let api = ''.concat("sched_api +1 none originate '", dialString, "' '", callerID != '' ? 'set_user:' + callerID + ',' : '',
                                 "transfer:", destinationNumber, " XML default' inline ");
 
                             log.trace(api);
@@ -83,7 +83,7 @@ module.exports = function (CallRouter) {
                             scope.__goto({
                                 "goto": "default:" + destinationNumber
                             });
-                        };
+                        }
                         return cb && cb();
                     } catch (e) {
                         log.error(e);
@@ -137,7 +137,7 @@ module.exports = function (CallRouter) {
                         log.warn('Bad callerId.');
                         return cb && cb();
                     }
-                    ;
+
                     callerID += '@' + scope.domain;
                     scope
                         .connection
@@ -148,7 +148,6 @@ module.exports = function (CallRouter) {
                                 log.warn('Bad user parameters password.');
                                 return cb && cb();
                             }
-                            ;
 
                             scope.__playback({
                                 "playback": {
@@ -167,7 +166,7 @@ module.exports = function (CallRouter) {
                                     log.warn('Bad password.');
                                     return cb && cb();
                                 }
-                                ;
+
                                 call();
                             })
                         }
@@ -176,7 +175,7 @@ module.exports = function (CallRouter) {
             } else {
                 call();
             }
-            ;
+
         } catch (e) {
             log.error(e);
             return cb && cb();

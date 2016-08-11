@@ -3,7 +3,7 @@
  */
 'use strict';
 
-var db = require('../../lib/mongoDrv'),
+let db = require('../../lib/mongoDrv'),
     log = require('../../lib/log')(module),
     config = require('../../conf'),
     moment = require('moment-timezone'),
@@ -17,7 +17,7 @@ module.exports = function (application, cb) {
         if (!prop) {
             log.error("Bad calendar application");
             return cb && cb();
-        };
+        }
 
         let name = prop.name,
             varName = prop.setVar;
@@ -25,7 +25,7 @@ module.exports = function (application, cb) {
         if (!name || !varName) {
             log.error('Bad calendar property');
             return cb && cb();
-        };
+        }
 
         var callback = function (err, ok) {
             if(err)
@@ -45,7 +45,7 @@ module.exports = function (application, cb) {
 
                 if (!calendar) {
                     return callback(new Error(`Not found calendar ${name}`), false);
-                };
+                }
 
                 let current;
                 if (this.offset)
@@ -74,12 +74,12 @@ module.exports = function (application, cb) {
                         isAccept = currentWeek === calendar.accept[i].weekDay && between(currentTimeOfDay, calendar.accept[i].startTime, calendar.accept[i].endTime);
                         if (isAccept)
                             break;
-                    };
+                    }
 
                 } else {
                     // TODO ERROR ???
                     return callback(new Error('Bad record ?'));
-                };
+                }
 
                 if (!isAccept)
                     return callback(null, false);
@@ -98,7 +98,7 @@ module.exports = function (application, cb) {
                                 (calendar.except[i].repeat === 1 || (calendar.except[i].repeat === 0 && exceptDate.get('year') == currentYear)) )
                             return callback(null, false);
                     }
-                };
+                }
 
                 return callback(null, true);
             }
@@ -113,4 +113,4 @@ module.exports = function (application, cb) {
 
 function between(x, min, max) {
     return x >= min && x <= max;
-};
+}

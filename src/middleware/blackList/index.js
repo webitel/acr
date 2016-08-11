@@ -2,11 +2,11 @@
  * Created by i.n. on 28.07.2015.
  */
 
-var db = require('../../lib/mongoDrv'),
+let db = require('../../lib/mongoDrv'),
     conf = require('../../conf'),
     BL_COLLECTION_NAME = conf.get('mongodb:blackListCollection');
 
-var BlackList = {
+const BlackList = {
     check: function (domain, name, number, cb) {
         try {
             var collection = db.getCollection(BL_COLLECTION_NAME);
@@ -18,7 +18,7 @@ var BlackList = {
             .count(cb);
         } catch (e) {
             cb(e);
-        };
+        }
     }
 };
 

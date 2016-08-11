@@ -3,7 +3,7 @@
  */
 'use strict';
 
-var conf = require('../../conf'),
+let conf = require('../../conf'),
     db = require('../../lib/mongoDrv'),
     EMAIL_COLLECTION_NAME = conf.get("mongodb:emailCollection")
 ;
@@ -11,7 +11,7 @@ var conf = require('../../conf'),
 module.exports = {
     getSettings: function (domainName, cb) {
         try {
-            var collection = db.getCollection(EMAIL_COLLECTION_NAME);
+            let collection = db.getCollection(EMAIL_COLLECTION_NAME);
 
             return collection
                 .findOne({"domain": domainName}, cb);
@@ -19,4 +19,4 @@ module.exports = {
             cb(e);
         }
     }
-}
+};
