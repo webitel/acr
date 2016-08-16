@@ -111,7 +111,9 @@ const OPERATION = {
     AGENT: 'agent',
     AVMD: "avmd",
     TELEGRAM: "telegram",
-    LIMIT: "limit"
+    LIMIT: "limit",
+
+    TTS: "tts"
 };
 
 const FS_COMMAND = {
@@ -246,6 +248,7 @@ var CallRouter = module.exports = function (connection, option) {
 
 require('./email')(CallRouter, OPERATION.EMAIL);
 require('./telegram')(CallRouter, OPERATION.TELEGRAM);
+require('./tts')(CallRouter, OPERATION.TTS);
 require('./disa')(CallRouter);
 require('./location/number')(CallRouter, OPERATION.LOCATION);
 
