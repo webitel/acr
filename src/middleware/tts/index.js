@@ -3,59 +3,73 @@
  */
 
 "use strict";
-const aws = require('./aws4'),
-    crypto = require('crypto'),
-    log = require('../../lib/log')(module)
+const log = require('../../lib/log')(module)
     ;
 
 const PROVIDER = {
-    "ivona": (router, config, cb) => {
-        if (!config.ivonaAccessKey || !config.ivonaSecretKey || !config.text) {
-            log.error(`Bad config parameters Ivona: ivonaAccessKey, ivonaSecretKey, text is required`);
+    "microsoft": (router, config, cb) => {
+
+        if (!config.accessKey1 || !config.accessKey2 || !config.appId || !config.text) {
+            log.error(`Bad config parameters microsoft: accessKey1, accessKey2, appId, text is required`);
             return cb && cb();
         }
-
-        let keys = {
-            accessKeyId : config.ivonaAccessKey,
-            secretAccessKey : config.ivonaSecretKey
-        };
 
         let text = router._parseVariable(config.text),
             voice = config.voice || {};
 
 
-        let query = `Input.Data=${encodeURIComponent(text)}&Input.Type=${encodeURIComponent('text/plain')}` +
-            `&OutputFormat.Codec=MP3&OutputFormat.SampleRate=22050&Parameters.Rate=slow`
-            ;
-
+        let query = `text=${encodeURIComponent(text)}`;
 
         if (voice.gender) {
-            query += `&Voice.Gender=${voice.gender}`
+            query += `&gender=${voice.gender}`
         }
 
         if (voice.language) {
-            query += `&Voice.Language=${voice.language}`
+            query += `&language=${voice.language}`
         }
 
         if (voice.name) {
-            query += `&Voice.Name=${voice.name}`
+            query += `&name=${voice.name}`
         }
-        
-        let request = {
-            path: `/CreateSpeech?${query}`,
-            host: 'tts.eu-west-1.ivonacloud.com',
-            service: 'tts',
-            method: 'GET',
-            region: config.region || 'eu-west-1',
-            accessKeyId : config.ivonaAccessKey,
-            secretAccessKey : config.ivonaSecretKey,
-            body: ''
-        };
-        let signedCredentials = aws.signUrl(request, keys);
+
+        query += `&key1=${config.accessKey1}&key2=${config.accessKey2}&appId=${config.appId}&.wav`;
 
         router.execApp({
             "app": 'playback',
-            "data": 'shout://tts.eu-west-1.ivonacloud.com:443' + signedCredentials
+            "data": '{refresh=true}http_cache://$${cdr_url}/sys/tts/microsoft?' + query
+        }, cb);
+
+    },
+    "ivona": (router, config, cb) => {
+        if (!config.accessKey || !config.accessToken || !config.text) {
+            log.error(`Bad config parameters Ivona: ivonaAccessKey, ivonaSecretKey, text is required`);
+            return cb && cb();
+        }
+
+        let text = router._parseVariable(config.text),
+            voice = config.voice || {};
+
+
+        let query = `text=${encodeURIComponent(text)}`;
+
+
+        if (voice.gender) {
+            query += `&gender=${voice.gender}`
+        }
+
+        if (voice.language) {
+            query += `&language=${voice.language}`
+        }
+
+        if (voice.name) {
+            query += `&name=${voice.name}`
+        }
+
+        query += `&key=${encodeURIComponent(config.accessKey)}&token=${encodeURIComponent(config.accessToken)}`;
+
+        router.execApp({
+            "app": 'playback',
+            "data": '${regex($${cdr_url}|^(http)?s?(.*)$|shout%2)}/sys/tts/ivona?' + query
         }, cb);
 
     }
