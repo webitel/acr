@@ -1315,33 +1315,38 @@ CallRouter.prototype._getPlaybackFileString = function (type, fileName, refresh,
             if (cdrUrl) {
                 filePath = (refresh === true ? '{refresh=true}' : '') + "http_cache://" +
                     encodeURI(cdrUrl + '/sys/media/' + MEDIA_TYPE.WAV + '/' + fileName + '?stream=false&domain=' + this.domain + '&.wav');
-            };
+            }
             break;
+
         case MEDIA_TYPE.LOCAL:
             filePath = fileName;
             break;
+
         case MEDIA_TYPE.SILENCE:
             filePath = noPref ? type : 'silence_stream://' + fileName;
             break;
+
         case MEDIA_TYPE.SHOUT:
             filePath = (fileName || '').replace(/https?/, 'shout');
             break;
+
         case MEDIA_TYPE.TONE:
             filePath = noPref ? fileName : 'tone_stream://' + fileName;
             break;
-        case MEDIA_TYPE.SAY:
 
+        case MEDIA_TYPE.SAY:
             let [lang = "en", method = "number pronounced"] = [allProp.lang, allProp.method];
             lang = this._parseVariable(lang);
             filePath = "${" + `say_string ${lang} ${lang} ${method} ${fileName}` + "}";
             break;
+
         default :
             var cdrUrl = this.getGlbVar('cdr_url');
             if (cdrUrl) {
                 filePath = encodeURI(cdrUrl.replace(/https?/, 'shout') + '/sys/media/' + MEDIA_TYPE.MP3 + '/' + fileName
                     + '?domain=' + this.domain);
-            };
-    };
+            }
+    }
 
     return filePath;
 };
@@ -1359,14 +1364,14 @@ CallRouter.prototype.__playback = function (app, cb) {
         var files = prop['files'];
         for (var i = 0, len = files.length; i < len; i++) {
             filePath += '!' + this._getPlaybackFileString(files[i]['type'], files[i]['name'], files[i]['refresh'], false, files[i]);
-        };
+        }
         filePath = 'file_string://' + filePath.substring(1);
     } else {
         log.warn('Bad _playback parameters');
         if (cb)
             cb();
         return;
-    };
+    }
 
     if (app[OPERATION.PLAYBACK].hasOwnProperty('getDigits')) {
         var _playAndGetDigits = app[OPERATION.PLAYBACK]['getDigits'],

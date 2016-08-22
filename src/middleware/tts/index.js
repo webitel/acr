@@ -15,8 +15,8 @@ const PROVIDER = {
         }
 
         let text = router._parseVariable(config.text),
-            voice = config.voice || {};
-
+            voice = config.voice || {},
+            playbackProp = copyTTSOptionToPlayback(config);
 
         let query = `text=${encodeURIComponent(text)}`;
 
@@ -34,10 +34,12 @@ const PROVIDER = {
 
         query += `&key1=${config.accessKey1}&key2=${config.accessKey2}&appId=${config.appId}&.wav`;
 
-        router.execApp({
-            "app": 'playback',
-            "data": '{refresh=true}http_cache://$${cdr_url}/sys/tts/microsoft?' + query
-        }, cb);
+        playbackProp.name = 'http_cache://$${cdr_url}/sys/tts/microsoft?' + query;
+        playbackProp.type = 'local';
+
+        router.__playback({
+            playback: playbackProp
+        }, cb)
 
     },
     "ivona": (router, config, cb) => {
@@ -47,7 +49,8 @@ const PROVIDER = {
         }
 
         let text = router._parseVariable(config.text),
-            voice = config.voice || {};
+            voice = config.voice || {},
+            playbackProp = copyTTSOptionToPlayback(config);
 
 
         let query = `text=${encodeURIComponent(text)}`;
@@ -67,10 +70,12 @@ const PROVIDER = {
 
         query += `&key=${encodeURIComponent(config.accessKey)}&token=${encodeURIComponent(config.accessToken)}`;
 
-        router.execApp({
-            "app": 'playback',
-            "data": '${regex($${cdr_url}|^(http)?s?(.*)$|shout%2)}/sys/tts/ivona?' + query
-        }, cb);
+        playbackProp.name = `${router.getGlbVar('cdr_url').replace(/https?/, 'shout')}/sys/tts/ivona?${query}`;
+        playbackProp.type = 'local';
+
+        router.__playback({
+            playback: playbackProp
+        }, cb)
 
     }
 };
@@ -86,3 +91,17 @@ module.exports = (CallRouter, appName) => {
         return cb && cb();
     }
 };
+
+const _PLAYBACK_PROPS = ['getDigits', 'broadcast', 'terminator'];
+
+function copyTTSOptionToPlayback(ttsProp) {
+    let playbackProp = {};
+
+    for (let key in ttsProp) {
+        if (ttsProp.hasOwnProperty(key) && ~_PLAYBACK_PROPS.indexOf(key)) {
+            playbackProp[key] = ttsProp[key]
+        }
+    }
+
+    return playbackProp;
+}
