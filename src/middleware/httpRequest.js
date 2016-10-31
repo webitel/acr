@@ -95,18 +95,19 @@ module.exports = function (parameters, router, cb) {
 
     let method = parameters['method'] || 'post',
         exportVariables = parameters['exportVariables'] || DEF_EXPORT_VAR(),
-        headers = parameters['headers'] || DEF_HEADERS();
+        headers = parameters['headers'] || DEF_HEADERS(),
+        timeout = parameters.timeout || 1000;
 
 
     let webArgs = {
         data: parameters['data'] || DEF_DATA(),
         headers: parseObject(headers),
         requestConfig: {
-            timeout: 1000, //request timeout in milliseconds
+            timeout: timeout, //request timeout in milliseconds
             keepAlive: false //Enable/disable keep-alive functionalityidle socket.
         },
         responseConfig: {
-            timeout: 1000 //response timeout
+            timeout: timeout //response timeout
         }
     };
     method = method.toLowerCase();

@@ -50,8 +50,8 @@ module.exports = function (application, cb) {
                 let current;
                 if (this.offset)
                     current = moment().tz(this.offset);
-                else if (res.timeZone && res.timeZone.id)
-                    current = moment().tz(res.timeZone.id);
+                else if (calendar.timeZone && calendar.timeZone.id)
+                    current = moment().tz(calendar.timeZone.id);
                 else current = moment();
 
                 let currentTime = current.valueOf();
