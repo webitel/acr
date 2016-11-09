@@ -5,24 +5,42 @@
 let log = require('../lib/log')(module),
     dialplan = require('./dialplan'),
     CallRouter = require('./callRouter'),
+    conf = require('../conf'),
+    DEFAULT_PUBLIC_ROUTE = conf.get('defaultPublicRout'),
     DEFAULT_HANGUP_CAUSE = require('../const').DEFAULT_HANGUP_CAUSE
     ;
 
 module.exports = function (conn, destinationNumber, globalVariable, notExistsDirection) {
-    dialplan.findActualPublicDialplan(destinationNumber, function (err, result) {
-        if (err) {
-            // TODO
-            log.error(err.message);
-            conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-            return
-        }
 
-        if (result.length == 0) {
+    findNumber(destinationNumber, (e, result) => {
+        if (e)
+            return conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
+
+        if (result)
+            return exec(result);
+
+        const defaultPublicRout = DEFAULT_PUBLIC_ROUTE || globalVariable.webitel_default_public_route;
+
+        if (!result && !defaultPublicRout) {
             log.warn("Not found route PUBLIC");
-            conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-            return;
+            return conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
         }
 
+        return findNumber(defaultPublicRout, (e, result) => {
+            if (e)
+                return conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
+
+            if (result)
+                return exec(result);
+
+
+            log.warn(`Not found route default PUBLIC: ${defaultPublicRout}`);
+            conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
+        });
+    });
+
+
+    const exec = (result) => {
         // WTEL-183
         if (notExistsDirection) {
             log.trace('set: webitel_direction=inbound');
@@ -56,5 +74,16 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
             //TODO узнать что ответить на ошибку
             conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
         }
+    };
+};
+
+const findNumber = (number, cb) => {
+    dialplan.findActualPublicDialplan(number, (err, result) => {
+        if (err) {
+            log.error(e.message);
+            return cb(err);
+        }
+
+        return cb(null, result.length === 0 ? null : result)
     });
 };
