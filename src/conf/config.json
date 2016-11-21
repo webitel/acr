@@ -16,6 +16,7 @@
     "emailCollection": "emailConfig",
     "dialerCollection": "dialer"
   },
+  "defaultPublicRout": null,
   "application": {
     "loglevel": "LOGLEVEL"
   }
