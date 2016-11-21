@@ -18,6 +18,6 @@
   },
   "defaultPublicRout": null,
   "application": {
-    "loglevel": "trace"
+    "loglevel": "LOGLEVEL"
   }
 }
