@@ -110,6 +110,7 @@ const OPERATION = {
     SIP_REDIRECT: 'sipRedirect',
     AGENT: 'agent',
     AVMD: "avmd",
+    AMD: "amd",
     TELEGRAM: "telegram",
     LIMIT: "limit",
 
@@ -965,28 +966,40 @@ CallRouter.prototype.__setVar = function (app, cb) {
 
     if (_app) {
         if (_data instanceof Array){
+
+            // TODO remove...
             for (var i = 0, len = _data.length; i < len; i++) {
                 this.execApp({
                     "app": _app,
                     "data": _data[i],
                     "async": app[OPERATION.ASYNC] ? true : false
                 });
-            };
+            }
+            this._addVariableArrayToChannelDump(_chnArrayVar);
+
+            if (cb)
+                cb();
+
+
         } else {
             this.execApp({
                 "app": _app,
                 "data": _data,
                 "async": app[OPERATION.ASYNC] ? true : false
+            }, (res) => {
+                res.headers.forEach( (item) => {
+                    this.setChnVar(item.name, item.value);
+                });
+
+                if (cb)
+                    cb();
             });
         }
     } else {
         log.warn('Bad parameter ', app[OPERATION.SET]);
     };
 
-    this._addVariableArrayToChannelDump(_chnArrayVar);
 
-    if (cb)
-        cb();
 };
 
 function _getGotoDataString(param) {
@@ -1028,7 +1041,11 @@ CallRouter.prototype.__goto = function (app, cb) {
             };
             this.start(this.callflows);
         } else {
-            log.error('Command "goto" cycle!');
+            if (!_i) {
+                log.error(`Command "goto" not found ${_gotoIndexName}`);
+            } else {
+                log.error('Command "goto" cycle!');
+            }
             if (cb)
                 cb();
         };
@@ -2501,6 +2518,23 @@ CallRouter.prototype.__agent = function (app, cb) {
 CallRouter.prototype.api = function (str, cb) {
     log.trace('Exec %s', str);
     return this.connection.api(str, cb);
+};
+
+CallRouter.prototype.__amd = function (app, cb) {
+    let prop = app[OPERATION.AMD] || {},
+        _app = 'amd',
+        data = '';
+
+    this.execApp({
+        "app": _app,
+        "data": data,
+        "async": app[OPERATION.ASYNC] ? true : false
+    }, res => {
+        console.log(res.getHeader('variable_amd_result'));
+        this.setChnVar('variable_amd_result', res.getHeader('variable_amd_result'));
+        this.setChnVar('variable_amd_cause', res.getHeader('variable_amd_cause'));
+        cb();
+    });
 };
 
 CallRouter.prototype.__avmd = function (app, cb) {
