@@ -2304,23 +2304,26 @@ CallRouter.prototype.__ringback = function (app, cb) {
     if (prop.hasOwnProperty('call') && prop.call['name']) {
         let call = prop.call;
         this.__setVar({
-            "setVar": "ringback=" + this._getPlaybackFileString(call.type, call.name, call.refresh, true, call)
+            "setVar": `${call.all === true || prop.all === true ? 'all:' : ''}ringback=` +
+                this._getPlaybackFileString(call.type, call.name, call.refresh, true, call)
         });
-    };
+    }
 
     if (prop.hasOwnProperty('hold')) {
         let hold = prop.hold;
         this.__setVar({
-            "setVar": "hold_music=" + this._getPlaybackFileString(hold.type, hold.name, hold.refresh, true, hold)
+            "setVar": `${prop.all === true || hold.all === true ? 'all:' : ''}hold_music=` +
+                this._getPlaybackFileString(hold.type, hold.name, hold.refresh, true, hold)
         });
-    };
+    }
 
     if (prop.hasOwnProperty('transfer') && prop.transfer['name']) {
         let transfer = prop.transfer;
         this.__setVar({
-            "setVar": "transfer_ringback=" + this._getPlaybackFileString(transfer.type, transfer.name, transfer.refresh, true, transfer)
+            "setVar": `${prop.all === true || transfer.all === true ? 'all:' : ''}transfer_ringback=` +
+                this._getPlaybackFileString(transfer.type, transfer.name, transfer.refresh, true, transfer)
         });
-    };
+    }
 
     if (cb)
         return cb();
