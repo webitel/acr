@@ -73,7 +73,7 @@ module.exports = function (parameters, router, cb) {
                     current = current && current[token];
                 });
 
-                if (!current) continue;
+                if (typeof current === "undefined") continue;
                 if (router.connection.socket) {
                     router.__setVar({
                         "setVar": "all:" + key + "=" + current
