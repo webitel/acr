@@ -995,7 +995,11 @@ CallRouter.prototype.__setVar = function (app, cb) {
                     cb();
             });
         }
+        this._addVariableArrayToChannelDump(_chnArrayVar);
     } else {
+        if (cb)
+            cb();
+        
         log.warn('Bad parameter ', app[OPERATION.SET]);
     };
 
