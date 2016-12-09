@@ -975,6 +975,7 @@ CallRouter.prototype.__setVar = function (app, cb) {
                     "async": app[OPERATION.ASYNC] ? true : false
                 });
             }
+            this._addVariableArrayToChannelDump(_chnArrayVar);
 
             if (cb)
                 cb();
@@ -994,7 +995,6 @@ CallRouter.prototype.__setVar = function (app, cb) {
                     cb();
             });
         }
-        this._addVariableArrayToChannelDump(_chnArrayVar);
     } else {
         log.warn('Bad parameter ', app[OPERATION.SET]);
     };
