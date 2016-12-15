@@ -65,7 +65,7 @@ const dialplan = {
 
         let dialCollection = db.getCollection(dialerCollection);
 
-        dialCollection.findOne({"_id": id}, {_cf: 1}, cb);
+        dialCollection.findOne({"_id": id}, {_cf: 1, amd: 1}, cb);
     },
     
     findActualDefaultDialplan: function (domainName, cb) {

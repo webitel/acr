@@ -32,6 +32,13 @@ module.exports = function (conn, destinationNumber, globalVariable) {
             return
         }
 
+        let callflow;
+        if (res.amd && res.amd.enabled) {
+            callflow = [].concat(getAmdSection(), res._cf, getFooter())
+        } else {
+            callflow = [].concat(res._cf, getFooter())
+        }
+
         // TODO caller ?
         let dn = conn.channelData.getHeader('Caller-Caller-ID-Number') || destinationNumber,
             uuid = conn.channelData.getHeader('variable_uuid'),
@@ -39,7 +46,6 @@ module.exports = function (conn, destinationNumber, globalVariable) {
             ;
         conn.execute('set', 'webitel_direction=dialer');
 
-        let callflow = res._cf;
 
         let _router = new CallRouter(conn, {
             "globalVar": globalVariable,
@@ -84,3 +90,37 @@ module.exports = function (conn, destinationNumber, globalVariable) {
         }
     });
 };
+
+function getAmdSection(channel) {
+    return [
+        {
+            "answer": ""
+        },
+        {
+            "amd": {} // TODO add config
+        },
+        {
+            "if": {
+                "expression": "${amd_result} !== 'HUMAN'",
+                "sysExpression" : "sys.getChnVar(\"amd_result\") !== 'HUMAN'",
+                "then": [
+                    {
+                        "hangup": "USER_BUSY"
+                    },
+                    {
+                        "break": ""
+                    }
+                ]
+            }
+        }
+    ]
+}
+
+
+function getFooter() {
+    return [
+        {
+            "hangup": ""
+        }
+    ]
+}
