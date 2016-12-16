@@ -2530,11 +2530,40 @@ CallRouter.prototype.api = function (str, cb) {
 CallRouter.prototype.__amd = function (app, cb) {
     let prop = app[OPERATION.AMD] || {},
         _app = 'amd',
-        data = '';
+        data = [];
+
+
+    if (prop.hasOwnProperty('silenceThreshold')) {
+        data.push(`silence_threshold=${prop.silenceThreshold}`);
+    }
+    if (prop.hasOwnProperty('maximumWordLength')) {
+        data.push(`maximum_word_length=${prop.maximumWordLength}`);
+    }
+    if (prop.hasOwnProperty('maximumNumberOfWords')) {
+        data.push(`maximum_number_of_words=${prop.maximumNumberOfWords}`);
+    }
+    if (prop.hasOwnProperty('betweenWordsSilence')) {
+        data.push(`between_words_silence=${prop.betweenWordsSilence}`);
+    }
+    if (prop.hasOwnProperty('minWordLength')) {
+        data.push(`min_word_length=${prop.minWordLength}`);
+    }
+    if (prop.hasOwnProperty('totalAnalysisTime')) {
+        data.push(`total_analysis_time=${prop.totalAnalysisTime}`);
+    }
+    if (prop.hasOwnProperty('afterGreetingSilence')) {
+        data.push(`after_greeting_silence=${prop.afterGreetingSilence}`);
+    }
+    if (prop.hasOwnProperty('greeting')) {
+        data.push(`greeting=${prop.greeting}`);
+    }
+    if (prop.hasOwnProperty('initialSilence')) {
+        data.push(`initial_silence=${prop.initialSilence}`);
+    }
 
     this.execApp({
         "app": _app,
-        "data": data,
+        "data": data.join(' '),
         "async": app[OPERATION.ASYNC] ? true : false
     }, res => {
         console.log(res.getHeader('variable_amd_result'));

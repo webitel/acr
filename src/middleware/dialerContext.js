@@ -34,7 +34,7 @@ module.exports = function (conn, destinationNumber, globalVariable) {
 
         let callflow;
         if (res.amd && res.amd.enabled) {
-            callflow = [].concat(getAmdSection(), res._cf, getFooter())
+            callflow = [].concat(getAmdSection(null, res.amd), res._cf, getFooter())
         } else {
             callflow = [].concat(res._cf, getFooter())
         }
@@ -91,13 +91,21 @@ module.exports = function (conn, destinationNumber, globalVariable) {
     });
 };
 
-function getAmdSection(channel) {
+const AMD_PARAMS = ["maximumWordLength", "maximumNumberOfWords", "betweenWordsSilence", "minWordLength",
+    "totalAnalysisTime", "silenceThreshold", "afterGreetingSilence", "greeting", "initialSilence"];
+function getAmdSection(channel, amdConfig = {}) {
+    const amdParams = {};
+    for (let param of AMD_PARAMS) {
+        if (amdConfig.hasOwnProperty(param))
+            amdParams[param] = amdConfig[param]
+    }
+
     return [
         {
             "answer": ""
         },
         {
-            "amd": {} // TODO add config
+            "amd": amdParams
         },
         {
             "if": {
