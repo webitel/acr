@@ -1400,11 +1400,12 @@ CallRouter.prototype.__playback = function (app, cb) {
             _min = _playAndGetDigits['min'] || 1,
             _max = _playAndGetDigits['max'] || 1,
             _tries = _playAndGetDigits['tries'] || 1,
+            _regexp = _playAndGetDigits['regexp'] || '.*',
             _timeout = _playAndGetDigits['timeout'] || 3000;
 
         this.execApp({
             "app": FS_COMMAND.PLAY_AND_GET,
-            "data": [_min, _max, _tries, _timeout, _terminator || '#', filePath, 'silence_stream://250', _setVar, '\\d+'].join(' '),
+            "data": [_min, _max, _tries, _timeout, _terminator || '#', filePath, 'silence_stream://250', _setVar, _regexp].join(' '),
             "async": app[OPERATION.PLAYBACK][OPERATION.ASYNC] ? true : false
         }, function (res) {
             try {
