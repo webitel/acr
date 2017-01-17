@@ -1446,20 +1446,30 @@ CallRouter.prototype.__playback = function (app, cb) {
 };
 
 CallRouter.prototype.__bridge = function (app, cb) {
-    var prop = app[OPERATION.BRIDGE],
+    let prop = app[OPERATION.BRIDGE],
         _data = '',
         scope = this,
+        _params = [],
         separator = prop['strategy'] == 'failover' // TODO переделать
             ? '|'
             : ','; // ":_:" - only for user & device; "," - for other types
 
     if (prop.hasOwnProperty('global') && prop['global'] instanceof Array){
         _data += '<' + prop['global'].join(',') + '>';
-    };
+    }
     _data += '{' + 'domain_name=' + this.domain;
+
     if (prop.hasOwnProperty('parameters') && prop['parameters'] instanceof Array) {
-        _data = _data.concat(',', prop['parameters'].join(','));
-    };
+        _params = prop['parameters'];
+    }
+
+    if (prop.hasOwnProperty('codecs')) {
+        _params.push(`absolute_codec_string='${prop.codecs}'`)
+    }
+
+    if (_params.length > 0)
+        _data = _data.concat(',', _params.join(','));
+
     _data += '}';
 
     if (prop.hasOwnProperty('endpoints') && prop['endpoints'] instanceof Array) {
