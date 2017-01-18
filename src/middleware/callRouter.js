@@ -636,25 +636,32 @@ CallRouter.prototype._parseVariable = function (name) {
 };
 
 CallRouter.prototype.execApp = function (_obj, cb) {
+    if (!this.connection.socket) {
+        log.trace(`Skip execute ${_obj.app} - no channel`);
+        return cb && cb(new Event());
+    }
+
     if (_obj[OPERATION.APPLICATION]) {
         if (typeof _obj[OPERATION.DATA] === 'string') {
-            var scope = this;
+            const scope = this;
             _obj[OPERATION.DATA] = _obj[OPERATION.DATA].replace(/\&reg(\d+)\.(\$\d+)/g, function(a, reg, key) {
                 var _res = (scope.regCollection[COMMANDS.REGEXP + reg])
                     ? scope.regCollection[COMMANDS.REGEXP + reg][key]
                     : '';
                 return _res || '';
             });
-        };
+        }
+
         if (_obj[OPERATION.ASYNC]) {
             log.trace('Execute sync app: %s, with data: %s', _obj[OPERATION.APPLICATION], _obj[OPERATION.DATA] || '');
             this.connection.setEventLock(false);
         } else {
             this.connection.setEventLock(true);
             log.trace('Execute app: %s, with data: %s', _obj[OPERATION.APPLICATION], _obj[OPERATION.DATA] || '');
-        };
+        }
+
         this.connection.execute(_obj[OPERATION.APPLICATION], _obj[OPERATION.DATA] || '', cb);
-    };
+    }
 };
 
 function getFnName(cond) {

@@ -74,11 +74,9 @@ module.exports = function (parameters, router, cb) {
                 });
 
                 if (typeof current === "undefined") continue;
-                if (router.connection.socket) {
-                    router.__setVar({
-                        "setVar": "all:" + key + "=" + current
-                    });
-                }
+                router.__setVar({
+                    "setVar": "all:" + key + "=" + current
+                });
             }
         } catch (e) {
             log.error(e);

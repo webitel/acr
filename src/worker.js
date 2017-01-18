@@ -44,6 +44,7 @@ eslServer.on('connection::ready', function(conn, id, allCountSocket) {
             if (conn.__callRouter.onDisconnectCallflow instanceof Array && conn.__callRouter.onDisconnectCallflow.length > 0) {
                 try {
                     conn.__callRouter._updateChannelDump(lastExecuteDump);
+                    conn.__callRouter.end = false;
                     conn.__callRouter.execute(conn.__callRouter.onDisconnectCallflow, () => {
                         log.trace(`end onDisconnectCallflow`);
                         end();
