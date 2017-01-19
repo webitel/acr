@@ -1221,7 +1221,7 @@ CallRouter.prototype.__log = function (app, cb) {
     } else {
         log.warn('Bad parameter ', app[OPERATION.SCRIPT]);
         return false;
-    };
+    }
 
     if (cb)
         cb();

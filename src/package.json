@@ -5,16 +5,17 @@
   "main": "app.js",
   "private": true,
   "dependencies": {
+    "amqplib": "^0.5.1",
     "async": "^1.5.2",
-    "winston": "^2.2.0",
-    "nconf": "^0.7.1",
+    "eventemitter2": "~0.4",
     "moment-timezone": "^0.4.0",
     "mongodb": "^2.2.21",
+    "nconf": "^0.7.1",
+    "node-rest-client": "^1.5.1",
+    "node-uuid": "~1.4",
     "nodemailer": "^1.10.0",
     "nodemailer-smtp-pool": "^1.1.4",
-    "eventemitter2": "~0.4",
-    "xml2js": "~0.4",
-    "node-uuid": "~1.4",
-    "node-rest-client": "^1.5.1"
+    "winston": "^2.2.0",
+    "xml2js": "~0.4"
   }
 }

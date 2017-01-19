@@ -1,26 +1,32 @@
-var esl = require('./lib/modesl'),
+const esl = require('./lib/modesl'),
     log = require('./lib/log')(module),
     conf = require('./conf'),
     publicContext = require('./middleware/publicContext'),
     defaultContext = require('./middleware/defaultContext'),
     dialerContext = require('./middleware/dialerContext'),
     globalCollection = require('./middleware/system'),
-    DEFAULT_HANGUP_CAUSE = require('./const').DEFAULT_HANGUP_CAUSE
+    DEFAULT_HANGUP_CAUSE = require('./const').DEFAULT_HANGUP_CAUSE,
+    PUBLIC_CONTEXT = 'public'
     ;
 
-const PUBLIC_CONTEXT = 'public';
 
-const eslServer = new esl.Server({host: conf.get('server:host'), port: process.env['WORKER_PORT'] || 10030,
-        myevents: true }, function() {
-    log.info("ESL server is up port " + this.port);
+const eslServer = new esl.Server(
+    {
+        host: conf.get('server:host'),
+        port: process.env['WORKER_PORT'] || 10030,
+        myevents: true
+    },
+    function() {
+        log.info("ESL server is up port " + this.port);
 
-    if (typeof gc == 'function') {
-        setInterval( () => {
-            console.log('----------------------- GC -----------------------');
-            gc();
-        }, 5000)
+        if (typeof gc == 'function') {
+            setInterval( () => {
+                console.log('----------------------- GC -----------------------');
+                gc();
+            }, 5000)
+        }
     }
-});
+);
 
 eslServer.on('connection::open', (conn, id) => {
     conn.on('error', function (error) {
@@ -68,6 +74,7 @@ eslServer.on('connection::ready', function(conn, id, allCountSocket) {
             dialerId = conn.channelData.getHeader('variable_dlr_queue'),
             destinationNumber = conn.channelData.getHeader('Channel-Destination-Number') ||
                 conn.channelData.getHeader('Caller-Destination-Number') || conn.channelData.getHeader('variable_destination_number');
+
         log.debug('Call %s -> %s', id, destinationNumber);
 
         globalCollection.getGlobalVariables(conn, conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {

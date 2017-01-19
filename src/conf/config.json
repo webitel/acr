@@ -19,5 +19,24 @@
   "defaultPublicRout": null,
   "application": {
     "loglevel": "LOGLEVEL"
+  },
+  "broker": {
+    "enable": false,
+    "connectionString": "amqp://webitel:secret@pre.webitel.com:5672?heartbeat=0",
+    "events": [
+      {
+        "name": "ACR.Events",
+        "type": "topic",
+        "format": "ACR-Hostname,Event-Name,Event-Subclass,Domain"
+      }
+    ],
+    "commands": [
+      {
+        "name": "ACR.Commands",
+        "type": "topic",
+        "rpc": false,
+        "format": "acr1.commands.inbound"
+      }
+    ]
   }
 }
