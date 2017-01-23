@@ -766,9 +766,9 @@ CallRouter.prototype.start = function (callflows) {
         if (scope.index == callflows.length || scope.end) {
             //scope.updateLocalVariables();
             scope.saveDomainVariables();
-            if ( !(scope.onDisconnectCallflow instanceof Array) || scope.onDisconnectCallflow.length === 0) {
-                scope.connection.disconnect();
-            }
+            // if ( !(scope.onDisconnectCallflow instanceof Array) || scope.onDisconnectCallflow.length === 0) {
+            //     scope.connection.disconnect();
+            // }
             return;
         }
         scope.doExec(callflows[scope.index], postExec);
