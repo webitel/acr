@@ -102,6 +102,9 @@ function getAmdSection(channel, amdConfig = {}) {
 
     return [
         {
+            "setVar": "ignore_early_media=true"
+        },
+        {
             "answer": ""
         },
         {
@@ -116,7 +119,7 @@ function getAmdSection(channel, amdConfig = {}) {
                         "hangup": "USER_BUSY"
                     },
                     {
-                        "break": ""
+                        "break": true
                     }
                 ]
             }

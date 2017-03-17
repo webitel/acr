@@ -9,7 +9,7 @@
     "async": "^1.5.2",
     "eventemitter2": "~0.4",
     "moment-timezone": "^0.4.0",
-    "mongodb": "^2.2.21",
+    "mongodb": "^2.2.24",
     "nconf": "^0.7.1",
     "node-rest-client": "^1.5.1",
     "node-uuid": "~1.4",

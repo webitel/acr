@@ -599,13 +599,13 @@ CallRouter.prototype.__if = function (condition, cb) {
             ? true
             : false);
         if (sandbox._resultCondition) {
-            if (condition[OPERATION.THEN]) {
+            if (condition[OPERATION.THEN] && condition[OPERATION.THEN].length > 0) {
                 this.execute(condition[OPERATION.THEN], cb);
             } else {
                 cb();
             };
         } else {
-            if (condition[OPERATION.ELSE]) {
+            if (condition[OPERATION.ELSE] && condition[OPERATION.ELSE].length > 0) {
                 this.execute(condition[OPERATION.ELSE], cb);
             } else {
                 cb();
