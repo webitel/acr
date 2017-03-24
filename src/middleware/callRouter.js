@@ -1102,7 +1102,7 @@ CallRouter.prototype.__stt = function (app, cb) {
 
     this.execApp({
         "app": FS_COMMAND.RECORD,
-        "data": `http_cache://` + "$${cdr_url}" + `/sys/stt?lang=${lang}&setVar=${setVar}&key=${key}&reply=${rpc._comandsQueue}&callId=${this._connectionId}&type=.wav ${maxSec < 16 ? maxSec : 10} ${silenceThresh} ${silenceHits}`
+        "data": `http_cache://` + "$${cdr_url}" + `/sys/stt?rate=${this.getChnVar('read_rate') || 8000}&lang=${lang}&setVar=${setVar}&key=${key}&reply=${rpc._comandsQueue}&callId=${this._connectionId}&type=.wav ${maxSec < 16 ? maxSec : 10} ${silenceThresh} ${silenceHits}`
     });
 };
 
