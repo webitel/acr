@@ -4,7 +4,6 @@
 
 var MongoDb = require("mongodb"),
     MongoClient = MongoDb.MongoClient,
-    format = require('util').format,
     config = require('../conf'),
     log = require('../lib/log')(module)
     ;
@@ -32,15 +31,15 @@ function connect () {
     if (timerId)
         clearTimeout(timerId);
 
-    let mongodbClient = new MongoClient(),
-        option = {
-            server: {
-                auto_reconnect: true
-            }
-        }
-    ;
+    const mongodbClient = new MongoClient();
 
-    mongodbClient.connect(config.get('mongodb:uri'), option, function(err, db) {
+    const options = {
+        autoReconnect: true,
+        reconnectTries: Infinity,
+        reconnectInterval: 1000
+    };
+
+    mongodbClient.connect(config.get('mongodb:uri'), options, function(err, db) {
         if (err) {
             log.error('Connect db error: %s', err.message);
             return timerId = setTimeout(connect, 1000);
@@ -54,6 +53,11 @@ function connect () {
 
         db.on('error', function (err) {
             log.error(err);
+        });
+
+        db.on('reconnect', function () {
+            log.info('Reconnect MongoDB');
+            drv._initDB(db);
         });
     });
 }
