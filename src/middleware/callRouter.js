@@ -14,6 +14,7 @@ var log = require('./../lib/log')(module),
     findExtension = require('./dialplan').findActualExtension,
     blackList = require('./blackList'),
     Event = require('../lib/modesl').Event,
+    rpc = require('./broker'),
     calendar = require('./calendar/index');
 
 const VARIABLES_MAP = require('./variablesMap');
@@ -114,7 +115,8 @@ const OPERATION = {
     TELEGRAM: "telegram",
     LIMIT: "limit",
 
-    TTS: "tts"
+    TTS: "tts",
+    STT: "stt"
 };
 
 const FS_COMMAND = {
@@ -216,6 +218,9 @@ var CallRouter = module.exports = function (connection, option) {
     this._dumpArrayIndex = {};
 
     this.onDisconnectCallflow = option.onDisconnect;
+    this._connectionId = connection._id;
+
+    this._callbackStopApi = null;
 
     //this.localVar = option['localVariables'] || {};
     //this._dbId = option['id'] || '';
@@ -687,6 +692,7 @@ CallRouter.prototype.doExec = function (condition, cb) {
             var fnName = getFnName(condition);
             if (fnName && typeof this['__' + fnName] === 'function') {
                 log.debug('execute application __' + fnName);
+                this._callbackStopApi = null;
                 this['__' + fnName](condition, cb);
             } else {
                 log.error('Bad application %s.', fnName);
@@ -1072,6 +1078,32 @@ CallRouter.prototype.__goto = function (app, cb) {
 
     if (cb)
         cb();
+};
+
+CallRouter.prototype.__stt = function (app, cb) {
+    if (!cb) {
+        log.error('No callback this api...'); // TODO
+        return;
+    }
+
+    if (!rpc || !rpc._comandsQueue) {
+        log.error('No connect to amqp');
+        return cb();
+    }
+
+    const {lang = "en-US", silenceThresh = 200, silenceHits = 3, setVar = "stt_response", maxSec = 10, key = ''} = app[OPERATION.STT];
+
+    if (this._callbackStopApi) {
+        log.error('Check other api....');
+        return cb();
+    } else {
+        this._callbackStopApi = cb;
+    }
+
+    this.execApp({
+        "app": FS_COMMAND.RECORD,
+        "data": `http_cache://http://10.10.10.25:10021/sys/stt?lang=${lang}&setVar=${setVar}&key=${key}&reply=${rpc._comandsQueue}&callId=${this._connectionId}&type=.wav ${maxSec < 16 ? maxSec : 10} ${silenceThresh} ${silenceHits}`
+    });
 };
 
 CallRouter.prototype.__recordFile = function (app, cb) {
@@ -2354,36 +2386,41 @@ CallRouter.prototype.__ringback = function (app, cb) {
 CallRouter.prototype.__string = function (app, cb) {
     try {
         let prop = app[OPERATION.STRING] || {},
-            data = this._parseVariable(prop.data),
+            data = this._parseVariable(prop.data) || '',
             fn = prop.fn,
             varName = prop.setVar,
             args = prop.args
             ;
 
-        if (!data || !varName) {
+        if (!varName) {
             log.error('Bad __string parameters');
             return cb && cb();
         }
+
+        const _args = [];
 
         if (args instanceof Array) {
             // TODO
             for (let i = 0, len = args.length; i < len; i++) {
                 if (typeof args[i] == 'string') {
                     var match = args[i].match(new RegExp('^/(.*?)/([gimy]*)$'));
-                    if (match)
-                        args[i] = new RegExp(match[1], match[2]);
+                    if (match) {
+                        _args.push(new RegExp(match[1], match[2]));
+                    } else {
+                        _args.push(this._parseVariable(args[i]))
+                    }
                 }
             }
         } else {
-            args = [args];
+            _args.push(this._parseVariable(args))
         }
 
         let res;
 
-        if (typeof StringOperation[fn] == 'function') {
-            res = StringOperation[fn](data, args);
-        } else if (typeof data[fn] == 'function') {
-            res = data[fn].apply(data, args);
+        if (typeof StringOperation[fn] === 'function') {
+            res = StringOperation[fn](data, _args);
+        } else if (typeof data[fn] === 'function') {
+            res = data[fn].apply(data, _args);
         } else {
             log.error('Bad __string fn name');
             return cb && cb();

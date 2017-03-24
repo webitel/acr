@@ -163,11 +163,10 @@ class RPC extends EventEmitter2 {
             return;
 
         const apiMsg = new ApiMsg(msg);
-        console.log(apiMsg);
+        log.debug(`exec ${apiMsg.api}, args: `, apiMsg.args);
         apiMsg.execute( (res) => {
             return this.sendCommandsResponse(apiMsg, JSON.stringify(res));
         });
-
     }
 
     sendCommandsResponse (apiMsg, data) {
@@ -175,7 +174,7 @@ class RPC extends EventEmitter2 {
             this
                 .channel
                 .sendToQueue(apiMsg.properties.replyTo, new Buffer(data), {correlationId: apiMsg.properties.correlationId});
-        } else {
+        } else if (apiMsg.routingKey) {
             this
                 .channel
                 .publish(apiMsg.exchange, apiMsg.routingKey, new Buffer(data));

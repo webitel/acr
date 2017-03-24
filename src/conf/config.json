@@ -21,7 +21,7 @@
     "loglevel": "LOGLEVEL"
   },
   "broker": {
-    "enable": false,
+    "enable": true,
     "connectionString": "amqp://webitel:secret@pre.webitel.com:5672?heartbeat=0",
     "events": [
       {
@@ -35,7 +35,7 @@
         "name": "ACR.Commands",
         "type": "topic",
         "rpc": false,
-        "format": "acr1.commands.inbound"
+        "format": "acr.commands.inbound"
       }
     ]
   }

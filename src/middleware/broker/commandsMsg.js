@@ -16,7 +16,7 @@ class CommandsMessage {
         this.args = null;
 
         this.exchange = this.properties.headers['x-api-resp-exchange'] || msg.fields.exchange;
-        this.routingKey = this.properties.headers['x-api-resp-key'] || "outbound";
+        this.routingKey = this.properties.headers['x-api-resp-key'];
 
         const data = getJson(msg.content.toString(this.encodings));
         if (data) {

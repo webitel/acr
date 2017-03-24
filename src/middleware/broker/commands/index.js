@@ -5,7 +5,9 @@
 "use strict";
     
 const status = require('./status');
+const channel = require('./channel');
 
 module.exports = {
-    status
+    status,
+    channel
 };
