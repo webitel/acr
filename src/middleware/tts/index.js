@@ -8,12 +8,6 @@ const log = require('../../lib/log')(module)
 
 const PROVIDER = {
     "microsoft": (router, config, cb) => {
-
-        if (!config.accessKey1 || !config.accessKey2 || !config.appId || !config.text) {
-            log.error(`Bad config parameters microsoft: accessKey1, accessKey2, appId, text is required`);
-            return cb && cb();
-        }
-
         let text = router._parseVariable(config.text),
             voice = config.voice || {},
             playbackProp = copyTTSOptionToPlayback(config);
@@ -32,9 +26,13 @@ const PROVIDER = {
             query += `&name=${voice.name}`
         }
 
-        query += `&key1=${config.accessKey1}&key2=${config.accessKey2}&appId=${config.appId}&.wav`;
+        const {rate, format} = getCodecSettings(router.getChnVar('write_rate'));
+        query += `&rate=${rate}&format=${format}`;
 
-        playbackProp.name = 'http_cache://$${cdr_url}/sys/tts/microsoft?' + query;
+        if (config.accessKey && config.accessToken)
+            query += `&accessKey=${config.accessKey}&accessToken=${config.accessToken}`;
+
+        playbackProp.name = `${router.getGlbVar('cdr_url').replace(/https?/, format === 'mp3' ? 'shout': 'http_cache')}/sys/tts/microsoft?${query}`;
         playbackProp.type = 'local';
 
         router.__playback({
@@ -43,10 +41,6 @@ const PROVIDER = {
 
     },
     "ivona": (router, config, cb) => {
-        if (!config.accessKey || !config.accessToken || !config.text) {
-            log.error(`Bad config parameters Ivona: ivonaAccessKey, ivonaSecretKey, text is required`);
-            return cb && cb();
-        }
 
         let text = router._parseVariable(config.text),
             voice = config.voice || {},
@@ -68,27 +62,91 @@ const PROVIDER = {
             query += `&name=${voice.name}`
         }
 
-        query += `&key=${encodeURIComponent(config.accessKey)}&token=${encodeURIComponent(config.accessToken)}`;
+        if (config.accessKey && config.accessToken)
+            query += `&accessKey=${encodeURIComponent(config.accessKey)}&accessToken=${encodeURIComponent(config.accessToken)}`;
 
-        playbackProp.name = `${router.getGlbVar('cdr_url').replace(/https?/, 'shout')}/sys/tts/ivona?${query}`;
+        const {rate, format} = getCodecSettings(router.getChnVar('write_rate'));
+        query += `&rate=${rate}&format=${format}`;
+
+        playbackProp.name = `${router.getGlbVar('cdr_url').replace(/https?/, format === 'mp3' ? 'shout': 'http_cache')}/sys/tts/ivona?${query}`;
         playbackProp.type = 'local';
 
         router.__playback({
             playback: playbackProp
         }, cb)
 
+    },
+    "polly": (router, config, cb) => {
+
+        let text = router._parseVariable(config.text),
+            voice = config.voice,
+            playbackProp = copyTTSOptionToPlayback(config);
+
+
+        let query = `text=${encodeURIComponent(text)}`;
+
+        if (voice) {
+            query += `&voice=${voice}`
+        }
+
+        if (config.accessKey && config.accessToken)
+            query += `&accessKey=${encodeURIComponent(config.accessKey)}&accessToken=${encodeURIComponent(config.accessToken)}`;
+
+        const {rate, format} = getCodecSettings(router.getChnVar('write_rate'));
+        query += `&rate=${rate}&format=${format}`;
+
+        playbackProp.name = `${router.getGlbVar('cdr_url').replace(/https?/, format === 'mp3' ? 'shout': 'http_cache')}/sys/tts/polly?${query}`;
+        playbackProp.type = 'local';
+
+        router.__playback({
+            playback: playbackProp
+        }, cb)
+
+    },
+    "default": (router, config, cb) => {
+        let text = router._parseVariable(config.text),
+            playbackProp = copyTTSOptionToPlayback(config);
+
+        let query = `text=${encodeURIComponent(text)}`;
+
+        for (let key in config) {
+            if (config.hasOwnProperty(key) && !~_PLAYBACK_PROPS.indexOf(key) && key !== 'text') {
+                if (config[key] instanceof Object) {
+                    for (let keyObject in config[key]) {
+                        query += `&${keyObject}=${config[key][keyObject]}`
+                    }
+                } else {
+                    query += `&${key}=${config[key]}`
+                }
+            }
+        }
+
+        const {rate, format} = getCodecSettings(router.getChnVar('write_rate'));
+        query += `&rate=${rate}&format=${format}`;
+
+        playbackProp.name = `${router.getGlbVar('cdr_url').replace(/https?/, format === 'mp3' ? 'shout': 'http_cache')}/sys/tts/default?${query}`;
+        playbackProp.type = 'local';
+        
+        router.__playback({
+            playback: playbackProp
+        }, cb)
     }
 };
 
 module.exports = (CallRouter, appName) => {
     CallRouter.prototype['__' + appName] = function (app, cb) {
         let prop = app[appName];
-        if (PROVIDER.hasOwnProperty(prop.provider)) {
-            return PROVIDER[prop.provider](this, prop, cb);
+
+        if (!prop.text) {
+            log.error(`Bad config parameters tts: text is required`);
+            return cb && cb();
         }
 
-        log.error(`Provider not found.`);
-        return cb && cb();
+        if (PROVIDER.hasOwnProperty(prop.provider)) {
+            return PROVIDER[prop.provider](this, prop, cb);
+        } else {
+            return PROVIDER.default(this, prop, cb);
+        }
     }
 };
 
@@ -104,4 +162,16 @@ function copyTTSOptionToPlayback(ttsProp) {
     }
 
     return playbackProp;
+}
+
+function getCodecSettings(writeRate) {
+    let rate = +writeRate || 8000;
+    let format = 'mp3';
+
+    if (rate === 8000 || rate === 16000) {
+        format = '.wav'
+    } else if (rate > 22050) {
+        rate = 22050;
+    }
+    return {rate, format};
 }

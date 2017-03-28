@@ -806,13 +806,19 @@ CallRouter.prototype.__answer = function (app, cb) {
         this.execApp({
             "app": _app,
             "async": app[OPERATION.ASYNC] ? true : false
+        }, (res) => {
+            res.headers.forEach( (item) => {
+                this.connection.channelData.addHeader(item.name, item.value);
+            });
+
+            if (cb)
+                cb();
         });
     } else {
         log.warn('Bad parameter ', app[OPERATION.ANSWER]);
-    };
-
-    if (cb)
-        cb();
+        if (cb)
+            cb();
+    }
 };
 
 CallRouter.prototype.__park = function (app, cb) {
