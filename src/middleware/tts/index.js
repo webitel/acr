@@ -25,12 +25,12 @@ const PROVIDER = {
         if (voice.name) {
             query += `&name=${voice.name}`
         }
+        
+        if (config.accessKey && config.accessToken)
+            query += `&accessKey=${config.accessKey}&accessToken=${config.accessToken}`;
 
         const {rate, format} = getCodecSettings(router.getChnVar('write_rate'));
         query += `&rate=${rate}&format=${format}`;
-
-        if (config.accessKey && config.accessToken)
-            query += `&accessKey=${config.accessKey}&accessToken=${config.accessToken}`;
 
         playbackProp.name = `${router.getGlbVar('cdr_url').replace(/https?/, format === 'mp3' ? 'shout': 'http_cache')}/sys/tts/microsoft?${query}`;
         playbackProp.type = 'local';
