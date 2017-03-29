@@ -44,7 +44,7 @@ module.exports = function (conn, destinationNumber, globalVariable) {
             uuid = conn.channelData.getHeader('variable_uuid'),
             answeredTime = conn.channelData.getHeader('Caller-Channel-Answered-Time')
             ;
-        conn.execute('set', 'webitel_direction=dialer');
+        
 
 
         let _router = new CallRouter(conn, {
