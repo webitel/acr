@@ -116,7 +116,7 @@ function getAmdSection(channel, amdConfig = {}) {
                 "sysExpression" : "sys.getChnVar(\"amd_result\") !== 'HUMAN'",
                 "then": [
                     {
-                        "hangup": "USER_BUSY"
+                        "hangup": "NORMAL_UNSPECIFIED"
                     },
                     {
                         "break": true
