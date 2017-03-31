@@ -1495,9 +1495,14 @@ CallRouter.prototype.__bridge = function (app, cb) {
         _data = '',
         scope = this,
         _params = [],
-        separator = prop['strategy'] == 'failover' // TODO переделать
-            ? '|'
-            : ','; // ":_:" - only for user & device; "," - for other types
+        separator = ':_:'; // ":_:" - only for user & device; "," - for other types
+
+
+    if (prop['strategy'] === 'failover') {
+        separator = '|';
+    } else if (prop['strategy'] && prop['strategy'] !== 'multiple') {
+        separator = prop['strategy'];
+    }
 
     if (prop.hasOwnProperty('global') && prop['global'] instanceof Array){
         _data += '<' + prop['global'].join(',') + '>';
