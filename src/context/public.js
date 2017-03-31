@@ -13,7 +13,52 @@ module.exports = (acr, conn) => {
 
 const test = [
     {
-        "log" : "start"
+        "function" : {
+            "name" : "testFn",
+            "actions" : [
+                {
+                    "abstract" : "ok my function"
+                },
+                {
+                    "if" : {
+                        "expression" : "1===1",
+                        "then" : [
+                            {
+                                "abstract" : "fn true",
+                                "tag" : "isolate"
+                            },
+                            {
+                                "goto" : "else",
+                                "tag" : "then"
+                            }
+                        ],
+                        "else" : [
+                            {
+                                "tag" : "else",
+                                "abstract" : "elseFn"
+                            },
+                            {
+                                "goto" : "then"
+                            }
+                        ],
+                        "sysExpression" : "1===1"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "execute" : "testFn",
+        "tag" : "else"
+    },
+    {
+        "execute" : "testFn"
+    },
+    {
+        "goto" : "isolate"
+    },
+    {
+        "abstract" : "start"
     },
     {
         "tag" : "if",
@@ -21,7 +66,7 @@ const test = [
             "expression" : "1 == 2",
             "then" : [
                 {
-                    "log" : "if1"
+                    "abstract" : "if1"
                 }
             ],
             "else" : [
@@ -30,7 +75,7 @@ const test = [
                         "expression" : "2 == 2",
                         "then" : [
                             {
-                                "log" : "then2"
+                                "abstract" : "then2"
                             },
                             {
                                 "goto" : "if3"
@@ -40,7 +85,7 @@ const test = [
                                     "expression" : "false",
                                     "then" : [
                                         {
-                                            "log" : "then3",
+                                            "abstract" : "then3",
                                             "tag" : "if3"
                                         },
                                         {
@@ -49,7 +94,7 @@ const test = [
                                     ],
                                     "else" : [
                                         {
-                                            "log" : "else3",
+                                            "abstract" : "else3",
                                             "tag" : "else3"
                                         },
                                         {
@@ -62,7 +107,7 @@ const test = [
                         ],
                         "else" : [
                             {
-                                "log" : "else2"
+                                "abstract" : "else2"
                             }
                         ],
                         "sysExpression" : "2 == 2"
@@ -82,10 +127,10 @@ const test = [
             "case" : {
                 "1" : [
                     {
-                        "log" : "s1"
+                        "abstract" : "s1"
                     },
                     {
-                        "log" : "6",
+                        "abstract" : "6",
                         "tag" : "s1"
                     },
                     {
@@ -93,7 +138,7 @@ const test = [
                             "expression" : "true",
                             "then" : [
                                 {
-                                    "log" : "swIf",
+                                    "abstract" : "swIf",
                                     "tag" : "swIf"
                                 },
                                 {
@@ -107,7 +152,7 @@ const test = [
                 ],
                 "default" : [
                     {
-                        "log" : "5",
+                        "abstract" : "5",
                         "tag" : "def1"
                     },
                     {
@@ -123,64 +168,6 @@ const test = [
     },
     {
         "tag" : "footer",
-        "log" : "footer"
+        "log" : "enad call ${uuid}"
     }
 ];
-
-const test2 = [
-    {
-        "tag": "fake",
-        "if": {
-            "expression": "1 === 1",
-            "then": [
-                {
-                    "log": "ANSWER"
-                },
-                {
-                    "if": {
-                        "expression": "2 === 2",
-                        "then": [
-                            {
-                                "log": "2 === 2 : OK",
-                                "tag": "fake2"
-                            },
-                            {
-                                "if": {
-                                    "expression": "3 === 3",
-                                    "then": [
-                                        {
-                                            "log": "3 === 3 : OK"
-                                        },
-                                        {
-                                            "fn": "asd"
-                                        },
-                                        {
-                                            "goto": "fake"
-                                        }
-                                    ],
-                                    "else": [
-                                        {
-                                            "log": "3 === 3 : ERR"
-                                        }
-                                    ]
-                                }
-                            }
-                        ],
-                        "else": [
-                            {
-                                "log": "2 === 2 : ERR"
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
-    },
-    {
-        "log": "sleep"
-    },
-    {
-        "tag": "end",
-        "log": "END!"
-    }
-]

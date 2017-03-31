@@ -17,12 +17,10 @@ module.exports = (acr) => {
 
         const callIterator = call.callFlowIter;
 
-        const end = () => {
+        const end = (err, res) => {
             call.callFlowIter = callIterator;
-            return cb();
+            return cb(err, res);
         };
-
-        //console.log(fn);
 
         call.callFlowIter = fn;
 
@@ -32,12 +30,12 @@ module.exports = (acr) => {
 
             let app = fn.next() || fn.getParent();
             if (!app) {
-                return end();
+                return end(err, res);
             }
             app.execute(call, (err, res) => {
                 if (app.break === true) {
-                    call.log(`Break call flow`);
-                    return end();
+                    call.log(`Break call flow function ${functionName}`);
+                    return end(err, res);
                 }
 
                 return exec(err, res);

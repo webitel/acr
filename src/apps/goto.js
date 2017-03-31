@@ -10,8 +10,16 @@ module.exports = (acr) => {
 
     return function(call, cb) {
         const tag = this.getArgs();
-        call.log(`Goto ${tag}`);
-        call.callFlowIter.goto(tag);
+
+        //TODO ADD old goto support - delete new version;
+        // isNaN(tag) &;
+
+        if (call.callFlowIter.goto(tag)) {
+            call.log(`Goto ${tag}`);
+        } else {
+            call.log(`Goto not found ${tag}`, true);
+        }
+
         return cb()
     }
 };

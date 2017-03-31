@@ -19,17 +19,19 @@ class Iterator {
     constructor (callflow, acr) {
         this.tags = new Map();
         this.functions = new Map();
-
         this._current = new Node(null);
 
-        this.getExecuteFunction = (name) => {
-            return acr.getApplication(name)
-        };
-
+        this.getExecuteFunction = (name) => acr.getApplication(name);
         this.getAcr = () => acr;
 
         this._gotoCounter = 0;
-        this._parseCallFlow(callflow, this._current);
+
+        if (callflow instanceof Array) {
+            this._rootCount = callflow.length - 1;
+            this._parseCallFlow(callflow, this._current);
+        }
+
+        //this.bigData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
 
         // const test = (n) => {
@@ -53,17 +55,43 @@ class Iterator {
     }
 
     goto (tagName) {
-        if (!this.tags.has(tagName))
+        // TODO add support old version from root number ?
+        const foundTagMap = this.tags.has(tagName);
+        let gotoApp;
+        if (!foundTagMap && typeof tagName !== 'number') {
             return false;
+        } else if (!foundTagMap && typeof tagName === 'number') {
+            // TODO remove next version
+            log.debug(`Deprecated goto from root position ${tagName}`);
+            if (this._rootCount < tagName && tagName > this._rootCount) {
+                log.warn(`Deprecated goto not found index ${tagName}`);
+                return false;
+            }
 
-        const gotoApp = this.tags.get(tagName);
+            while (this.getParent()) {
+
+            }
+            gotoApp = this._current.children[tagName];
+
+            if (!gotoApp) {
+                log.warn(`Deprecated goto not found index ${tagName} by skip bad applications... move to end!!!`);
+                gotoApp = this._current.children[this._current.children.length - 1];
+
+            }
+        } else {
+            gotoApp = this.tags.get(tagName);
+        }
+
+        
         this._current.first();
         this.setRoot(gotoApp.getParent());
         this._current.position = gotoApp.idx;
+        
         if (this._current._parent) {
             this._current._parent.position = this._current.idx + 1;
         }
         this._gotoCounter++;
+        return true;
     }
 
     getFunction (name) {
@@ -89,10 +117,11 @@ class Iterator {
     }
 
     _checkTag (app, node) {
-        if (app.hasOwnProperty('tag') && app.tag) {
+        if (app.tag != null) {
             this.tags.set(app.tag, node);
         }
     }
+
 
     _parseCallFlow (obj, root) {
         if (obj instanceof Array) {
@@ -132,7 +161,7 @@ class Iterator {
                         }
                         node = new Iterator(app.function.actions, this.getAcr()); // new FunctionNode(app.function.name, app.function.actions);
                         this.functions.set(app.function.name, node);
-                        break;
+                        continue;
 
                     case 'switch':
                         node = new SwitchNode(root, app.switch, args);

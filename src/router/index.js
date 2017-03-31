@@ -12,6 +12,11 @@ const CallTreeInterator = require('./iterator'),
 class Call {
     constructor (conn, shema, acr) {
         this._id = conn._id;
+        this._uuid = conn.channelData.getHeader('variable_uuid');
+        if (!this._uuid) {
+            log.warn(`Not found uuid in ${this._id}`);
+        }
+
         this.domain = shema.domain;
 
         this._routeLog = [];
@@ -70,7 +75,7 @@ class Call {
 
         if (e)
             log.error(data);
-        else log.trace(`[${this._id}]: ${data}`); //TODO to uuid
+        else log.trace(`[${this._uuid}]: ${data}`); //TODO to uuid
     }
 }
 
