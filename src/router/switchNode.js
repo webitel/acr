@@ -31,10 +31,6 @@ class SwitchNode extends BaseNode {
         this.case = new Map();
         this._values = [];
 
-        this.getCauseWorkFlow = value => {
-            return args.case && args.case[value]
-        };
-
         this.getCaseWorkFlow = (value) => {
             return args.case[value];
         };

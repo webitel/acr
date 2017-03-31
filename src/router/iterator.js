@@ -18,11 +18,15 @@ const MAX_GOTO_COUNTER = 100;
 class Iterator {
     constructor (callflow, acr) {
         this.tags = new Map();
+        this.functions = new Map();
+
         this._current = new Node(null);
 
         this.getExecuteFunction = (name) => {
             return acr.getApplication(name)
         };
+
+        this.getAcr = () => acr;
 
         this._gotoCounter = 0;
         this._parseCallFlow(callflow, this._current);
@@ -62,6 +66,10 @@ class Iterator {
         this._gotoCounter++;
     }
 
+    getFunction (name) {
+        return this.functions.get(name);
+    }
+
     setRoot (root) {
         if (root instanceof Node) {
             this._current = root;
@@ -72,10 +80,10 @@ class Iterator {
 
     getParent () {
         const parent = this._current.getParent();
+        this._current.first();
         if (!parent)
             return null;
 
-        this._current.first();
         this._current = parent;
         return this.next() || this.getParent();
     }
@@ -115,6 +123,15 @@ class Iterator {
                     case 'break':
                         node = new BreakNode(root);
                         root.add(node);
+                        break;
+
+                    case 'function':
+                        if (!app.function.name || !(app.function.actions instanceof Array)) {
+                            log.warn(`Bad function parameters: `, app);
+                            continue;
+                        }
+                        node = new Iterator(app.function.actions, this.getAcr()); // new FunctionNode(app.function.name, app.function.actions);
+                        this.functions.set(app.function.name, node);
                         break;
 
                     case 'switch':
