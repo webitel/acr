@@ -1,0 +1,186 @@
+/**
+ * Created by igor on 27.03.17.
+ */
+
+"use strict";
+
+const log = require(__appRoot + '/lib/log')(module),
+    acr = require(__appRoot + '/acr'),
+    Node = require('./node'),
+    ApplicationNode = require('./applicationNode'),
+    BreakNode = require('./breakNode'),
+    SwitchNode = require('./switchNode'),
+    ConditionNode = require('./conditionNode');
+
+
+const MAX_GOTO_COUNTER = 100;
+
+class Iterator {
+    constructor (callflow, acr) {
+        this.tags = new Map();
+        this._current = new Node(null);
+
+        this.getExecuteFunction = (name) => {
+            return acr.getApplication(name)
+        };
+
+        this._gotoCounter = 0;
+        this._parseCallFlow(callflow, this._current);
+
+
+        // const test = (n) => {
+        //     if (!n) {
+        //         console.log("END!!!!!!!!!!!!!!!!!");
+        //         return;
+        //     }
+        //
+        //     n.execute(this);
+        //
+        //     if (n.name === 'goto') {
+        //         this.goto(n.getArgs())
+        //     }
+        //
+        //     test(this.next() || this.getParent());
+        //
+        // };
+        //
+        // test(this.next() || this.getParent());
+
+    }
+
+    goto (tagName) {
+        if (!this.tags.has(tagName))
+            return false;
+
+        const gotoApp = this.tags.get(tagName);
+        this._current.first();
+        this.setRoot(gotoApp.getParent());
+        this._current.position = gotoApp.idx;
+        if (this._current._parent) {
+            this._current._parent.position = this._current.idx + 1;
+        }
+        this._gotoCounter++;
+    }
+
+    setRoot (root) {
+        if (root instanceof Node) {
+            this._current = root;
+        } else {
+            throw root;
+        }
+    }
+
+    getParent () {
+        const parent = this._current.getParent();
+        if (!parent)
+            return null;
+
+        this._current.first();
+        this._current = parent;
+        return this.next() || this.getParent();
+    }
+
+    _checkTag (app, node) {
+        if (app.hasOwnProperty('tag') && app.tag) {
+            this.tags.set(app.tag, node);
+        }
+    }
+
+    _parseCallFlow (obj, root) {
+        if (obj instanceof Array) {
+            for (let app of obj) {
+                const {name, args} = getApplicationParameters(app);
+
+                if (!name) {
+                    log.warn(`Skip bad application: `, app);
+                    continue;
+                }
+
+                let node = null;
+
+                switch (name) {
+
+                    case 'if':
+                        node = new ConditionNode(root, app.if, args);
+                        root.add(node);
+
+                        if (app.if.then instanceof Array) {
+                            this._parseCallFlow(app.if.then, node.getThenNode())
+                        }
+                        if (app.if.else instanceof Array) {
+                            this._parseCallFlow(app.if.else, node.getElseNode())
+                        }
+                        break;
+
+                    case 'break':
+                        node = new BreakNode(root);
+                        root.add(node);
+                        break;
+
+                    case 'switch':
+                        node = new SwitchNode(root, app.switch, args);
+                        root.add(node);
+                        node._values.forEach( valueName => {
+                            this._parseCallFlow(node.getCaseWorkFlow(valueName), node.getValueNode(valueName));
+                        });
+
+                        break;
+
+                    default:
+                        const execFn = this.getExecuteFunction(name);
+                        if (typeof execFn !== 'function') {
+                            log.warn(`Skip bad application: `, app);
+                            continue;
+                        }
+                        node = new ApplicationNode(root, name, app[name], args, execFn);
+                        root.add(node);
+                        this._parseCallFlow(app, root);
+                }
+
+                this._checkTag(app, node);
+            }
+        }
+    }
+
+    next () {
+        if (this._gotoCounter >= MAX_GOTO_COUNTER) {
+            log.error(`Cycle goto application: ${this._gotoCounter}`);
+            return null;
+        }
+
+        return this._current.next();
+    }
+}
+
+
+/**
+ *
+ * @param app
+ * @returns {{name: null, args: {}}}
+ */
+const getApplicationParameters = (app) => {
+    const result = {name: null, args: {}};
+
+    if (!(app instanceof Object))
+        return result;
+
+    const propKeys = Object.keys(app);
+    if (propKeys.length === 1) {
+        result.name = propKeys[0];
+    } else if (propKeys.length > 0) {
+        for (let propName of propKeys){
+            if (!result.name && propName !== 'break' && propName !== 'async' && propName !== 'tag' && propName !== 'dump') {
+                result.name = propName;
+            } else {
+                result.args[propName] = app[propName]
+            }
+        }
+    }
+
+    if (app[result.name] == null)
+        result.name = null;
+
+    return result;
+};
+
+module.exports = Iterator;

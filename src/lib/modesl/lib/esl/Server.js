@@ -67,7 +67,7 @@ Server.prototype._onConnection = function(socket) {
     this.connections[id]._id = id;
     this.connectionsLength++;
 
-    this.emit('connection::open', conn, id);
+    this.emit('connection::open', conn, id, this.connectionsLength);
 
     conn.send('connect');
     conn.on('esl::ready', function(id) {

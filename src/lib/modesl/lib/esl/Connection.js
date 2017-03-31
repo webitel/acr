@@ -47,6 +47,7 @@ var Connection = module.exports = function() {
     this.once('esl::ready', ((typeof arguments[len - 1] === 'function') ? arguments[len - 1] : this._noop));
 
     //reasonable defaults for values
+    this.globalVars = null;
     this.execAsync = false;
     this.execLock = false;
     this.connecting = true;
@@ -154,6 +155,14 @@ Connection.prototype.socketDescriptor = function() {
     if(this._inbound) return null;
 
     return this.socket;
+};
+//WEBITEL
+Connection.prototype.setGlobalVars = function (vars) {
+    this.globalVars = vars;
+};
+
+Connection.prototype.getGlobalVar = function (name) {
+    return this.globalVars && this.globalVars[name];
 };
 
 //Test if the connection object is connected. Returns `true` if connected, `false` otherwise.

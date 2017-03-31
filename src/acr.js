@@ -1,134 +1,156 @@
 /**
- * Created by igor on 23.03.17.
- * //TODO
+ * Created by igor on 27.03.17.
  */
 
 "use strict";
-
-
-const esl = require('./lib/modesl'),
-    log = require('./lib/log')(module),
-    conf = require('./conf'),
-    publicContext = require('./middleware/publicContext'),
-    defaultContext = require('./middleware/defaultContext'),
-    dialerContext = require('./middleware/dialerContext'),
-    globalCollection = require('./middleware/system'),
-    DEFAULT_HANGUP_CAUSE = require('./const').DEFAULT_HANGUP_CAUSE,
-    EventEmitter2 = require('eventemitter2').EventEmitter2,
-    PUBLIC_CONTEXT = 'public'
-    ;
     
-class Acr extends EventEmitter2 {
-    constructor() {
+const EventEmitter2 = require('eventemitter2').EventEmitter2,
+    DB = require('./db'),
+    ESL = require('./lib/modesl'),
+    conf = require('./conf'),
+    context = require('./context'),
+    parseApi = require('./utils/parser').api,
+    fs = require('fs'),
+    log = require('./lib/log')(module);
+
+const DEFAULT_HANGUP_CAUSE = 'DESTINATION_OUT_OF_ORDER';
+
+class ACR extends EventEmitter2 {
+    constructor () {
         super();
+        this.db = new DB();
+        this._server = null;
 
-        const eslServer = this.server = new esl.Server(
-            {
-                host: conf.get('server:host'),
-                port: process.env['WORKER_PORT'] || 10030,
-                myevents: true
-            },
-            function() {
-                log.info("ESL server is up port " + this.port);
-            }
-        );
-
-        eslServer.on('connection::open', (conn, id) => {
-            conn.on('error', function (error) {
-                log.warn('Call %s error: %s', id, error.message);
-            });
+        this.db.once('connect', () => {
+            this.createServer();
         });
 
-        eslServer.on('connection::ready', function(conn, id, allCountSocket) {
+        this.globalVar = new Map();
 
-            log.trace('New call %s [all socket: %s]', id, allCountSocket);
+        this.apps = new Map();
+        this._appNames = ['if', 'case', 'switch', 'break'];
 
-            let lastExecuteDump;
-            conn.on('esl::end', () => {
-                if (conn && conn.__callRouter) {
-                    var end = () => {
-                        if (conn.__callRouter) {
-                            conn.__callRouter.stop();
-                            delete conn.__callRouter;
-                        }
-                    };
+        this.registerApplications();
+    }
 
-                    if (conn.__callRouter.onDisconnectCallflow instanceof Array && conn.__callRouter.onDisconnectCallflow.length > 0) {
-                        try {
-                            conn.__callRouter._updateChannelDump(lastExecuteDump);
-                            conn.__callRouter.end = false;
-                            conn.__callRouter.execute(conn.__callRouter.onDisconnectCallflow, () => {
-                                log.trace(`end onDisconnectCallflow`);
-                                end();
-                            })
-                        } catch (e) {
-                            log.error(e);
-                            end();
-                        }
-                    } else {
-                        end();
-                    }
-                }
-            });
+    getApplication (name) {
+        return this.apps.get(name)
+    }
 
-            conn.on(`esl::event::CHANNEL_EXECUTE_COMPLETE::*`, (e) => {
-                lastExecuteDump = e;
-            });
+    registerApplications () {
+        const appsFiles = fs.readdirSync(__appRoot + '/apps');
 
-            try {
-                var context = conn.channelData.getHeader('Channel-Context'),
-                    dialerId = conn.channelData.getHeader('variable_dlr_queue'),
-                    destinationNumber = conn.channelData.getHeader('Channel-Destination-Number') ||
-                        conn.channelData.getHeader('Caller-Destination-Number') || conn.channelData.getHeader('variable_destination_number');
+        appsFiles.forEach( fileName => {
+            const appName = fileName.replace(/(.*)\.(.*)?/, '$1');
+            log.info(`Register application ${appName}`);
+            const app = require(`./apps/${fileName}`)(this);
 
-                log.debug('Call %s -> %s', id, destinationNumber);
+            if (typeof app !== 'function')
+                throw `Bad application file ${fileName}`;
 
-                globalCollection.getGlobalVariables(conn, conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
-                    if (err) {
-                        log.error(err.message);
-                        conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-                        return
-                    }
-
-                    var soundPref = '\/$${sounds_dir}\/en\/us\/callie';
-                    if (conn.channelData.getHeader('variable_default_language') == 'ru') {
-                        soundPref = '\/$${sounds_dir}\/ru\/RU\/elena';
-                    }
-
-                    conn.execute('set', 'sound_prefix=' + soundPref);
-
-                    if (context == PUBLIC_CONTEXT) {
-                        publicContext(conn, destinationNumber, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
-                    } else if (dialerId) {
-                        dialerContext(conn, dialerId, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
-                    } else {
-                        defaultContext(conn, destinationNumber, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
-                    }
-
-                });
-
-            } catch (e) {
-                log.error(e.message);
-                conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
-            }
-
-        });
-
-        eslServer.on('error', function (err) {
-            log.error(err);
-        });
-
-        eslServer.on('connection::close', function(c, id, allCount) {
-            log.trace("Call end %s [all socket: %s]", id, allCount);
+            this.apps.set(appName, app);
+            this._appNames.push(appName);
         });
     }
 
-    getConnection (id) {
-        if (this.server.connections.hasOwnProperty(id)) {
-            return this.server.connections[id];
+    existsApp (name) {
+        return ~this._appNames.indexOf(name);
+    }
+    
+    initGlobalVar (switchUuid, conn, cb) {
+        if (this.globalVar.has(switchUuid)) {
+            return cb(null);
         }
+
+        conn.api('global_getvar', res => {
+            const vars = parseApi(res && res.getBody());
+            this.globalVar.set(switchUuid, vars);
+            log.info(`Set global variables from ${switchUuid}`);
+            return cb(null);
+        });
+    }
+
+    getGlobalVar (switchUuid, name) {
+        if (this.globalVar.has(switchUuid)) {
+            return this.globalVar.get(switchUuid)[name]
+        }
+        log.warn(`No global var ${switchUuid}`);
         return null;
+    }
+
+    createServer () {
+        const host = conf.get('server:host');
+        const port = process.env['WORKER_PORT'] || 10030;
+        this._server = new ESL.Server(
+            {
+                host,
+                port,
+                myevents: true
+            },
+            () => log.info(`Open esl server on ${host}:${port}`)
+        );
+        this._server.on('error', this.onError.bind(this));
+        this._server.on('connection::open', this.onOpenConnection.bind(this));
+        this._server.on('connection::close', this.onCloseConnection.bind(this));
+        this._server.on('connection::ready', this.onReadyConnection.bind(this));
+
+    }
+
+    closeConnection (conn, err) {
+        if (err)
+            log.error(err);
+        conn.execute('hangup', DEFAULT_HANGUP_CAUSE);
+    }
+
+    onReadyConnection (conn, id) {
+        try {
+            context(this, conn, id);
+        } catch (e) {
+            log.error(`Route ${id} error: `, e);
+        }
+    }
+
+    onOpenConnection (conn, id, allCount) {
+        log.debug(`Open connection ${id} [all connection count ${allCount}]`);
+        conn.on('error', (err) => {
+            log.warn(`Call ${id} error: `, err);
+        });
+    };
+
+    onCloseConnection (conn, id, allCount) {
+        log.debug(`Close connection ${id} [all connection count ${allCount}]`);
+    }
+
+    onError (err) {
+        log.error(err);
+    }
+
+
+    stop (e) {
+        log.info('stop');
+        this.db.close();
+        process.exit(1);
     }
 }
 
-global.application = new Acr();
+const acr = new ACR();
+
+function getFnName(cond) {
+    if (!cond)
+        return null;
+
+    var propKeys = Object.keys(cond);
+    if (propKeys.length === 1) {
+        return propKeys[0];
+    } else if (propKeys.length === 0) {
+        return null;
+    } else {
+        for (var i = 0, len = propKeys.length; i < len; i++) {
+            if (propKeys[i] !== 'break' && propKeys[i] !== 'async' && propKeys[i] !== 'tag') {
+                return propKeys[i];
+            }
+        }
+    }
+}
+
+module.exports = () => acr;

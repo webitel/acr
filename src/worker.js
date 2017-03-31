@@ -1,22 +1,31 @@
+/**
+ * Created by igor on 27.03.17.
+ */
+
+"use strict";
+
 const path = require('path');
-
 global.__appRoot = path.resolve(__dirname);
+const acr = require('./acr')();
+const log = require('./lib/log')(module);
 
+process.title = "ACR V2";
 
-const acr = require('./acr'),
-    log = require('./lib/log')(module)
-    ;
-
-
-process.on('uncaughtException', function (err) {
-    log.error('UncaughtException:', err.message);
-    log.error(err.stack);
+process.on('SIGINT', function() {
+    log.info('SIGINT received ...');
+    acr.stop();
     process.exit(1);
+    return true;
 });
 
-if (typeof gc == 'function') {
-    setInterval( () => {
-        console.log('----------------------- GC -----------------------');
+process.on('uncaughtException', function (err = {}) {
+    log.error(err);
+    acr.stop();
+});
+
+if (typeof gc === 'function') {
+    setInterval(function () {
         gc();
-    }, 5000)
+        console.log('----------------- GC -----------------');
+    }, 5000);
 }

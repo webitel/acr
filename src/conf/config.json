@@ -4,7 +4,7 @@
     "ports": 10030
   },
   "mongodb": {
-    "uri": "mongodb://MONGODB_HOST:27017/webitel",
+    "uri": "mongodb://10.10.10.200:27017/webitel",
     "publicCollection": "public",
     "defaultCollection": "default",
     "globalCollection": "global",
@@ -18,11 +18,11 @@
   },
   "defaultPublicRout": null,
   "application": {
-    "loglevel": "LOGLEVEL"
+    "loglevel": "error"
   },
   "broker": {
     "enable": true,
-    "connectionString": "amqp://webitel:secret@pre.webitel.com:5672?heartbeat=0",
+    "connectionString": "amqp://webitel:secret@10.10.10.200:5672?heartbeat=0",
     "events": [
       {
         "name": "ACR.Events",
@@ -35,7 +35,7 @@
         "name": "ACR.Commands",
         "type": "topic",
         "rpc": false,
-        "format": "acr.commands.inbound"
+        "format": "acr1.commands.inbound"
       }
     ]
   }
