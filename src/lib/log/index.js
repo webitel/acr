@@ -4,14 +4,14 @@
 
 "use strict";
 
-var winston = require('winston');
-var conf = require(__appRoot + '/conf');
+const winston = require('winston');
+const conf = require(__appRoot + '/conf');
 
 function getLogger(module) {
-    let pathDirectory = module.filename.split(/\/+/).slice(-3);
-    let path = pathDirectory.join('\\') + '(' + process.pid + ')';
+    const pathDirectory = module.filename.split(/\/+/).slice(-3);
+    const path = pathDirectory.join('\\') + '(' + process.pid + ')';
 
-    let logLevels = {
+    const logLevels = {
         levels: {
             trace: 4,
             debug: 3,

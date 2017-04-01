@@ -4,9 +4,10 @@
 
 "use strict";
 
-const CallTreeInterator = require('./iterator'),
+const CallTreeIterator = require('./iterator'),
     log = require(__appRoot + '/lib/log')(module),
-    moment = require('moment-timezone')
+    moment = require('moment-timezone'),
+    MAP_VARIABLES = require(__appRoot + '/utils/mapVariables')
     ;
 
 class Call {
@@ -14,6 +15,9 @@ class Call {
         this._routeLog = [];
         this._id = conn._id;
         this._uuid = conn.channelData.getHeader('variable_uuid');
+        this.localVariables = new Map();
+
+        const switchUUid = conn.channelData.getHeader('Core-UUID');
 
         if (!this._uuid) {
             this.log(`Not found uuid in ${this._id}`, true);
@@ -22,7 +26,7 @@ class Call {
 
         this.domain = shema.domain;
         this.timezone = shema.fs_timezone;
-        this.callFlowIter = new CallTreeInterator(shema.callflow, acr);
+        this.callFlowIter = new CallTreeIterator(shema.callflow, acr);
         
         // this.bigData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
@@ -41,6 +45,23 @@ class Call {
 
             conn.execute(appName, data || '', cb);
         };
+
+        this.getVar = varName => {
+            return conn.channelData.getHeader('variable_' + varName)
+                || conn.channelData.getHeader(varName)
+                || this.getLocalVar(varName)
+                || conn.channelData.getHeader(MAP_VARIABLES[varName])
+                || '';
+        };
+
+        this.getLocalVar = varName => {
+            if (this.localVariables.has(varName))
+                return this.localVariables.get(varName);
+            else
+                return null;
+        };
+
+        this.getGlobalVar = varName => acr.getGlobalVar(switchUUid, varName);
 
         const end = () => {
             console.dir(this.logToJson(), {depth: 10, colors: true});
