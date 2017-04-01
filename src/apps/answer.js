@@ -23,6 +23,7 @@ module.exports = (acr) => {
         }
 
         call.execApp(app, "", {async: this.async}, dump => {
+            call.updateChannelDump(dump); //TODO
             return cb(null, dump);
         });
     }

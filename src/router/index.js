@@ -11,11 +11,12 @@ const CallTreeIterator = require('./iterator'),
     ;
 
 class Call {
-    constructor (conn, shema, acr) {
+    constructor (conn, schema, acr) {
         this._routeLog = [];
         this._id = conn._id;
         this._uuid = conn.channelData.getHeader('variable_uuid');
         this.localVariables = new Map();
+        this.regexpVariables = new Map();
 
         const switchUUid = conn.channelData.getHeader('Core-UUID');
 
@@ -24,9 +25,9 @@ class Call {
             this._uuid = this._id;
         }
 
-        this.domain = shema.domain;
-        this.timezone = shema.fs_timezone;
-        this.callFlowIter = new CallTreeIterator(shema.callflow, acr);
+        this.domain = schema.domain;
+        this.timezone = schema.fs_timezone;
+        this.callFlowIter = new CallTreeIterator(schema.callflow, acr);
         
         // this.bigData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
@@ -63,6 +64,29 @@ class Call {
 
         this.getGlobalVar = varName => acr.getGlobalVar(switchUUid, varName);
 
+        this.parseVarsFromText = (text = '') => {
+            try {
+                return text
+                    .replace(/\$\$\{([\s\S]*?)\}/gi, (a, b) => {
+                        return this.getGlobalVar(b);
+                    })
+                    .replace(/\$\{([\s\S]*?)\}/gi, (a, b) => {
+                        return this.getVar(b)
+                    });
+            } catch (e) {
+                log.error(`Parse variables error: `, text);
+            };
+        };
+
+        this.updateChannelDump = dump => {
+            if (dump) {
+                dump.headers.forEach( (item) => {
+                    conn.channelData.addHeader(item.name, item.value);
+                });
+            }
+        };
+
+        //region //Execute engine
         const end = () => {
             console.dir(this.logToJson(), {depth: 10, colors: true});
             // this.execApp('hangup', '');
@@ -90,14 +114,24 @@ class Call {
 
         exec();
 
+        //endregion engine
+
     }
 
-    getDate () {
+    setLocalVar (varName, value) {
+        if (!varName)
+            return  false;
+
+        this.localVariables.set(varName, value);
+        return true;
+    }
+
+    getDate (momentDate) {
         if (!this.timezone) {
-            return moment();
+            return moment(momentDate).utc();
         }
 
-        return moment().tz(this.timezone);
+        return moment(momentDate).tz(this.timezone);
     }
 
     log(data, e) {
