@@ -22,7 +22,7 @@ module.exports = (acr) => {
             return cb(new Error(`Bad answer value: ${data}`));
         }
 
-        call.execApp(app, "", this.async, dump => {
+        call.execApp(app, "", {async: this.async}, dump => {
             return cb(null, dump);
         });
     }

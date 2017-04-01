@@ -168,6 +168,6 @@ const test = [
     },
     {
         "tag" : "footer",
-        "log" : "enad call ${uuid}"
+        "abstract" : "enad call ${uuid}"
     }
 ];

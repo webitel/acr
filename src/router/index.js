@@ -5,32 +5,33 @@
 "use strict";
 
 const CallTreeInterator = require('./iterator'),
-    log = require(__appRoot + '/lib/log')(module)
+    log = require(__appRoot + '/lib/log')(module),
+    moment = require('moment-timezone')
     ;
-
 
 class Call {
     constructor (conn, shema, acr) {
+        this._routeLog = [];
         this._id = conn._id;
         this._uuid = conn.channelData.getHeader('variable_uuid');
+
         if (!this._uuid) {
-            log.warn(`Not found uuid in ${this._id}`);
+            this.log(`Not found uuid in ${this._id}`, true);
+            this._uuid = this._id;
         }
 
         this.domain = shema.domain;
-
-        this._routeLog = [];
-
+        this.timezone = shema.fs_timezone;
         this.callFlowIter = new CallTreeInterator(shema.callflow, acr);
         
         // this.bigData = new Array(1e6).join('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n');
 
 
-        this.execApp = (appName, data, async, cb) => {
+        this.execApp = (appName, data, options = {}, cb) => {
             if (!appName)
                 return cb(new Error('Application name is required.'));
 
-            if (async) {
+            if (options.async) {
                 this.log(`Execute async app: ${appName}, with data: ${data}`);
                 conn.setEventLock(false);
             } else {
@@ -42,7 +43,7 @@ class Call {
         };
 
         const end = () => {
-            //console.log('END ????');
+            console.dir(this.logToJson(), {depth: 10, colors: true});
             // this.execApp('hangup', '');
             // return;
         };
@@ -70,12 +71,27 @@ class Call {
 
     }
 
+    getDate () {
+        if (!this.timezone) {
+            return moment();
+        }
+
+        return moment().tz(this.timezone);
+    }
+
     log(data, e) {
-        this._routeLog.push(data);
+        this._routeLog.push({
+            time: Date.now(),
+            log: data
+        });
 
         if (e)
             log.error(data);
         else log.trace(`[${this._uuid}]: ${data}`); //TODO to uuid
+    }
+
+    logToJson () {
+        return JSON.stringify(this._routeLog);
     }
 }
 

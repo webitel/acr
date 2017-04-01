@@ -13,7 +13,6 @@ module.exports = (acr) => {
             call.log(`Not found function ${functionName}`, true);
             return cb();
         }
-        call.log(`Execute function ${functionName}`);
 
         const callIterator = call.callFlowIter;
 
@@ -42,7 +41,7 @@ module.exports = (acr) => {
             });
 
         };
-
+        call.log(`Execute function ${functionName}`);
         exec();
     }
 };

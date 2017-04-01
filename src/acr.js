@@ -135,22 +135,4 @@ class ACR extends EventEmitter2 {
 
 const acr = new ACR();
 
-function getFnName(cond) {
-    if (!cond)
-        return null;
-
-    var propKeys = Object.keys(cond);
-    if (propKeys.length === 1) {
-        return propKeys[0];
-    } else if (propKeys.length === 0) {
-        return null;
-    } else {
-        for (var i = 0, len = propKeys.length; i < len; i++) {
-            if (propKeys[i] !== 'break' && propKeys[i] !== 'async' && propKeys[i] !== 'tag') {
-                return propKeys[i];
-            }
-        }
-    }
-}
-
 module.exports = () => acr;

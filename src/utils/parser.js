@@ -12,7 +12,7 @@ module.exports = {
         if (str) {
             str.split('\n').forEach(function (str) {
                 _param = str.split('=');
-                if (_param[0] == '') return;
+                if (_param[0] === '') return;
                 _json[_param[0]] = _param[1];
             });
         }
