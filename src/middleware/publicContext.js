@@ -80,7 +80,7 @@ module.exports = function (conn, destinationNumber, globalVariable, notExistsDir
 const findNumber = (number, cb) => {
     dialplan.findActualPublicDialplan(number, (err, result) => {
         if (err) {
-            log.error(e.message);
+            log.error(err);
             return cb(err);
         }
 
