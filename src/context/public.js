@@ -7,8 +7,49 @@
 const Call = require(__appRoot + '/router');
     
 module.exports = (acr, conn) => {
-    new Call(conn, {callflow: test}, acr);
-    conn.execute('hangup', "");
+    // new Call(conn, {callflow: test}, acr);
+
+    const setSound = () => {
+        conn.execute('set', "sound_prefix=/$${sounds_dir}/en/us/callie", setTime);
+    };
+
+
+    const setTime = (cb) => {
+        conn.execute('set', "timezone=Europe/Kiev", setDomain);
+    };
+
+    const setDomain = (cb) => {
+        conn.execute('set', "domain_name=10.10.10.144", setTransfer);
+    };
+
+    const setTransfer = (cb) => {
+        conn.execute('set', "force_transfer_context=default", setHash);
+    };
+
+    const setHash = (cb) => {
+        setMulti();
+        //conn.execute('hash', "insert/10.10.10.144-last_dial/global/${uuid}", setMulti);
+    };
+
+    const setMulti = (cb) => {
+        setSleep()
+        // conn.execute('multiset', "^^~eavesdrop_group=10.10.10.144~presence_data=10.10.10.144", setSleep);
+    };
+
+    const setSleep = (cb) => {
+        end();
+        // conn.execute('sleep', "5000", end);
+    };
+
+    const end = (cb) => {
+        conn.execute('answer', "", e => {
+            // console.log('END');
+        });
+    };
+
+
+    setSound()
+
 };
 
 const test = [

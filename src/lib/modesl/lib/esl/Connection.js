@@ -91,9 +91,11 @@ var Connection = module.exports = function() {
         // this.send('connect');
 
         this.once('esl::event::CHANNEL_DATA::**', function() {
-            self.subscribe(self.reqEvents, function() {
-                self.emit('esl::ready');
-            });
+            //TODO BUG!!!
+            self.emit('esl::ready');
+            // self.subscribe(self.reqEvents, function() {
+            //     self.emit('esl::ready');
+            // });
         });
 
         this.socket.on('error', this._onError.bind(this));
