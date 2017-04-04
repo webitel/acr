@@ -58,7 +58,7 @@ var Connection = module.exports = function() {
     this.executeHandlers = {};
 
     //events required for the module to operate properly
-    this.reqEvents = ['BACKGROUND_JOB', 'CHANNEL_EXECUTE_COMPLETE'];
+    this.reqEvents = ['CHANNEL_EXECUTE_COMPLETE'];
     this.listeningEvents = [];
 
     //"Inbound" connection (going into FSW)
@@ -90,9 +90,10 @@ var Connection = module.exports = function() {
         // this.send('connect');
 
         this.once('esl::event::CHANNEL_DATA::**', function() {
-            self.subscribe(self.reqEvents, function() {
-                self.emit('esl::ready');
-            });
+            self.emit('esl::ready');
+            // self.subscribe(self.reqEvents, function() {
+            //     self.emit('esl::ready');
+            // });
         });
 
         this.socket.on('error', this._onError.bind(this));
