@@ -2,6 +2,7 @@ var EventEmitter2 = require('eventemitter2').EventEmitter2,
     util = require('util'),
     xml2js = require('xml2js'),
     Buffer = require('buffer').Buffer,
+    log = require(__appRoot + '/lib/log')(module),
     Event = require('./Event');
 
 var Parser = module.exports = function(socket) {
@@ -194,6 +195,8 @@ Parser.prototype._parseEvent = function(headers, body) {
         event = new Event(data);
     else
         event = new Event(headers, body);
+
+    log.trace(`Server resp: ${headers['Content-Type']} ${event.type || ''}`);
 
     //try and massage an OK/Error message
     var reply = event.getHeader('Reply-Text');

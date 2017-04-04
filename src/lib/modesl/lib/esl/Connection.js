@@ -38,7 +38,7 @@ var Connection = module.exports = function() {
     EventEmitter2.call(this, {
         wildcard: true,
         delimiter: '::',
-        maxListeners: 25
+        maxListeners: Infinity
     });
 
     var len = arguments.length, self = this;
@@ -55,11 +55,9 @@ var Connection = module.exports = function() {
     this.channelData = null;
     this.cmdCallbackQueue = [];
     this.apiCallbackQueue = [];
-    this.executeCallbacks = {};
-    this.executeHandlers = {};
 
     //events required for the module to operate properly
-    this.reqEvents = ['BACKGROUND_JOB', 'CHANNEL_EXECUTE_COMPLETE'];
+    this.reqEvents = []; // ['BACKGROUND_JOB', 'CHANNEL_EXECUTE_COMPLETE'];
     this.listeningEvents = [];
 
     //"Inbound" connection (going into FSW)
@@ -193,6 +191,7 @@ Connection.prototype.getInfo = function() {
 //NOTE: This is a FAF method of sending a command
 Connection.prototype.send = function(command, args) {
     var self = this;
+    //console.log(command, args);
 
     if (!self.socket) {
         return self._onError(new Error('No live connect'));
@@ -723,18 +722,22 @@ Connection.prototype._doExec = function(uuid, cmd, args, cb) {
     //this method of event tracking is based on:
     //http://lists.freeswitch.org/pipermail/freeswitch-users/2013-May/095329.html
     args['Event-UUID'] = generateUuid.v4();
-    this.executeCallbacks[args['Event-UUID']] = cb;
 
-    if(!this.executeHandlers[uuid]) {
-        var self = this;
-        this.on('esl::event::CHANNEL_EXECUTE_COMPLETE::' + uuid, this.executeHandlers[uuid] = function(evt) {
-            var evtUuid = evt.getHeader('Application-UUID') || evt.getHeader('Event-UUID');
+    const eventName = 'esl::event::CHANNEL_EXECUTE_COMPLETE::' + uuid;
+    const self = this;
+    const cbWrapper = function(evt) {
+        const evtUuid = evt.getHeader('Application-UUID') || evt.getHeader('Event-UUID');
 
-            if(self.executeCallbacks[evtUuid]) {
-                self.executeCallbacks[evtUuid].call(self, evt);
-            }
-        });
-    }
+        if (args['Event-UUID'] === evtUuid) {
+            self.removeListener(eventName, cbWrapper);
+        }
+
+        if (typeof cb === 'function') {
+            cb(evt);
+        }
+    };
+
+    this.once(eventName, cbWrapper);
 
     this.send('sendmsg ' + uuid, args);
 

@@ -73,7 +73,11 @@ Server.prototype._onConnection = function(socket) {
     conn.on('esl::ready', function(id) {
         if(this.bindEvents) {
             conn.sendRecv('myevents', function() {
-                this.emit('connection::ready', this.connections[id], id, this.connectionsLength);
+                // this.emit('connection::ready', this.connections[id], id, this.connectionsLength);
+                conn.filter('Event-Name', 'CHANNEL_ANSWER');
+                conn.filter('Event-Name', 'CHANNEL_EXECUTE_COMPLETE', () => {
+                    this.emit('connection::ready', this.connections[id], id, this.connectionsLength);
+                });
             }.bind(this));
         }else{
             this.emit('connection::ready', this.connections[id], id, this.connectionsLength);
