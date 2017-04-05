@@ -12,7 +12,7 @@ var Parser = module.exports = function(socket) {
         maxListeners: 25
     });
 
-    this.buffer = new Buffer([]);
+    this.buffer = Buffer.alloc(0);
     this.bodyLen = 0;
     this.encoding = 'utf8';
 
@@ -196,7 +196,7 @@ Parser.prototype._parseEvent = function(headers, body) {
     else
         event = new Event(headers, body);
 
-    log.trace(`Server resp: ${headers['Content-Type']} ${event.type || ''}`);
+    //log.trace(`Server resp: ${headers['Content-Type']} ${event.type || ''}`);
 
     //try and massage an OK/Error message
     var reply = event.getHeader('Reply-Text');

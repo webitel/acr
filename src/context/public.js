@@ -42,8 +42,9 @@ module.exports = (acr, conn) => {
     };
 
     const end = (cb) => {
-        conn.execute('answer', "", e => {
-            // console.log('END');
+        conn.execute('hangup', "USER_BUSY", () => {
+            for (let i = 0; i < 100; i ++)
+                conn.channelData.getHeader('variable_uuid');
         });
     };
 
