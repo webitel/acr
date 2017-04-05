@@ -145,7 +145,6 @@ module.exports = function (parameters, router, cb) {
     req.on('requestTimeout',function(req){
         log.warn("request has expired");
         req.abort();
-        cb();
     });
 
     req.on('error',function(err){
