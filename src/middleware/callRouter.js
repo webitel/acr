@@ -636,7 +636,7 @@ CallRouter.prototype.__userData = function (app, cb) {
         return cb && cb();
     }
 
-    this.connection.api(`${FS_COMMAND.USER_DATA} ${name}@${this.domain} var '${getVar}'`, res => {
+    this.connection.api(`${FS_COMMAND.USER_DATA} ${this._parseVariable(name)}@${this.domain} var '${getVar}'`, res => {
         let {body} = res;
         if (!body || body === "-ERR no reply\n") {
            body = ""
