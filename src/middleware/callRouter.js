@@ -116,7 +116,9 @@ const OPERATION = {
     LIMIT: "limit",
 
     TTS: "tts",
-    STT: "stt"
+    STT: "stt",
+
+    USER_DATA: "userData"
 };
 
 const FS_COMMAND = {
@@ -190,7 +192,9 @@ const FS_COMMAND = {
     REDIRECT: 'redirect',
     AVMD_START: "avmd_start",
     AVMD_STOP: "avmd_stop",
-    LIMIT: "limit"
+    LIMIT: "limit",
+
+    USER_DATA: "user_data"
 };
 
 
@@ -621,6 +625,27 @@ CallRouter.prototype.__if = function (condition, cb) {
         if (cb)
             cb();
     };
+};
+
+
+CallRouter.prototype.__userData = function (app, cb) {
+    const { name, var: getVar, setVar } = app[OPERATION.USER_DATA];
+
+    if (!name || !getVar || !setVar) {
+        log.error(`Bad application userData: `, app);
+        return cb && cb();
+    }
+
+    this.connection.api(`${FS_COMMAND.USER_DATA} ${name}@${this.domain} var '${getVar}'`, res => {
+        let {body} = res;
+        if (!body || body === "-ERR no reply\n") {
+           body = ""
+        }
+        log.trace(`Response user (${name}) data: ${body}`);
+        this.__setVar({
+            "setVar": `${setVar}=${body}`
+        }, cb);
+    });
 };
 
 CallRouter.prototype._parseVariable = function (name) {
