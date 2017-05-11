@@ -46,9 +46,17 @@ module.exports = function (CallRouter, applicationName) {
 
             let collection = db.getCollection(LOCATION_COLLECTION_NAME);
             number = number.replace(/\D/g, '');
-            
+
+            const arrNumbers = number.split('');
+
+            if (arrNumbers.length === 0) {
+                log.error(`Bad number, is empty`);
+                if (cb)
+                    return cb();
+            }
+
             let numbers = [];
-            number.split('').reduce(function(r, v, i, a) {
+            arrNumbers.reduce(function(r, v, i, a) {
                 numbers.push(a.slice(0, i).join(''));
                 return r + v
             });
