@@ -100,6 +100,25 @@ function getAmdSection(channel, amdConfig = {}) {
             amdParams[param] = amdConfig[param]
     }
 
+    const _if = {
+        "then": [
+            {
+                "hangup": "NORMAL_UNSPECIFIED"
+            },
+            {
+                "break": true
+            }
+        ]
+    };
+
+    if (amdConfig.allowNotSure === true) {
+        _if.expression = " !(${amd_result} === 'HUMAN' || ${amd_result} === 'NOTSURE')";
+        _if.sysExpression = "!(sys.getChnVar(\"amd_result\") === 'HUMAN' || sys.getChnVar(\"amd_result\") === 'NOTSURE')";
+    } else {
+        _if.expression = "${amd_result} !== 'HUMAN'";
+        _if.sysExpression = "sys.getChnVar(\"amd_result\") !== 'HUMAN'";
+    }
+
     return [
         {
             "setVar": "ignore_early_media=true"
@@ -111,18 +130,7 @@ function getAmdSection(channel, amdConfig = {}) {
             "amd": amdParams
         },
         {
-            "if": {
-                "expression": "${amd_result} !== 'HUMAN'",
-                "sysExpression" : "sys.getChnVar(\"amd_result\") !== 'HUMAN'",
-                "then": [
-                    {
-                        "hangup": "NORMAL_UNSPECIFIED"
-                    },
-                    {
-                        "break": true
-                    }
-                ]
-            }
+            "if": _if
         }
     ]
 }
