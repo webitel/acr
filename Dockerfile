@@ -11,6 +11,6 @@ COPY docker-entrypoint.sh /
 
 WORKDIR /acr
 
-RUN npm install && npm cache clear
+RUN npm install
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
