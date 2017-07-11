@@ -81,7 +81,7 @@ class Acr extends EventEmitter2 {
                     destinationNumber = conn.channelData.getHeader('Channel-Destination-Number') ||
                         conn.channelData.getHeader('Caller-Destination-Number') || conn.channelData.getHeader('variable_destination_number');
 
-                log.debug('Call %s -> %s', id, destinationNumber);
+                log.debug('Call %s -> %s ->', id, destinationNumber, context);
 
                 globalCollection.getGlobalVariables(conn, conn.channelData.getHeader('Core-UUID'), function (err, globalVariable) {
                     if (err) {
@@ -97,7 +97,7 @@ class Acr extends EventEmitter2 {
 
                     conn.execute('set', 'sound_prefix=' + soundPref);
 
-                    if (context == PUBLIC_CONTEXT) {
+                    if (context === PUBLIC_CONTEXT) {
                         publicContext(conn, destinationNumber, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));
                     } else if (dialerId) {
                         dialerContext(conn, dialerId, globalVariable, !conn.channelData.getHeader('variable_webitel_direction'));

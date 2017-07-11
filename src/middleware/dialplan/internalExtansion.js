@@ -16,10 +16,7 @@ module.exports = function (conn, userId, domainName) {
     conn.api('user_exists id ' + userId + ' ' + domainName, function (res) {
         try {
             if (res && res['body'] === "false") {
-                execSyncApp(conn, "answer");
-                execSyncApp(conn, "sleep", "1500");
-                execSyncApp(conn, "playback", "ivr/ivr-you_have_dialed_an_invalid_extension.wav");
-                execSyncApp(conn, "hangup", "UNALLOCATED_NUMBER");
+                execSyncApp(conn, "hangup", "NO_ROUTE_DESTINATION");
             } else {
                 execSyncApp(conn, "set", "continue_on_fail=true");
                 execSyncApp(conn, "set", "hangup_after_bridge=true");
