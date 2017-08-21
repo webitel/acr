@@ -2057,7 +2057,7 @@ CallRouter.prototype.__voicemail = function (app, cb) {
                 if (index > 0)
                     cc += ',';
 
-                cc += item + '@' + domain
+                cc += item; // + '@' + domain
             });
             _set.push('vm_cc=' + cc);
         };
