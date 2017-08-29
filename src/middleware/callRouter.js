@@ -1593,6 +1593,7 @@ CallRouter.prototype.__bridge = function (app, cb) {
                         case "sip":
                             _data = _data.concat('[', 'webitel_call_uuid=${create_uuid()},sip_invite_domain=${domain_name},' +
                                 'presence_id=', endpoint['name'], '@${domain_name}');
+
                             if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
                                 _data = _data.concat(',', endpoint['parameters'].join(','));
                             };
@@ -1601,9 +1602,11 @@ CallRouter.prototype.__bridge = function (app, cb) {
                         case "webrtc":
                             _data = _data.concat('[', 'webitel_call_uuid=${create_uuid()},sip_invite_domain=${domain_name},' +
                                 'presence_id=', endpoint['name'], '@${domain_name}');
+
                             if (endpoint.hasOwnProperty('parameters') && endpoint['parameters'] instanceof Array) {
                                 _data = _data.concat(',', endpoint['parameters'].join(','));
                             };
+
                             _data = _data.concat(']${verto_contact(', endpoint['name'], '@${domain_name})}');
                             break;
                         default :
@@ -1621,7 +1624,7 @@ CallRouter.prototype.__bridge = function (app, cb) {
         });
 
         var pickup = '';
-        if (prop['pickup'] && prop['strategy'] != 'failover') {
+        if (prop['pickup'] && prop['strategy'] !== 'failover') {
             if (prop['pickup'] instanceof Array) {
                 prop['pickup'].forEach(function (item) {
                     pickup += ',pickup/' + item + '@${domain_name}'
@@ -2581,7 +2584,7 @@ CallRouter.prototype.__eavesdrop = function (app, cb) {
 CallRouter.prototype.__sipRedirect = function (app, cb) {
     var prop = app[OPERATION.SIP_REDIRECT],
         app  = FS_COMMAND.REDIRECT;
-     if (+this.getChnVar('answer_epoch') > 0)
+     if (+this.getChnVar('Caller-Channel-Answered-Time') > 0)
         app = FS_COMMAND.DEFLECT;
 
     this.execApp({
