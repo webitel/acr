@@ -1,0 +1,10 @@
+/**
+ * Created by I. Navrotskyj on 19.08.17.
+ */
+
+package acr
+
+const (
+	HANGUP_NORMAL_TEMPORARY_FAILURE =  "NORMAL_TEMPORARY_FAILURE"
+	HANGUP_NO_ROUTE_DESTINATION =  "NO_ROUTE_DESTINATION"
+)

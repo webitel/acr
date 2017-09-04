@@ -1,6 +1,0 @@
-#!/usr/bin/env node
-
-var Api = require('../lib/api').Api,
-api = new Api();
-
-api.start();
