@@ -1,8 +1,5 @@
 sudo: required
-language: go
-
-go:
-  - 1.8
+language: bash
 
 services:
   - docker
@@ -12,12 +9,11 @@ env:
 
 before_install:
   - if [ ! -z "$TRAVIS_TAG" ]; then sed -i 's/ENV VERSION/ENV VERSION '${TRAVIS_TAG}'#'${TRAVIS_BUILD_NUMBER}'-sha1:'${TRAVIS_COMMIT:0:7}'/g' Dockerfile; else sed -i 's/ENV VERSION/ENV VERSION master#'${TRAVIS_BUILD_NUMBER}'-sha1:'${TRAVIS_COMMIT:0:7}'/g' Dockerfile; fi
-  - cd src && go get -d ./... && go install
 
 install:
-  - go build && cd ../
   - docker login --email=$DOCKER_HUB_EMAIL --username=$DOCKER_HUB_USERNAME --password=$DOCKER_HUB_PASSWORD
 
 script:
   - docker build -t $DOCKER_IMAGE_NAME .
   - if [ ! -z "$TRAVIS_TAG" ]; then docker tag $DOCKER_IMAGE_NAME:latest $DOCKER_IMAGE_NAME:$TRAVIS_TAG; fi && docker push $DOCKER_IMAGE_NAME
+
