@@ -17,7 +17,7 @@ before_install:
   - cd src && go get -d ./... && go install
 
 install:
-  - cd src && go build
+  - go build && ls -la
   - docker login --email=$DOCKER_HUB_EMAIL --username=$DOCKER_HUB_USERNAME --password=$DOCKER_HUB_PASSWORD
 
 script:
