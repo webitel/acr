@@ -25,6 +25,7 @@ type SConn struct {
 	EventSocket
 	ChannelData  Event
 	Uuid         string
+	SwitchUuid   string
 	Disconnected bool
 	cbWrapper    map[string]chan Event
 	mx           *sync.Mutex
@@ -125,9 +126,9 @@ func (conn *SConn) SndRecMsg(app string, arg string, look bool) (Event, error) {
 
 	select {
 	case <-conn.exit:
-		delete(conn.cbWrapper, u)
+		//delete(conn.cbWrapper, u)
 		return Event{}, nil
-	case out, ok := <-conn.cbWrapper[u]:
+	case out, ok := <-c:
 
 		if !ok {
 			return out, nil
@@ -183,6 +184,7 @@ func handle(conn *SConn, s *Server) {
 		Message: data,
 	}
 	conn.Uuid = data.Header.Get("Unique-ID")
+	conn.SwitchUuid = data.Header.Get("Core-UUID")
 	//conn.call(nil, 0, "divert_events")
 	_, err = conn.call(nil, 0, "linger")
 	if err != nil {
@@ -228,7 +230,7 @@ func handle(conn *SConn, s *Server) {
 		conn.mx.Lock()
 
 		if recv.Header.Get("Content-Type") == "text/disconnect-notice" {
-			conn.Disconnected = true
+			//			conn.Disconnected = true
 			//if len(conn.cbWrapper) == 0 {
 			//	fmt.Println(string(recv.Body))
 			//}
@@ -254,6 +256,12 @@ func handle(conn *SConn, s *Server) {
 			} else if e.Header.Get("Event-Name") == "CHANNEL_HANGUP_COMPLETE" {
 				conn.Disconnected = true // TODO RACE!!!
 				conn.ChannelData = e
+				for _, v := range conn.cbWrapper {
+					close(v)
+					//delete(conn.cbWrapper, ch)
+				}
+				conn.mx.Unlock()
+				runtime.Gosched()
 				break
 			} else {
 				conn.event.Fire(Event{Event: plain, Subclass: event, Message: recv, SendData: nil})
@@ -265,10 +273,7 @@ func handle(conn *SConn, s *Server) {
 	//fmt.Println(conn.Uuid, "->ENDFOR")
 
 	conn.exit <- true
-	for _, v := range conn.cbWrapper {
-		close(v)
-		//delete(conn.cbWrapper, ch)
-	}
+
 }
 
 func NewServer(addr string, onConnect onConnect, onDisconnect onDisconnect) *Server {

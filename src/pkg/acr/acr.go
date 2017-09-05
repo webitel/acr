@@ -44,13 +44,12 @@ func (a *ACR) GetGlobalVarBySwitchId(switchId, varName string) (val string, ok b
 }
 
 func (a *ACR) initGlobalVar(c *esl.SConn) {
-	uuid := c.ChannelData.Header.Get("Core-UUID")
-	if uuid == "" {
+	if c.SwitchUuid == "" {
 		logger.Error("Bad connection 'Core-UUID': ", c.ChannelData)
 		return
 	}
-	if _, ok := a.GlobalVars[uuid]; !ok {
-		a.GlobalVars[uuid] = make(map[string]string)
+	if _, ok := a.GlobalVars[c.SwitchUuid]; !ok {
+		a.GlobalVars[c.SwitchUuid] = make(map[string]string)
 		data, err := c.Api("global_getvar")
 		if err != nil {
 			logger.Error("Bad api global_getvar: ", err)
@@ -67,11 +66,11 @@ func (a *ACR) initGlobalVar(c *esl.SConn) {
 		for i := 0; i < len(rows); i++ {
 			val = bytes.SplitN(rows[i], []byte("="), 2)
 			if len(val) == 2 {
-				a.GlobalVars[uuid][string(val[0])] = string(val[1])
+				a.GlobalVars[c.SwitchUuid][string(val[0])] = string(val[1])
 			}
 		}
 
-		logger.Info("Success init global variables: %s", uuid)
+		logger.Info("Success init global variables: %s", c.SwitchUuid)
 	}
 }
 
