@@ -15,6 +15,7 @@ type Call interface {
 	GetDate() (now time.Time)
 	ParseString(args string) string
 	GetUuid() string
+	ValidateApp(string) bool
 }
 
 const (

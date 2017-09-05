@@ -93,33 +93,41 @@ func (i *Iterator) Goto(tag string) bool {
 }
 
 func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
-	var valid bool
-	for _, v := range cf {
+	var ok bool
+	var appName, tag string
+	var configFlags AppConfig
+	var args interface{}
 
-		if _, valid = v.(bson.M); !valid {
+	var tmpMap map[string]interface{}
+	var tmp, v interface{}
+
+	for _, v = range cf {
+
+		if _, ok = v.(bson.M); !ok {
 			continue
 		}
 
-		appName, args, configFlags, tag := parseApp(v.(bson.M))
+		appName, args, configFlags, tag = parseApp(v.(bson.M), i.Call)
 		switch appName {
 		case "if":
-			if ifApp, ok := args.(map[string]interface{}); ok {
+
+			if tmpMap, ok = args.(map[string]interface{}); ok {
 				condApp := NewConditionApplication(configFlags, root)
-				if thenApp, ok := ifApp["then"]; ok {
-					if thenAppArray, ok := thenApp.([]interface{}); ok {
-						i.parseCallFlowArray(condApp._then, thenAppArray)
+				if tmp, ok = tmpMap["then"]; ok {
+					if _, ok = tmp.([]interface{}); ok {
+						i.parseCallFlowArray(condApp._then, tmp.([]interface{}))
 					}
 				}
 
-				if elseApp, ok := ifApp["else"]; ok {
-					if elseAppArray, ok := elseApp.([]interface{}); ok {
-						i.parseCallFlowArray(condApp._else, elseAppArray)
+				if tmp, ok = tmpMap["else"]; ok {
+					if _, ok = tmp.([]interface{}); ok {
+						i.parseCallFlowArray(condApp._else, tmp.([]interface{}))
 					}
 				}
 
-				if expression, ok := ifApp["sysExpression"]; ok {
-					if expStr, ok := expression.(string); ok {
-						condApp.expression = expStr
+				if tmp, ok = tmpMap["sysExpression"]; ok {
+					if _, ok = tmp.(string); ok {
+						condApp.expression = tmp.(string)
 					}
 				}
 
@@ -128,34 +136,36 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 			}
 
 		case "function":
-			if functionParam, ok := args.(map[string]interface{}); ok {
-				if fnName, ok := functionParam["name"]; ok {
-					if _, ok := functionParam["actions"]; ok {
-						if arrActions, ok := functionParam["actions"].([]interface{}); ok {
-							i.Functions[fnName.(string)] = NewIterator(arrActions, i.Call)
-							continue
+			if tmpMap, ok = args.(map[string]interface{}); ok {
+				if _, ok = tmpMap["name"]; ok {
+					if _, ok = tmpMap["name"].(string); ok {
+						if _, ok = tmpMap["actions"]; ok {
+							if _, ok = tmpMap["actions"].([]interface{}); ok {
+								i.Functions[tmpMap["name"].(string)] = NewIterator(tmpMap["actions"].([]interface{}), i.Call)
+								continue
+							}
 						}
 					}
 				}
 			}
 		case "switch":
-			if switchParam, ok := args.(map[string]interface{}); ok {
+			if tmpMap, ok = args.(map[string]interface{}); ok {
 				switchApp := NewSwitchApplication(configFlags, root)
 				i.trySetTag(tag, switchApp, root, switchApp.idx)
 				root.Add(switchApp)
 
-				if _, ok := switchParam["variable"]; ok {
-					if v, ok := switchParam["variable"].(string); ok {
-						switchApp.variable = v
+				if _, ok = tmpMap["variable"]; ok {
+					if _, ok = tmpMap["variable"].(string); ok {
+						switchApp.variable = tmpMap["variable"].(string)
 					}
 				}
 
-				if _, ok := switchParam["case"]; ok {
-					if v, ok := switchParam["case"].(bson.M); ok {
-						for caseName, caseValue := range v {
-							if arrCaseValue, ok := caseValue.([]interface{}); ok {
+				if _, ok = tmpMap["case"]; ok {
+					if _, ok = tmpMap["case"].(bson.M); ok {
+						for caseName, caseValue := range tmpMap["case"].(bson.M) {
+							if _, ok = caseValue.([]interface{}); ok {
 								switchApp.cases[caseName] = NewNode(root)
-								i.parseCallFlowArray(switchApp.cases[caseName], arrCaseValue)
+								i.parseCallFlowArray(switchApp.cases[caseName], caseValue.([]interface{}))
 							}
 						}
 					}
@@ -172,26 +182,6 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 
 		}
 
-		//fmt.Println(getName(app))
-		//for fieldName, fieldValue := range elem {
-		//	fmt.Println(fieldName, fieldValue)
-		//
-		//	switch fieldValue.(type) {
-		//	case string:
-		//		fmt.Println(fieldName, "BSON STRING")
-		//	case int, int8, int16, int32, int64:
-		//		fmt.Println(fieldName, "BSON int")
-		//
-		//	case bool:
-		//		fmt.Println(fieldName, "BSON bool")
-		//	case []interface{}:
-		//		fmt.Println(fieldName, "BSON ARRAY")
-		//		parseArray(root, fieldValue.([]interface{}))
-		//	default:
-		//		fmt.Println("Unmarshal needs a map or a pointer to a struct.")
-		//	}
-		//}
-
 	}
 }
 
@@ -205,7 +195,7 @@ func NewIterator(c []interface{}, call Call) *Iterator {
 	return i
 }
 
-func parseApp(m bson.M) (appName string, args interface{}, appConf AppConfig, tag string) {
+func parseApp(m bson.M, c Call) (appName string, args interface{}, appConf AppConfig, tag string) {
 
 	for fieldName, fieldValue := range m {
 		switch fieldName {
@@ -229,6 +219,10 @@ func parseApp(m bson.M) (appName string, args interface{}, appConf AppConfig, ta
 				tag = strconv.Itoa(fieldValue.(int))
 			}
 		default:
+			if !(c.ValidateApp(fieldName) || fieldName == "if" || fieldName == "switch" || fieldName == "function") {
+				continue
+			}
+
 			if appName == "" {
 				appName = fieldName
 

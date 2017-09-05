@@ -241,6 +241,11 @@ func (c *Call) GetUuid() string {
 	return c.Uuid
 }
 
+func (c *Call) ValidateApp(name string) (ok bool) {
+	_, ok = applications[name]
+	return
+}
+
 func MakeCall(destinationNumber string, c *esl.SConn, cf *router.CallFlow, acr IBridge) *Call {
 
 	call := &Call{
