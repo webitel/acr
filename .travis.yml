@@ -2,8 +2,7 @@ sudo: required
 language: go
 
 go:
-  - 1.8.3
-  - master
+  - 1.8
 
 services:
   - docker
@@ -15,7 +14,7 @@ env:
 
 before_install:
   - if [ ! -z "$TRAVIS_TAG" ]; then sed -i 's/ENV VERSION/ENV VERSION '${TRAVIS_TAG}'#'${TRAVIS_BUILD_NUMBER}'-sha1:'${TRAVIS_COMMIT:0:7}'/g' Dockerfile; else sed -i 's/ENV VERSION/ENV VERSION master#'${TRAVIS_BUILD_NUMBER}'-sha1:'${TRAVIS_COMMIT:0:7}'/g' Dockerfile; fi
-  - cd src && go install
+  - cd src && go get -d ./... && go install
 
 install:
   - cd src && go build
