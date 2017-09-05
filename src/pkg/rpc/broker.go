@@ -198,7 +198,10 @@ func New() *RPC {
 	r := &RPC{
 		callbacks: make(map[string]chan ApiT),
 	}
-	r.connect()
+
+	if err := r.connect(); err != nil {
+		r.reconnect()
+	}
 
 	return r
 }
