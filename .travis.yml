@@ -1,16 +1,24 @@
 sudo: required
-language: bash
+language: go
+
+go:
+  - 1.8.3
+  - master
 
 services:
   - docker
 
 env:
+  - GOARCH=amd64
+  - GO_FOR_RELEASE=1.8
   - DOCKER_IMAGE_NAME=webitel/acr
 
 before_install:
   - if [ ! -z "$TRAVIS_TAG" ]; then sed -i 's/ENV VERSION/ENV VERSION '${TRAVIS_TAG}'#'${TRAVIS_BUILD_NUMBER}'-sha1:'${TRAVIS_COMMIT:0:7}'/g' Dockerfile; else sed -i 's/ENV VERSION/ENV VERSION master#'${TRAVIS_BUILD_NUMBER}'-sha1:'${TRAVIS_COMMIT:0:7}'/g' Dockerfile; fi
+  - cd src && go install
 
 install:
+  - cd src && go build
   - docker login --email=$DOCKER_HUB_EMAIL --username=$DOCKER_HUB_USERNAME --password=$DOCKER_HUB_PASSWORD
 
 script:
