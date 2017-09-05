@@ -8,8 +8,6 @@ services:
   - docker
 
 env:
-  - GOARCH=amd64
-  - GO_FOR_RELEASE=1.8
   - DOCKER_IMAGE_NAME=webitel/acr
 
 before_install:
@@ -17,7 +15,7 @@ before_install:
   - cd src && go get -d ./... && go install
 
 install:
-  - go build && ls -la
+  - go build && cd ../
   - docker login --email=$DOCKER_HUB_EMAIL --username=$DOCKER_HUB_USERNAME --password=$DOCKER_HUB_PASSWORD
 
 script:

@@ -1,16 +1,13 @@
-FROM node:slim
-MAINTAINER Vitaly Kovalyshyn "v.kovalyshyn@webitel.com"
+# vim:set ft=dockerfile:
+FROM scratch
+LABEL maintainer="Vitaly Kovalyshyn"
 
 ENV VERSION
 ENV WEBITEL_MAJOR 3
 ENV WEBITEL_REPO_BASE https://github.com/webitel
-ENV NODE_TLS_REJECT_UNAUTHORIZED 0
 
-COPY src /acr
-COPY docker-entrypoint.sh /
+ADD /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-WORKDIR /acr
+ADD src/acr.go /
 
-RUN npm install
-
-ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["/acr.go"]
