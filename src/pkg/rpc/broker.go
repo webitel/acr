@@ -34,6 +34,7 @@ const exchangeCommandsFormat = "acr.commands.inbound"
 type RPC struct {
 	sync.Mutex
 	queueCommands amqp.Queue
+	queueEvents   amqp.Queue
 	callbacks     map[string]chan ApiT
 	channel       *amqp.Channel
 	connection    *amqp.Connection
@@ -59,7 +60,7 @@ func (rpc *RPC) RemoveCommands(uuid string, data ApiT) {
 	}
 }
 
-func (rpc *RPC) initExchangeCommands() error {
+func (rpc *RPC) initExchange() error {
 	err := rpc.channel.ExchangeDeclare(
 		exchangeCommandsName,
 		"topic",
@@ -142,6 +143,22 @@ func (rpc *RPC) initExchangeCommands() error {
 	return nil
 }
 
+func (rpc *RPC) Fire(body []byte, rk string) error {
+	logger.Debug("RPC: send to engine %d bytes %s", len(body), body)
+	return rpc.channel.Publish(
+		"engine",
+		rk,
+		false,
+		false,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			Timestamp:    time.Now(),
+			ContentType:  "text/plain",
+			Body:         body,
+		},
+	)
+}
+
 func (rpc *RPC) connect() error {
 	connectionString := config.Conf.Get("broker:connectionString")
 	if connectionString == "" {
@@ -161,7 +178,7 @@ func (rpc *RPC) connect() error {
 
 	rpc.connection = conn
 	rpc.channel = ch
-	rpc.initExchangeCommands()
+	rpc.initExchange()
 	return nil
 }
 

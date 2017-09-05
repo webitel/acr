@@ -118,6 +118,10 @@ func (a *ACR) AddRPCCommands(uuid string) rpc.ApiT {
 	return a.rpc.AddCommands(uuid)
 }
 
+func (a *ACR) FireRPCEvent(body []byte, rk string) error {
+	return a.rpc.Fire(body, rk)
+}
+
 func onConnect(c *esl.SConn) {
 	acr.addConnection(c.Uuid)
 	acr.initGlobalVar(c)

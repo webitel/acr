@@ -31,6 +31,7 @@ type IBridge interface {
 	SetDomainVariable(domainName, key, value string) error
 	GetRPCCommandsQueueName() string
 	AddRPCCommands(uuid string) rpc.ApiT
+	FireRPCEvent(body []byte, rk string) error
 }
 
 var applications Applications
