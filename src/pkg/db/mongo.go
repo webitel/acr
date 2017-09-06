@@ -63,6 +63,16 @@ func (db *DB) FindExtension(destinationNumber string, domainName string, dataStr
 		"disabled": bson.M{
 			"$ne": true,
 		},
+	}).Select(bson.M{
+		"_id":                1,
+		"debug":              1,
+		"name":               1,
+		"destination_number": 1,
+		"fs_timezone":        1,
+		"domain":             1,
+		"callflow":           1,
+		"onDisconnect":       1,
+		"version":            1,
 	}).One(dataStructure)
 
 	if err != nil {
@@ -86,7 +96,17 @@ func (db *DB) FindDefault(domainName string, dataStructure interface{}) (err err
 		"disabled": bson.M{
 			"$ne": true,
 		},
-	}).Sort("order").All(dataStructure)
+	}).Sort("order").Select(bson.M{
+		"_id":                1,
+		"debug":              1,
+		"name":               1,
+		"destination_number": 1,
+		"fs_timezone":        1,
+		"domain":             1,
+		"callflow":           1,
+		"onDisconnect":       1,
+		"version":            1,
+	}).All(dataStructure)
 	if err != nil {
 		if err != mgo.ErrNotFound {
 			err = nil
@@ -110,7 +130,17 @@ func (db *DB) FindPublic(destinationNumber string, dataStructure interface{}) (e
 		"disabled": bson.M{
 			"$ne": true,
 		},
-	}).Sort("version").One(dataStructure)
+	}).Sort("version").Select(bson.M{
+		"_id":                1,
+		"debug":              1,
+		"name":               1,
+		"destination_number": 1,
+		"fs_timezone":        1,
+		"domain":             1,
+		"callflow":           1,
+		"onDisconnect":       1,
+		"version":            1,
+	}).One(dataStructure)
 
 	if err != nil {
 		if err == mgo.ErrNotFound {
