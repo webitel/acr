@@ -104,7 +104,9 @@ func parseCC(parameters interface{}, domainName string) string {
 				cc += "," + v.(string) // + "@" + domainName
 			}
 		}
-		return cc[1:]
+		if len(cc) > 0 {
+			return cc[1:]
+		}
 	}
 	return ""
 }
