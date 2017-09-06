@@ -17,22 +17,19 @@ import (
 func Log(c *Call, args interface{}) error {
 
 	if data, ok := args.(string); ok {
-		return sendLogToFs(c, data)
-	} else if props, ok := args.(map[string]interface{}); ok {
-		msgText := getStringValueFromMap("message", props, "")
-		if _, ok = props["to"]; ok {
+
+		if c.IsDebug() {
 			msgJson := make(map[string]interface{})
-			msgJson["to"] = props["to"]
-			msgJson["message"] = msgText
-			msgJson["callId"] = c.Uuid
+			msgJson["domain"] = c.Domain
+			msgJson["message"] = c.ParseString(data)
 			if body, err := json.Marshal(msgJson); err == nil {
-				c.acr.FireRPCEvent(body, "*.message.system")
+				c.acr.FireRPCEvent(body, "*.broadcast.message."+c.GetRouteId())
 			} else {
 				logger.Error("Call %s log marshal json message error: %s", c.Uuid, err.Error())
 			}
-
 		}
-		return sendLogToFs(c, msgText)
+
+		return sendLogToFs(c, data)
 	} else {
 		logger.Error("Call %s log bad arguments %s", c.Uuid, args)
 	}

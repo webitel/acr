@@ -37,6 +37,7 @@ type IBridge interface {
 var applications Applications
 
 type Call struct {
+	routeId              string
 	Uuid                 string
 	SwitchId             string
 	Domain               string
@@ -49,6 +50,7 @@ type Call struct {
 	RegExp               map[string][]string
 	Conn                 *esl.SConn
 	breakCall            bool
+	debug                bool
 	acr                  IBridge
 }
 
@@ -116,6 +118,14 @@ func init() {
 		i++
 		logger.Info("Register application %v (%v)", tmp, i)
 	}
+}
+
+func (c *Call) GetRouteId() string {
+	return c.routeId
+}
+
+func (c *Call) IsDebug() bool {
+	return c.debug
 }
 
 func (c *Call) AddRegExp(data []string) {
@@ -249,6 +259,7 @@ func (c *Call) ValidateApp(name string) (ok bool) {
 func MakeCall(destinationNumber string, c *esl.SConn, cf *router.CallFlow, acr IBridge) *Call {
 
 	call := &Call{
+		routeId:           cf.Id.Hex(),
 		Timezone:          cf.Timezone,
 		Uuid:              c.Uuid,
 		Domain:            cf.Domain,
@@ -257,6 +268,7 @@ func MakeCall(destinationNumber string, c *esl.SConn, cf *router.CallFlow, acr I
 		LocalVariables:    make(map[string]string),
 		SwitchId:          c.ChannelData.Header.Get("Core-UUID"),
 		DestinationNumber: destinationNumber,
+		debug:             cf.Debug,
 		RegExp:            setupNumber(cf.Number, destinationNumber),
 	}
 

@@ -19,6 +19,7 @@ type Tag struct {
 
 type CallFlow struct {
 	Id           bson.ObjectId `json:"id" bson:"_id"`
+	Debug        bool          `json:"debug" bson:"debug"`
 	Name         string        `json:"name" bson:"name"`
 	Number       string        `json:"destination_number" bson:"destination_number"`
 	Timezone     string        `json:"fs_timezone" bson:"fs_timezone"`
@@ -240,45 +241,4 @@ func parseApp(m bson.M, c Call) (appName string, args interface{}, appConf AppCo
 
 	}
 	return
-}
-
-func init2() {
-	//region json
-	//const jsonStream = `
-	//	[
-	//		{
-	//			"break": true,
-	//			"ddd":  1
-	//		}
-	//	]
-	//`
-
-	//endregion
-
-	//session, err := mgo.Dial("10.10.10.200:27017")
-	//if err != nil {
-	//	panic(err)
-	//}
-	//defer session.Close()
-	//c := session.DB("webitel").C("default")
-	//
-	//result := &CallFlow{}
-	//
-	//err = c.Find(bson.M{"name": "go"}).One(&result)
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//iter := NewIterator(result, nil)
-	//
-	//for {
-	//	v := iter.NextApp()
-	//	if v == nil {
-	//		break
-	//	}
-	//	fmt.Println(v)
-	//	v.Execute(iter)
-	//}
-	//fmt.Println(iter.Tags)
-
 }

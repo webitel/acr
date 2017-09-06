@@ -144,7 +144,7 @@ func (rpc *RPC) initExchange() error {
 }
 
 func (rpc *RPC) Fire(body []byte, rk string) error {
-	logger.Debug("RPC: send to engine %d bytes %s", len(body), body)
+	logger.Debug("RPC: send to engine %s %d bytes %s", rk, len(body), body)
 	return rpc.channel.Publish(
 		"engine",
 		rk,
@@ -153,7 +153,7 @@ func (rpc *RPC) Fire(body []byte, rk string) error {
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent,
 			Timestamp:    time.Now(),
-			ContentType:  "text/plain",
+			ContentType:  "text/json",
 			Body:         body,
 		},
 	)
