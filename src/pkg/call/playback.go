@@ -50,7 +50,9 @@ func Playback(c *Call, args interface{}) error {
 					}
 					filePath += "!" + getPlaybackFileString(c, typeFile, name, refresh, false, lang, method)
 				}
-				filePath = "file_string://" + filePath[1:]
+				if len(filePath) > 0 {
+					filePath = "file_string://" + filePath[1:]
+				}
 			}
 		}
 
