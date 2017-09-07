@@ -30,10 +30,11 @@ func (a *CustomApp) Execute(i *Iterator) {
 	//}
 }
 
-func NewCustomApplication(name string, conf AppConfig, parent *Node, args interface{}) *CustomApp {
+func NewCustomApplication(name, id string, conf AppConfig, parent *Node, args interface{}) *CustomApp {
 	c := &CustomApp{}
 	c.name = name
 	c.args = args
+	c._id = id
 	c.setParentNode(parent)
 	c.setAppConfig(conf)
 	return c

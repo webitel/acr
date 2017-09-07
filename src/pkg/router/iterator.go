@@ -95,7 +95,7 @@ func (i *Iterator) Goto(tag string) bool {
 
 func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 	var ok bool
-	var appName, tag string
+	var appName, tag, id string
 	var configFlags AppConfig
 	var args interface{}
 
@@ -108,12 +108,12 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 			continue
 		}
 
-		appName, args, configFlags, tag = parseApp(v.(bson.M), i.Call)
+		appName, args, configFlags, tag, id = parseApp(v.(bson.M), i.Call)
 		switch appName {
 		case "if":
 
 			if tmpMap, ok = args.(map[string]interface{}); ok {
-				condApp := NewConditionApplication(configFlags, root)
+				condApp := NewConditionApplication(id, configFlags, root)
 				if tmp, ok = tmpMap["then"]; ok {
 					if _, ok = tmp.([]interface{}); ok {
 						i.parseCallFlowArray(condApp._then, tmp.([]interface{}))
@@ -151,7 +151,7 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 			}
 		case "switch":
 			if tmpMap, ok = args.(map[string]interface{}); ok {
-				switchApp := NewSwitchApplication(configFlags, root)
+				switchApp := NewSwitchApplication(id, configFlags, root)
 				i.trySetTag(tag, switchApp, root, switchApp.idx)
 				root.Add(switchApp)
 
@@ -177,7 +177,7 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 			if appName == "" && configFlags&flagBreakEnabled == flagBreakEnabled {
 				appName = "break"
 			}
-			customApp := NewCustomApplication(appName, configFlags, root, args)
+			customApp := NewCustomApplication(appName, id, configFlags, root, args)
 			i.trySetTag(tag, customApp, root, customApp.idx)
 			root.Add(customApp)
 
@@ -196,20 +196,25 @@ func NewIterator(c []interface{}, call Call) *Iterator {
 	return i
 }
 
-func parseApp(m bson.M, c Call) (appName string, args interface{}, appConf AppConfig, tag string) {
+func parseApp(m bson.M, c Call) (appName string, args interface{}, appConf AppConfig, tag, _id string) {
+	var ok, v bool
 
 	for fieldName, fieldValue := range m {
 		switch fieldName {
+		case "_id":
+			if _, ok = fieldValue.(string); ok {
+				_id = fieldValue.(string)
+			}
 		case "break":
-			if v, ok := fieldValue.(bool); ok && v {
+			if v, ok = fieldValue.(bool); ok && v {
 				appConf |= flagBreakEnabled
 			}
 		case "async":
-			if v, ok := fieldValue.(bool); ok && v {
+			if v, ok = fieldValue.(bool); ok && v {
 				appConf |= flagAsyncEnabled
 			}
 		case "dump":
-			if v, ok := fieldValue.(bool); ok && v {
+			if v, ok = fieldValue.(bool); ok && v {
 				appConf |= flagDumpEnabled
 			}
 		case "tag":

@@ -34,9 +34,10 @@ func (c *SwitchApp) initConfig(params bson.M) (err error) {
 	return nil
 }
 
-func NewSwitchApplication(conf AppConfig, parent *Node) *SwitchApp {
+func NewSwitchApplication(id string, conf AppConfig, parent *Node) *SwitchApp {
 	c := &SwitchApp{}
 	c.name = "switch"
+	c._id = id
 	c.cases = make(map[string]*Node)
 	c.setAppConfig(conf)
 	c.setParentNode(parent)

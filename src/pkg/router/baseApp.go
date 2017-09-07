@@ -4,7 +4,9 @@
 
 package router
 
-import "time"
+import (
+	"time"
+)
 
 type AppConfig int
 
@@ -34,16 +36,29 @@ type App interface {
 	GetName() string
 	IsBreak() bool
 	IsAsync() bool
+	GetId() string
 	GetArgs() interface{}
 }
 
 type baseApp struct {
 	BaseNode
+	_id    string
 	name   string
 	_break bool
 	async  bool
 	dump   bool
 	tag    string
+}
+
+func NewBaseApp(name, id string) *CustomApp {
+	a := &CustomApp{}
+	a.name = name
+	a._id = id
+	return a
+}
+
+func (a *baseApp) GetId() string {
+	return a._id
 }
 
 func (a *baseApp) GetArgs() interface{} {
@@ -62,7 +77,6 @@ func (a *baseApp) setAppConfig(i AppConfig) {
 	a._break = (i & flagBreakEnabled) == flagBreakEnabled
 	a.async = (i & flagAsyncEnabled) == flagAsyncEnabled
 	a.dump = (i & flagDumpEnabled) == flagDumpEnabled
-
 }
 
 func (a *baseApp) GetName() string {

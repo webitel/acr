@@ -5,6 +5,7 @@
 package call
 
 import (
+	"encoding/json"
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/router"
@@ -51,6 +52,8 @@ type Call struct {
 	Conn                 *esl.SConn
 	breakCall            bool
 	debug                bool
+	debugLog             bool
+	debugMap             map[string]interface{}
 	acr                  IBridge
 }
 
@@ -124,8 +127,8 @@ func (c *Call) GetRouteId() string {
 	return c.routeId
 }
 
-func (c *Call) IsDebug() bool {
-	return c.debug
+func (c *Call) IsDebugLog() bool {
+	return c.debugLog
 }
 
 func (c *Call) AddRegExp(data []string) {
@@ -266,10 +269,21 @@ func MakeCall(destinationNumber string, c *esl.SConn, cf *router.CallFlow, acr I
 		Conn:              c,
 		acr:               acr,
 		LocalVariables:    make(map[string]string),
+		debugMap:          make(map[string]interface{}),
 		SwitchId:          c.ChannelData.Header.Get("Core-UUID"),
 		DestinationNumber: destinationNumber,
-		debug:             cf.Debug,
+		debugLog:          cf.Debug,
 		RegExp:            setupNumber(cf.Number, destinationNumber),
+	}
+
+	if c.ChannelData.Header.Get("variable_webitel_debug_acr") == "true" {
+		call.debug = true
+	}
+
+	if call.debug {
+		call.debugMap["action"] = "execute"
+		call.debugMap["uuid"] = call.Uuid
+		call.debugMap["domain"] = call.Domain
 	}
 
 	call.Iterator = router.NewIterator(cf.Callflow, call)
@@ -335,13 +349,36 @@ func routeIterator(call *Call) {
 		}
 
 		if fn, ok := applications[v.GetName()]; ok {
+			if call.debug {
+				call.FireDebugApplication(v)
+			}
+
 			if fn(call, v.GetArgs()) != nil {
 				logger.Debug("Call %s stop connection", call.GetUuid())
 				break
 			}
 			continue
 		}
+		if call.debug {
+			call.FireDebugApplication(v)
+		}
 		v.Execute(call.Iterator)
+	}
+
+	if call.debug {
+		call.FireDebugApplication(router.NewBaseApp("disconnect", "end"))
+	}
+}
+
+func (c *Call) FireDebugApplication(a router.App) {
+	if a.GetId() != "" {
+		c.debugMap["app-id"] = a.GetId()
+		c.debugMap["app-name"] = a.GetName()
+		if body, err := json.Marshal(c.debugMap); err == nil {
+			c.acr.FireRPCEvent(body, "*.broadcast.message."+c.GetRouteId())
+		} else {
+			logger.Error("Call %s log marshal json message error: %s", c.Uuid, err.Error())
+		}
 	}
 }
 

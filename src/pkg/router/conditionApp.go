@@ -51,9 +51,10 @@ func (c *ConditionApp) Execute(i *Iterator) {
 	}
 }
 
-func NewConditionApplication(conf AppConfig, parent *Node) *ConditionApp {
+func NewConditionApplication(id string, conf AppConfig, parent *Node) *ConditionApp {
 	c := &ConditionApp{}
 	c.name = "if"
+	c._id = id
 	c._then = NewNode(parent)
 	c._else = NewNode(parent)
 	c.setAppConfig(conf)

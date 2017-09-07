@@ -18,8 +18,9 @@ func Log(c *Call, args interface{}) error {
 
 	if data, ok := args.(string); ok {
 
-		if c.IsDebug() {
+		if c.IsDebugLog() {
 			msgJson := make(map[string]interface{})
+			msgJson["action"] = "log"
 			msgJson["domain"] = c.Domain
 			msgJson["message"] = c.ParseString(data)
 			if body, err := json.Marshal(msgJson); err == nil {
