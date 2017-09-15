@@ -10,9 +10,6 @@ import (
 	"time"
 )
 
-var COLLECTION_EXTENSION = config.Conf.Get("mongodb:extensionsCollection")
-var COLLECTION_DEFAULT = config.Conf.Get("mongodb:defaultCollection")
-var COLLECTION_PUBLIC = config.Conf.Get("mongodb:publicCollection")
 
 type DB struct {
 	reconnecting bool
@@ -65,6 +62,7 @@ func (db *DB) connectToPg() {
 	pg.Debug()
 	pg.DB().SetMaxOpenConns(100)
 	db.pg = pg
+	db.migrateMongoToPg()
 }
 
 //TODO RECONNECT!!!

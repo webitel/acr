@@ -55,9 +55,5 @@ func (db *DB) FindPublic(destinationNumber string) (models.CallFlow, error) {
 		return def, nil
 	}
 
-	if res.Error != nil {
-		panic(res.Error)
-	}
-
 	return def, res.Error
 }

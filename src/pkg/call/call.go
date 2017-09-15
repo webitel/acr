@@ -29,7 +29,7 @@ type IBridge interface {
 	GetEmailConfig(domainName string, dataStructure interface{}) error
 	GetCalendar(name, domainName string, dataStructure interface{}) error
 	FindLocation(sysLength int, numbers []string, dataStructure interface{}) error
-	GetDomainVariables(domainName string, dataStructure interface{}) error
+	GetDomainVariables(domainName string) (models.DomainVariables, error)
 	SetDomainVariable(domainName, key, value string) error
 	GetRPCCommandsQueueName() string
 	AddRPCCommands(uuid string) rpc.ApiT
@@ -301,9 +301,9 @@ func MakeCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, acr I
 
 func setupDomainVariables(call *Call) {
 	var err error
-	var dVars domainVariablesT
+	var dVars models.DomainVariables
 
-	if err = call.acr.GetDomainVariables(call.Domain, &dVars); err != nil {
+	if dVars, err = call.acr.GetDomainVariables(call.Domain); err != nil {
 		logger.Error("Call %s set domain variables db error: %s", call.Uuid, err.Error())
 	}
 

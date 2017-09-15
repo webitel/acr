@@ -91,8 +91,8 @@ func (a *ACR) FindLocation(sysLength int, numbers []string, dataStructure interf
 	return a.DB.FindLocation(sysLength, numbers, dataStructure)
 }
 
-func (a *ACR) GetDomainVariables(domainName string, dataStructure interface{}) error {
-	return a.DB.GetDomainVariables(domainName, dataStructure)
+func (a *ACR) GetDomainVariables(domainName string) (models.DomainVariables, error) {
+	return a.DB.GetDomainVariables(domainName)
 }
 
 func (a *ACR) SetDomainVariable(domainName, key, value string) error {

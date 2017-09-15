@@ -5,28 +5,40 @@
 package db
 
 import (
+	"github.com/jinzhu/gorm"
 	"github.com/webitel/acr/src/pkg/config"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/webitel/acr/src/pkg/models"
 )
 
 var COLLECTION_DOMAIN_VARIABLES = config.Conf.Get("mongodb:variablesCollection")
 
-func (db *DB) GetDomainVariables(domainName string, dataStructure interface{}) (err error) {
+func (db *DB) GetDomainVariables(domainName string) (models.DomainVariables, error) {
+	data := models.DomainVariables{}
+	res := db.pg.Debug().Table("callflow_variables").
+		Select(`id, variables`).
+		Where(`domain = $1`, domainName).
+		Limit(1).
+		Scan(&data)
 
-	err = db.db.C(COLLECTION_DOMAIN_VARIABLES).Find(bson.M{
-		"domain": domainName,
-	}).Select(bson.M{"variables": 1, "_id": 0}).One(dataStructure)
-
-	if err == mgo.ErrNotFound {
-		err = nil
+	if res.Error == gorm.ErrRecordNotFound {
+		return data, nil
 	}
 
-	return
+	return data, res.Error
 }
 
 func (db *DB) SetDomainVariable(domainName, key, value string) error {
-	_, e := db.db.C(COLLECTION_DOMAIN_VARIABLES).
-		Upsert(bson.M{"domain": domainName}, bson.M{"$set": bson.M{"variables." + key: value}})
-	return e
+	res := db.pg.Exec(`
+	  	with upsert as (
+		  update callflow_variables
+		  set variables = jsonb_set(variables, ARRAY[?], ?, TRUE )
+		  where domain = ?
+		  returning *
+		)
+		INSERT INTO callflow_variables (domain, variables)
+		select ?, jsonb_set('{}', ARRAY[?],  ?, TRUE )
+		WHERE NOT EXISTS (SELECT * FROM upsert);
+	`, key, `"`+value+`"`, domainName, domainName, key, `"`+value+`"`)
+
+	return res.Error
 }
