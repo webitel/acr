@@ -74,7 +74,7 @@ func migrateDefault(db *DB) {
 	for iter.Next(&doc) {
 		tmp, _ = json.Marshal(doc["callflow"])
 		tmp2, _ = json.Marshal(doc["onDisconnect"])
-		d = db.pg.Debug().Exec(`INSERT INTO callflow_default (destination_number, name, disabled, domain, fs_timezone, callflow, callflow_on_disconnect)
+		d = db.pg.Exec(`INSERT INTO callflow_default (destination_number, name, disabled, domain, fs_timezone, callflow, callflow_on_disconnect)
 				VALUES(?, ?, ?, ?, ?, ?, ?)`,
 			doc["destination_number"], doc["name"], doc["disabled"], doc["domain"], doc["fs_timezone"], tmp, tmp2)
 
@@ -114,7 +114,7 @@ func migratePublic(db *DB) {
 		tmp, _ = json.Marshal(doc["callflow"])
 		tmp2, _ = json.Marshal(doc["onDisconnect"])
 
-		d = db.pg.Debug().Exec(`INSERT INTO callflow_public (destination_number, name, domain, fs_timezone, disabled, callflow, callflow_on_disconnect)
+		d = db.pg.Exec(`INSERT INTO callflow_public (destination_number, name, domain, fs_timezone, disabled, callflow, callflow_on_disconnect)
 				VALUES(ARRAY[?], ?, ?, ?, ?, ?::JSON, ?::JSON)`,
 			doc["destination_number"], doc["name"], doc["domain"], doc["fs_timezone"], doc["disabled"], tmp, tmp2)
 
@@ -153,7 +153,7 @@ func migrateExtension(db *DB) {
 	for iter.Next(&doc) {
 		tmp, _ = json.Marshal(doc["callflow"])
 		tmp2, _ = json.Marshal(doc["onDisconnect"])
-		d = db.pg.Debug().Exec(`INSERT INTO callflow_extension (destination_number, domain, user_id, name, callflow, callflow_on_disconnect, fs_timezone)
+		d = db.pg.Exec(`INSERT INTO callflow_extension (destination_number, domain, user_id, name, callflow, callflow_on_disconnect, fs_timezone)
 				select ?, ?, ?, ?, ?, ?, ?
 				WHERE NOT EXISTS (select id from callflow_extension where domain = ? AND user_id = ?)`,
 			doc["destination_number"], doc["domain"], doc["userRef"], doc["name"], tmp, tmp2, doc["fs_timezone"], doc["domain"], doc["userRef"])
@@ -192,7 +192,7 @@ func migrateVariables(db *DB) {
 
 	for iter.Next(&doc) {
 		tmp, _ = json.Marshal(doc["variables"])
-		d = db.pg.Debug().Exec(`INSERT INTO callflow_variables (domain, variables)
+		d = db.pg.Exec(`INSERT INTO callflow_variables (domain, variables)
 				VALUES(?, ?)`,
 			doc["domain"], tmp)
 
