@@ -7,8 +7,7 @@ package acr
 import (
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
-	"github.com/webitel/acr/src/pkg/router"
-	"regexp"
+	"github.com/webitel/acr/src/pkg/models"
 )
 
 func defaultContext(a *ACR, c *esl.SConn, destinationNumber string) {
@@ -28,29 +27,29 @@ func defaultContext(a *ACR, c *esl.SConn, destinationNumber string) {
 		}
 	}
 
-	cf := router.CallFlow{}
-	var ok bool
-	err, ok = a.DB.FindExtension(destinationNumber, domainName, &cf)
+	cf := models.CallFlow{}
+
+	cf, err = a.DB.FindExtension(destinationNumber, domainName)
 	if err != nil {
 		logger.Error("Call %s db error: %s", c.Uuid, err.Error())
 		c.Hangup(HANGUP_NORMAL_TEMPORARY_FAILURE)
 		return
 	}
 
-	if ok {
+	if cf.Id != 0 {
 		internalCall(destinationNumber, a, c, &cf)
 		return
 	}
-	cfs := []router.CallFlow{}
-	err, ok = a.DB.FindDefault(domainName, &cfs)
+
+	cf, err = a.DB.FindDefault(domainName, destinationNumber)
 	if err != nil {
 		logger.Error("Call %s db error: %s", c.Uuid, err.Error())
 		c.Hangup(HANGUP_NORMAL_TEMPORARY_FAILURE)
 		return
 	}
 
-	if ok {
-		worldCall(destinationNumber, a, c, &cfs)
+	if cf.Id != 0 {
+		worldCall(destinationNumber, a, c, &cf)
 		return
 	}
 
@@ -58,7 +57,7 @@ func defaultContext(a *ACR, c *esl.SConn, destinationNumber string) {
 	c.Hangup(HANGUP_NO_ROUTE_DESTINATION)
 }
 
-func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *router.CallFlow) {
+func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFlow) {
 	logger.Debug("Call %s is internal", c.Uuid)
 	var err error
 
@@ -81,9 +80,9 @@ func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *router.Cal
 	a.CreateCall(destinationNumber, c, cf)
 }
 
-func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *[]router.CallFlow) {
+func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFlow) {
 	var err error
-	logger.Debug("Call %s is default", c.Uuid)
+	logger.Debug("Call %s is default context %s %s", c.Uuid, cf.Name, cf.Number)
 
 	if c.ChannelData.Header.Get("variable_webitel_direction") == "" {
 		_, err = c.SndMsg("set", "webitel_direction=outbound", false, false)
@@ -92,18 +91,7 @@ func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *[]router.Call
 		}
 	}
 
-	var match bool
-	for _, v := range *cf {
-		//TODO add support /^(d+)$/g ???
-		if match, _ = regexp.MatchString(v.Number, destinationNumber); match {
-			logger.Debug("Call %s found default context %s from number %s", c.Uuid, v.Number, destinationNumber)
-			a.CreateCall(destinationNumber, c, &v)
-			return
-		}
-		logger.Debug("Call %s skip regexp %s from number %s", c.Uuid, v.Number, destinationNumber)
-	}
-
-	c.Hangup(HANGUP_NO_ROUTE_DESTINATION)
+	a.CreateCall(destinationNumber, c, cf)
 }
 
 func setupPickupParameters(c *esl.SConn, userId string, domainName string) {

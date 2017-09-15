@@ -11,7 +11,7 @@ import (
 	"github.com/webitel/acr/src/pkg/db"
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
-	"github.com/webitel/acr/src/pkg/router"
+	"github.com/webitel/acr/src/pkg/models"
 	"github.com/webitel/acr/src/pkg/rpc"
 	"sync"
 	"sync/atomic"
@@ -28,7 +28,7 @@ type ACR struct {
 
 var acr *ACR
 
-func (a *ACR) CreateCall(destinationNumber string, c *esl.SConn, cf *router.CallFlow) {
+func (a *ACR) CreateCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow) {
 	a.mx.Lock()
 	defer a.mx.Unlock()
 	a.calls[c] = call.MakeCall(destinationNumber, c, cf, a)

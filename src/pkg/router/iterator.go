@@ -6,7 +6,7 @@ package router
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/webitel/acr/src/pkg/models"
 	"strconv"
 )
 
@@ -15,18 +15,6 @@ const MAX_GOTO = 100 //32767
 type Tag struct {
 	parent *Node
 	idx    int
-}
-
-type CallFlow struct {
-	Id           bson.ObjectId `json:"id" bson:"_id"`
-	Debug        bool          `json:"debug" bson:"debug"`
-	Name         string        `json:"name" bson:"name"`
-	Number       string        `json:"destination_number" bson:"destination_number"`
-	Timezone     string        `json:"fs_timezone" bson:"fs_timezone"`
-	Domain       string        `json:"domain" bson:"domain"`
-	Callflow     []interface{} `json:"callflow" bson:"callflow"`
-	OnDisconnect []interface{} `json:"onDisconnect" bson:"onDisconnect"`
-	Version      int           `json:"version" bson:"version"`
 }
 
 type Iterator struct {
@@ -93,7 +81,7 @@ func (i *Iterator) Goto(tag string) bool {
 	return false
 }
 
-func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
+func (i *Iterator) parseCallFlowArray(root *Node, cf models.ArrayApplications) {
 	var ok bool
 	var appName, tag, id string
 	var configFlags AppConfig
@@ -104,11 +92,11 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 
 	for _, v = range cf {
 
-		if _, ok = v.(bson.M); !ok {
+		if _, ok = v.(models.Application); !ok {
 			continue
 		}
 
-		appName, args, configFlags, tag, id = parseApp(v.(bson.M), i.Call)
+		appName, args, configFlags, tag, id = parseApp(v.(models.Application), i.Call)
 		switch appName {
 		case "if":
 
@@ -116,13 +104,13 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 				condApp := NewConditionApplication(id, configFlags, root)
 				if tmp, ok = tmpMap["then"]; ok {
 					if _, ok = tmp.([]interface{}); ok {
-						i.parseCallFlowArray(condApp._then, tmp.([]interface{}))
+						i.parseCallFlowArray(condApp._then, arrInterfaceToArrayApplication(tmp.([]interface{})))
 					}
 				}
 
 				if tmp, ok = tmpMap["else"]; ok {
 					if _, ok = tmp.([]interface{}); ok {
-						i.parseCallFlowArray(condApp._else, tmp.([]interface{}))
+						i.parseCallFlowArray(condApp._else, arrInterfaceToArrayApplication(tmp.([]interface{})))
 					}
 				}
 
@@ -142,7 +130,7 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 					if _, ok = tmpMap["name"].(string); ok {
 						if _, ok = tmpMap["actions"]; ok {
 							if _, ok = tmpMap["actions"].([]interface{}); ok {
-								i.Functions[tmpMap["name"].(string)] = NewIterator(tmpMap["actions"].([]interface{}), i.Call)
+								i.Functions[tmpMap["name"].(string)] = NewIterator(arrInterfaceToArrayApplication(tmpMap["actions"].([]interface{})), i.Call)
 								continue
 							}
 						}
@@ -162,11 +150,11 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 				}
 
 				if _, ok = tmpMap["case"]; ok {
-					if _, ok = tmpMap["case"].(bson.M); ok {
-						for caseName, caseValue := range tmpMap["case"].(bson.M) {
+					if _, ok = tmpMap["case"].(map[string]interface{}); ok {
+						for caseName, caseValue := range tmpMap["case"].(map[string]interface{}) {
 							if _, ok = caseValue.([]interface{}); ok {
 								switchApp.cases[caseName] = NewNode(root)
-								i.parseCallFlowArray(switchApp.cases[caseName], caseValue.([]interface{}))
+								i.parseCallFlowArray(switchApp.cases[caseName], arrInterfaceToArrayApplication(caseValue.([]interface{})))
 							}
 						}
 					}
@@ -186,7 +174,7 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf []interface{}) {
 	}
 }
 
-func NewIterator(c []interface{}, call Call) *Iterator {
+func NewIterator(c models.ArrayApplications, call Call) *Iterator {
 	i := &Iterator{}
 	i.Call = call
 	i.currentNode = NewNode(nil)
@@ -196,7 +184,7 @@ func NewIterator(c []interface{}, call Call) *Iterator {
 	return i
 }
 
-func parseApp(m bson.M, c Call) (appName string, args interface{}, appConf AppConfig, tag, _id string) {
+func parseApp(m models.Application, c Call) (appName string, args interface{}, appConf AppConfig, tag, _id string) {
 	var ok, v bool
 
 	for fieldName, fieldValue := range m {
@@ -232,7 +220,7 @@ func parseApp(m bson.M, c Call) (appName string, args interface{}, appConf AppCo
 			if appName == "" {
 				appName = fieldName
 
-				if m, ok := fieldValue.(bson.M); ok {
+				if m, ok := fieldValue.(models.Application); ok {
 					tmp := make(map[string]interface{})
 					for argK, argV := range m {
 						tmp[argK] = argV
@@ -246,4 +234,15 @@ func parseApp(m bson.M, c Call) (appName string, args interface{}, appConf AppCo
 
 	}
 	return
+}
+
+func arrInterfaceToArrayApplication(src []interface{}) models.ArrayApplications {
+	res := make(models.ArrayApplications, len(src))
+	var ok bool
+	for k, v := range src {
+		if _, ok = v.(map[string]interface{}); ok {
+			res[k] = v.(map[string]interface{})
+		}
+	}
+	return res
 }

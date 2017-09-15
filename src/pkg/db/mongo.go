@@ -1,11 +1,12 @@
 package db
 
 import (
-	"errors"
+	"fmt"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/webitel/acr/src/pkg/config"
 	"github.com/webitel/acr/src/pkg/logger"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"time"
 )
 
@@ -16,6 +17,7 @@ var COLLECTION_PUBLIC = config.Conf.Get("mongodb:publicCollection")
 type DB struct {
 	reconnecting bool
 	connected    bool
+	pg           *gorm.DB
 	session      *mgo.Session
 	db           *mgo.Database
 }
@@ -48,109 +50,21 @@ func (db *DB) reconnect() {
 	}(db)
 }
 
-func (db *DB) FindExtension(destinationNumber string, domainName string, dataStructure interface{}) (err error, ok bool) {
-	ok = false
-	if destinationNumber == "" {
-		err = errors.New("destinationNumber is empty")
-		return
-	}
+func (db *DB) connectToPg() {
+	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable host=%s",
+		config.Conf.Get("pg:user"), config.Conf.Get("pg:password"), config.Conf.Get("pg:dbName"), config.Conf.Get("pg:host"))
 
-	c := db.db.C(COLLECTION_EXTENSION)
-
-	err = c.Find(bson.M{
-		"destination_number": destinationNumber,
-		"domain":             domainName,
-		"disabled": bson.M{
-			"$ne": true,
-		},
-	}).Select(bson.M{
-		"_id":                1,
-		"debug":              1,
-		"name":               1,
-		"destination_number": 1,
-		"fs_timezone":        1,
-		"domain":             1,
-		"callflow":           1,
-		"onDisconnect":       1,
-		"version":            1,
-	}).One(dataStructure)
-
+	pg, err := gorm.Open("postgres", dbInfo)
 	if err != nil {
-		if err == mgo.ErrNotFound {
-			err = nil
-		}
-		db.observeError(err)
+		logger.Debug("Connect to PG %s error: ", dbInfo, err.Error())
+		time.Sleep(time.Second)
+		db.connectToPg()
 		return
 	}
-	ok = true
-	return
-}
-
-func (db *DB) FindDefault(domainName string, dataStructure interface{}) (err error, ok bool) {
-	ok = false
-
-	c := db.db.C(COLLECTION_DEFAULT)
-
-	err = c.Find(bson.M{
-		"domain": domainName,
-		"disabled": bson.M{
-			"$ne": true,
-		},
-	}).Sort("order").Select(bson.M{
-		"_id":                1,
-		"debug":              1,
-		"name":               1,
-		"destination_number": 1,
-		"fs_timezone":        1,
-		"domain":             1,
-		"callflow":           1,
-		"onDisconnect":       1,
-		"version":            1,
-	}).All(dataStructure)
-	if err != nil {
-		if err != mgo.ErrNotFound {
-			err = nil
-		}
-		db.observeError(err)
-		return
-	}
-	ok = true
-	return
-}
-
-func (db *DB) FindPublic(destinationNumber string, dataStructure interface{}) (err error, ok bool) {
-	if destinationNumber == "" {
-		err = errors.New("destination_number is undefined")
-	}
-
-	c := db.db.C(COLLECTION_PUBLIC)
-
-	err = c.Find(bson.M{
-		"destination_number": destinationNumber,
-		"disabled": bson.M{
-			"$ne": true,
-		},
-	}).Sort("version").Select(bson.M{
-		"_id":                1,
-		"debug":              1,
-		"name":               1,
-		"destination_number": 1,
-		"fs_timezone":        1,
-		"domain":             1,
-		"callflow":           1,
-		"onDisconnect":       1,
-		"version":            1,
-	}).One(dataStructure)
-
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			err = nil
-		}
-		db.observeError(err)
-		return
-	}
-	ok = true
-	return
+	logger.Debug("Connect to PG %s - success", dbInfo)
+	pg.Debug()
+	pg.DB().SetMaxOpenConns(100)
+	db.pg = pg
 }
 
 //TODO RECONNECT!!!
@@ -161,8 +75,10 @@ func NewDB(uri string) *DB {
 		return NewDB(uri)
 	}
 	logger.Debug("Connect to mongo success")
-	return &DB{
+	db := &DB{
 		session: session,
 		db:      session.DB("webitel"),
 	}
+	db.connectToPg()
+	return db
 }

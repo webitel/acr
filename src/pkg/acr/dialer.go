@@ -7,14 +7,13 @@ package acr
 import (
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
-	"github.com/webitel/acr/src/pkg/router"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/webitel/acr/src/pkg/models"
 	"strconv"
 )
 
 type dialerCallFlowType struct {
-	Callflow []interface{}          `bson:"_cf"`
-	AMD      map[string]interface{} `bson:"amd"`
+	Callflow models.ArrayApplications `bson:"_cf"`
+	AMD      map[string]interface{}   `bson:"amd"`
 }
 
 //originate [^^:domain_name=10.10.10.144:ignore_early_media=true:loopback_bowout=false:dlr_queue=58bd30b0a01699316e2d5ae2]loopback/12312321312312312/default &park()
@@ -45,7 +44,7 @@ func dialerContext(a *ACR, c *esl.SConn, destinationNumber, dialerId string) {
 	}
 
 	exec := func() {
-		cf := router.CallFlow{
+		cf := models.CallFlow{
 			Domain:   domainName,
 			Callflow: getDialerRoute(&dialer),
 			Version:  2,
@@ -69,7 +68,7 @@ func dialerContext(a *ACR, c *esl.SConn, destinationNumber, dialerId string) {
 
 }
 
-func getDialerRoute(d *dialerCallFlowType) (r []interface{}) {
+func getDialerRoute(d *dialerCallFlowType) (r models.ArrayApplications) {
 
 	if d.AMD != nil {
 		if isTrue("enabled", d.AMD) {
@@ -78,18 +77,19 @@ func getDialerRoute(d *dialerCallFlowType) (r []interface{}) {
 	}
 
 	r = append(r, d.Callflow...)
-	r = append(r, bson.M{"hangup": ""})
+	r = append(r, models.Application{"hangup": ""})
 	return
 }
 
-func getAmdExpression(m map[string]interface{}) (r []interface{}) {
-	amd := bson.M{}
-	ifApp := bson.M{
-		"then": []bson.M{
+func getAmdExpression(m map[string]interface{}) (r models.ArrayApplications) {
+	amd := models.Application{}
+	ifApp := models.Application{
+		"then": models.ArrayApplications{
 			{
 				"hangup": "NORMAL_UNSPECIFIED",
 			},
 			{
+
 				"break": true,
 			},
 		},
@@ -133,11 +133,11 @@ func getAmdExpression(m map[string]interface{}) (r []interface{}) {
 		ifApp["sysExpression"] = "sys.getChnVar(\"amd_result\") !== 'HUMAN'"
 	}
 
-	return []interface{}{
-		bson.M{"setVar": "ignore_early_media=true"},
-		bson.M{"answer": ""},
-		bson.M{"amd": amd},
-		bson.M{"if": ifApp},
+	return models.ArrayApplications{
+		{"setVar": "ignore_early_media=true"},
+		{"answer": ""},
+		{"amd": amd},
+		{"if": ifApp},
 	}
 }
 

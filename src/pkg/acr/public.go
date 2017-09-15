@@ -8,24 +8,26 @@ import (
 	"github.com/webitel/acr/src/pkg/config"
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
-	"github.com/webitel/acr/src/pkg/router"
+	"github.com/webitel/acr/src/pkg/models"
 )
 
 var defaultPublicRoute = config.Conf.Get("defaultPublicRout")
 
 func publicContext(a *ACR, c *esl.SConn, destinationNumber string) {
 
-	var cf router.CallFlow
+	var cf models.CallFlow
 	var def string
+	var err error
+	var ok bool
 
-	err, ok := a.DB.FindPublic(destinationNumber, &cf)
+	cf, err = a.DB.FindPublic(destinationNumber)
 	if err != nil {
 		logger.Error("Call %s db error: %s", c.Uuid, err.Error())
 		c.Hangup(HANGUP_NORMAL_TEMPORARY_FAILURE)
 		return
 	}
 
-	if ok {
+	if cf.Id != 0 {
 		createPublicCall(a, c, destinationNumber, &cf)
 		return
 	}
@@ -37,7 +39,7 @@ func publicContext(a *ACR, c *esl.SConn, destinationNumber string) {
 	}
 
 	if def != "" {
-		err, ok = a.DB.FindPublic(def, &cf)
+		cf, err = a.DB.FindPublic(def)
 		if err != nil {
 			logger.Error("Call %s db error: %s", c.Uuid, err.Error())
 			c.Hangup(HANGUP_NORMAL_TEMPORARY_FAILURE)
@@ -53,7 +55,7 @@ func publicContext(a *ACR, c *esl.SConn, destinationNumber string) {
 	c.Hangup(HANGUP_NO_ROUTE_DESTINATION)
 }
 
-func createPublicCall(a *ACR, c *esl.SConn, destinationNumber string, cf *router.CallFlow) {
+func createPublicCall(a *ACR, c *esl.SConn, destinationNumber string, cf *models.CallFlow) {
 	var err error
 	if c.ChannelData.Header.Get("variable_webitel_direction") == "" {
 		_, err = c.SndMsg("set", "webitel_direction=inbound", false, false)

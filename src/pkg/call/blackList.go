@@ -6,8 +6,8 @@ package call
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
+	"github.com/webitel/acr/src/pkg/models"
 	"github.com/webitel/acr/src/pkg/router"
-	"gopkg.in/mgo.v2/bson"
 	"regexp"
 )
 
@@ -17,7 +17,7 @@ func BlackList(c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var name, varName, number string
-	var actions []interface{}
+	var actions models.ArrayApplications
 	var count int
 	var err error
 
@@ -46,20 +46,20 @@ func BlackList(c *Call, args interface{}) error {
 
 		if count > 0 {
 			if _, ok = props["actions"]; ok {
-				actions, ok = props["actions"].([]interface{})
+				actions, ok = props["actions"].(models.ArrayApplications)
 			}
 
 			if len(actions) == 0 {
-				actions = []interface{}{
-					bson.M{
+				actions = models.ArrayApplications{
+					map[string]interface{}{
 						"hangup": "INCOMING_CALL_BARRED",
 					},
-					bson.M{
+					map[string]interface{}{
 						"break": true,
 					},
 				}
 			} else {
-				actions = append(actions, bson.M{
+				actions = append(actions, map[string]interface{}{
 					"break": true,
 				})
 			}

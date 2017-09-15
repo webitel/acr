@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
+	"github.com/webitel/acr/src/pkg/models"
 	"github.com/webitel/acr/src/pkg/router"
 	"github.com/webitel/acr/src/pkg/rpc"
 	"regexp"
@@ -38,7 +39,7 @@ type IBridge interface {
 var applications Applications
 
 type Call struct {
-	routeId              string
+	routeId              int
 	Uuid                 string
 	SwitchId             string
 	Domain               string
@@ -124,7 +125,7 @@ func init() {
 }
 
 func (c *Call) GetRouteId() string {
-	return c.routeId
+	return strconv.Itoa(c.routeId)
 }
 
 func (c *Call) IsDebugLog() bool {
@@ -259,10 +260,10 @@ func (c *Call) ValidateApp(name string) (ok bool) {
 	return
 }
 
-func MakeCall(destinationNumber string, c *esl.SConn, cf *router.CallFlow, acr IBridge) *Call {
+func MakeCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, acr IBridge) *Call {
 
 	call := &Call{
-		routeId:           cf.Id.Hex(),
+		routeId:           cf.Id,
 		Timezone:          cf.Timezone,
 		Uuid:              c.Uuid,
 		Domain:            cf.Domain,
@@ -323,9 +324,11 @@ func setupDomainVariables(call *Call) {
 func setupNumber(reg, dest string) map[string][]string {
 	storage := make(map[string][]string)
 	if reg != "" {
-		re := regexp.MustCompile(reg)
-		d := re.FindStringSubmatch(dest)
-		storage["0"] = d
+		re, err := regexp.Compile(reg)
+		if err == nil {
+			d := re.FindStringSubmatch(dest)
+			storage["0"] = d
+		}
 	} else {
 		storage["0"] = []string{}
 	}

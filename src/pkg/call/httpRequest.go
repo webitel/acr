@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"github.com/tidwall/gjson"
 	"github.com/webitel/acr/src/pkg/logger"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/webitel/acr/src/pkg/models"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -48,8 +48,8 @@ func HttpRequest(c *Call, args interface{}) error {
 	}
 
 	if _, ok = props["path"]; ok {
-		if _, ok = props["path"].(bson.M); ok {
-			for k, v = range props["path"].(bson.M) {
+		if _, ok = props["path"].(models.Application); ok {
+			for k, v = range props["path"].(models.Application) {
 				str = parseMapValue(c, v)
 				urlParam.Path = strings.Replace(urlParam.Path, "${"+k+"}", str, -1)
 				urlParam.RawQuery = strings.Replace(urlParam.RawQuery, "${"+k+"}", str, -1)
@@ -58,8 +58,8 @@ func HttpRequest(c *Call, args interface{}) error {
 	}
 
 	if _, ok = props["headers"]; ok {
-		if _, ok = props["headers"].(bson.M); ok {
-			for k, v = range props["headers"].(bson.M) {
+		if _, ok = props["headers"].(models.Application); ok {
+			for k, v = range props["headers"].(models.Application) {
 				headers[strings.ToLower(k)] = parseMapValue(c, v)
 			}
 		}
@@ -74,8 +74,8 @@ func HttpRequest(c *Call, args interface{}) error {
 		case "application/x-www-form-urlencoded":
 			str = ""
 			switch props["data"].(type) {
-			case bson.M:
-				for k, v = range props["data"].(bson.M) {
+			case models.Application:
+				for k, v = range props["data"].(models.Application) {
 					str += "&" + k + "=" + parseMapValue(c, v)
 				}
 				str = str[1:]
@@ -145,13 +145,13 @@ func HttpRequest(c *Call, args interface{}) error {
 	str = res.Header.Get("content-type")
 	if strings.Index(str, "application/json") > -1 {
 		if _, ok = props["exportVariables"]; ok {
-			if _, ok = props["exportVariables"].(bson.M); ok {
+			if _, ok = props["exportVariables"].(models.Application); ok {
 				body, err = ioutil.ReadAll(res.Body)
 				if err != nil {
 					logger.Error("Call %s httpRequest read response error: %s", c.Uuid, err.Error())
 					return nil
 				}
-				for k, v = range props["exportVariables"].(bson.M) {
+				for k, v = range props["exportVariables"].(models.Application) {
 					if str, ok = v.(string); ok {
 						err = SetVar(c, "all:"+k+"="+gjson.GetBytes(body, str).String())
 						if err != nil {

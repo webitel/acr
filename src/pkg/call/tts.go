@@ -6,7 +6,7 @@ package call
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/webitel/acr/src/pkg/models"
 	"net/url"
 	"strconv"
 )
@@ -53,8 +53,8 @@ func ttsDefault(c *Call, props map[string]interface{}, text string) error {
 		switch val.(type) {
 		case string:
 			query += "&" + key + "=" + val.(string)
-		case bson.M:
-			for keyObj, valObj = range val.(bson.M) {
+		case models.Application:
+			for keyObj, valObj = range val.(models.Application) {
 				if _, ok = valObj.(string); ok {
 					query += "&" + keyObj + "=" + valObj.(string)
 				}
@@ -71,8 +71,8 @@ func ttsMicrosoft(c *Call, props map[string]interface{}, text string) error {
 	var tmp string
 
 	if _, ok = props["voice"]; ok {
-		if _, ok = props["voice"].(bson.M); ok {
-			voice := props["voice"].(bson.M)
+		if _, ok = props["voice"].(models.Application); ok {
+			voice := props["voice"].(models.Application)
 
 			if tmp = getStringValueFromMap("gender", voice, ""); tmp != "" {
 				query += "&gender=" + tmp

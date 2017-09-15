@@ -6,7 +6,6 @@ package router
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
-	"gopkg.in/mgo.v2/bson"
 )
 
 type SwitchApp struct {
@@ -30,7 +29,7 @@ func (c *SwitchApp) Execute(i *Iterator) {
 	}
 }
 
-func (c *SwitchApp) initConfig(params bson.M) (err error) {
+func (c *SwitchApp) initConfig(params interface{}) (err error) {
 	return nil
 }
 

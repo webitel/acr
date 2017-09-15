@@ -6,7 +6,7 @@ package call
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/webitel/acr/src/pkg/models"
 	"net/url"
 	"regexp"
 	"strings"
@@ -18,7 +18,7 @@ func Playback(c *Call, args interface{}) error {
 	var filePath, name, typeFile, lang, method, terminator string
 	var ok, refresh bool
 	var props, getDigits map[string]interface{}
-	var files []bson.M
+	var files models.ArrayApplications
 
 	if props, ok = args.(map[string]interface{}); ok {
 		name = getStringValueFromMap("name", props, "")
@@ -59,7 +59,7 @@ func Playback(c *Call, args interface{}) error {
 		if filePath != "" {
 
 			if _, ok = props["getDigits"]; ok {
-				if getDigits, ok = bsonToMapInterface(props["getDigits"]); ok {
+				if getDigits, ok = applicationToMapInterface(props["getDigits"]); ok {
 					return playbackGetDigits(c, getDigits, filePath, terminator)
 				}
 			} else {

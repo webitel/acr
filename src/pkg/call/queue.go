@@ -6,8 +6,8 @@ package call
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
+	"github.com/webitel/acr/src/pkg/models"
 	"github.com/webitel/acr/src/pkg/router"
-	"gopkg.in/mgo.v2/bson"
 	"regexp"
 	"strings"
 	"time"
@@ -33,8 +33,8 @@ func Queue(c *Call, args interface{}) error {
 		name += "@" + c.Domain
 
 		if _, ok = props["timer"]; ok {
-			var arrayTimers []bson.M
-			if timer, ok = bsonToMapInterface(props["timer"]); ok {
+			var arrayTimers models.ArrayApplications
+			if timer, ok = applicationToMapInterface(props["timer"]); ok {
 				timers = append(timers, newTimer(c, timer))
 			} else if arrayTimers, ok = getArrayFromMap(props["timer"]); ok {
 				for _, timer = range arrayTimers {
@@ -50,8 +50,8 @@ func Queue(c *Call, args interface{}) error {
 			switch props["startPosition"].(type) {
 			case string:
 				startPositionVarName = props["startPosition"].(string)
-			case bson.M:
-				startPositionVarName = getStringValueFromMap("var", props["startPosition"].(bson.M), startPositionVarName)
+			case models.Application:
+				startPositionVarName = getStringValueFromMap("var", props["startPosition"].(models.Application), startPositionVarName)
 			}
 
 			if startPositionVarName == "" {
@@ -94,13 +94,13 @@ func newTimer(c *Call, props map[string]interface{}) chan bool {
 	var maxTries, tries int
 	var offset, interval time.Duration
 	stop := make(chan bool, 1)
-	var actions []interface{}
+	var actions models.ArrayApplications
 	var iterator *router.Iterator
 
 	var ok bool
 
 	if _, ok = props["actions"]; ok {
-		if actions, ok = props["actions"].([]interface{}); ok {
+		if actions, ok = props["actions"].(models.ArrayApplications); ok {
 			iterator = router.NewIterator(actions, c)
 		}
 	}

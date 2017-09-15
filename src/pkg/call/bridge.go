@@ -6,7 +6,7 @@ package call
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/webitel/acr/src/pkg/models"
 	"strings"
 )
 
@@ -15,7 +15,7 @@ func Bridge(c *Call, args interface{}) error {
 	var ok bool
 	var strategy, separator, dialString, pickup, p string
 	var tmpArr, params []string
-	var endpoints []bson.M
+	var endpoints models.ArrayApplications
 
 	if props, ok = args.(map[string]interface{}); ok {
 

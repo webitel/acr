@@ -6,14 +6,14 @@ package call
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/webitel/acr/src/pkg/models"
 )
 
 func RingBack(c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok, all bool
 	var err error
-	var elem bson.M
+	var elem models.Application
 
 	if props, ok = args.(map[string]interface{}); ok {
 
@@ -26,7 +26,7 @@ func RingBack(c *Call, args interface{}) error {
 		}
 
 		if _, ok = props["call"]; ok {
-			if elem, ok = props["call"].(bson.M); ok {
+			if elem, ok = props["call"].(models.Application); ok {
 				err = setRingBack(c, elem, "ringback", all)
 				if err != nil {
 					return err
@@ -35,7 +35,7 @@ func RingBack(c *Call, args interface{}) error {
 		}
 
 		if _, ok = props["hold"]; ok {
-			if elem, ok = props["hold"].(bson.M); ok {
+			if elem, ok = props["hold"].(models.Application); ok {
 				err = setRingBack(c, elem, "hold_music", all)
 				if err != nil {
 					return err
@@ -44,7 +44,7 @@ func RingBack(c *Call, args interface{}) error {
 		}
 
 		if _, ok = props["transfer"]; ok {
-			if elem, ok = props["transfer"].(bson.M); ok {
+			if elem, ok = props["transfer"].(models.Application); ok {
 				err = setRingBack(c, elem, "transfer_ringback", all)
 				if err != nil {
 					return err
@@ -61,7 +61,7 @@ func RingBack(c *Call, args interface{}) error {
 	return nil
 }
 
-func setRingBack(c *Call, elem bson.M, varName string, all bool) error {
+func setRingBack(c *Call, elem models.Application, varName string, all bool) error {
 	var err error
 	var data string
 

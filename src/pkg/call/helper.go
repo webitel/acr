@@ -6,7 +6,7 @@ package call
 
 import (
 	"fmt"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/webitel/acr/src/pkg/models"
 	"strconv"
 )
 
@@ -62,15 +62,15 @@ func getBoolValueFromMap(name string, params map[string]interface{}, def bool) b
 	return def
 }
 
-func getArrayFromMap(arr interface{}) (res []bson.M, ok bool) {
+func getArrayFromMap(arr interface{}) (res models.ArrayApplications, ok bool) {
 
 	var tmp []interface{}
-	var d bson.M
+	var d models.Application
 
 	if tmp, ok = arr.([]interface{}); ok {
 		//res = make([]map[string]interface{}, len(tmp))
 		for _, v := range tmp {
-			if d, ok = v.(bson.M); ok {
+			if d, ok = v.(models.Application); ok {
 				res = append(res, d)
 			}
 		}
@@ -81,11 +81,11 @@ func getArrayFromMap(arr interface{}) (res []bson.M, ok bool) {
 	return res, ok
 }
 
-func bsonToMapInterface(data interface{}) (res map[string]interface{}, ok bool) {
-	var b bson.M
+func applicationToMapInterface(data interface{}) (res map[string]interface{}, ok bool) {
+	var b models.Application
 	res = make(map[string]interface{})
 
-	if b, ok = data.(bson.M); ok {
+	if b, ok = data.(models.Application); ok {
 		for key, val := range b {
 			res[key] = val
 		}
