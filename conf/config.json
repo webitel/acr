@@ -4,7 +4,7 @@
     "ports": 10030
   },
   "mongodb": {
-    "uri": "mongodb://10.10.10.200:27017/webitel",
+    "uri": "mongodb://MONGODB_HOST:27017/webitel",
     "publicCollection": "public",
     "defaultCollection": "default",
     "globalCollection": "global",
@@ -17,7 +17,7 @@
     "dialerCollection": "dialer"
   },
   "pg": {
-    "host": "10.10.10.200",
+    "host": "postgres",
     "port": "5432",
     "dbName": "webitel",
     "user": "webitel",
