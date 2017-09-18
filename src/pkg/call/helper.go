@@ -41,6 +41,10 @@ func getIntValueFromMap(name string, params map[string]interface{}, def int) int
 		switch v.(type) {
 		case int:
 			return v.(int)
+		case float64:
+			return int(v.(float64))
+		case float32:
+			return int(v.(float32))
 		case string:
 			var err error
 			if res, err = strconv.Atoi(v.(string)); err == nil {
@@ -66,12 +70,12 @@ func getArrayFromMap(arr interface{}) (res models.ArrayApplications, ok bool) {
 
 	var tmp []interface{}
 	var d models.Application
-
 	if tmp, ok = arr.([]interface{}); ok {
-		//res = make([]map[string]interface{}, len(tmp))
-		for _, v := range tmp {
-			if d, ok = v.(models.Application); ok {
-				res = append(res, d)
+		res = make(models.ArrayApplications, len(tmp))
+		for i, v := range tmp {
+			if d, ok = v.(map[string]interface{}); ok {
+				res[i] = d
+				//res = append(res, d)
 			}
 		}
 		return res, true
@@ -82,10 +86,9 @@ func getArrayFromMap(arr interface{}) (res models.ArrayApplications, ok bool) {
 }
 
 func applicationToMapInterface(data interface{}) (res map[string]interface{}, ok bool) {
-	var b models.Application
+	var b map[string]interface{}
 	res = make(map[string]interface{})
-
-	if b, ok = data.(models.Application); ok {
+	if b, ok = data.(map[string]interface{}); ok {
 		for key, val := range b {
 			res[key] = val
 		}

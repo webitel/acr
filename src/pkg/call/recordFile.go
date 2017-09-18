@@ -75,7 +75,10 @@ func parseEmail(parameters interface{}) string {
 				email += "," + v.(string)
 			}
 		}
-		return email[1:]
+		if len(email) > 0 {
+			email = email[1:]
+		}
+		return email
 
 	case []string:
 		return strings.Join(parameters.([]string), ",")

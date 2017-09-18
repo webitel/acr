@@ -100,7 +100,7 @@ func newTimer(c *Call, props map[string]interface{}) chan bool {
 	var ok bool
 
 	if _, ok = props["actions"]; ok {
-		if actions, ok = props["actions"].(models.ArrayApplications); ok {
+		if actions, ok = getArrayFromMap(props["actions"]); ok {
 			iterator = router.NewIterator(actions, c)
 		}
 	}
