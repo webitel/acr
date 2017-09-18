@@ -78,6 +78,10 @@ func parseEmail(parameters interface{}) string {
 		if len(email) > 0 {
 			email = email[1:]
 		}
+
+		if email == "" {
+			email = "none"
+		}
 		return email
 
 	case []string:
