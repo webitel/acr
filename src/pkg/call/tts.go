@@ -97,6 +97,10 @@ func ttsPolly(c *Call, props map[string]interface{}, text string) error {
 		query += "&voice=" + tmp
 	}
 
+	if tmp = getStringValueFromMap("textType", props, ""); tmp != "" {
+		query += "&textType=" + tmp
+	}
+
 	return ttsToPlayback(c, props, query, "polly")
 }
 
