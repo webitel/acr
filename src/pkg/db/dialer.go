@@ -11,6 +11,7 @@ import (
 )
 
 var COLLECTION_DIALER = config.Conf.Get("mongodb:dialerCollection")
+var COLLECTION_MEMBERS = config.Conf.Get("mongodb:membersCollection")
 var errDialerContextBadDialerId = errors.New("Bad dialer objectId")
 
 func (db *DB) FindDialerCallFlow(id, domainName string, dataStructure interface{}) error {
@@ -24,4 +25,21 @@ func (db *DB) FindDialerCallFlow(id, domainName string, dataStructure interface{
 		"_id":    bson.ObjectIdHex(id),
 		"domain": domainName,
 	}).Select(bson.M{"_cf": 1, "amd": 1}).One(dataStructure)
+}
+
+func (db *DB) AddMember(data interface{}) error {
+	c := db.db.C(COLLECTION_MEMBERS)
+	return c.Insert(data)
+}
+
+func (db *DB) UpdateMember(id string, data interface{}) error {
+
+	if !bson.IsObjectIdHex(id) {
+		return errors.New("Bad objectId " + id)
+	}
+
+	c := db.db.C(COLLECTION_MEMBERS)
+	return c.UpdateId(bson.ObjectIdHex(id), bson.M{
+		"$set": data,
+	})
 }

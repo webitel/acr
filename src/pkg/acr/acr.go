@@ -99,6 +99,14 @@ func (a *ACR) SetDomainVariable(domainName, key, value string) error {
 	return a.DB.SetDomainVariable(domainName, key, value)
 }
 
+func (a *ACR) AddMember(data interface{}) error {
+	return a.DB.AddMember(data)
+}
+
+func (a *ACR) UpdateMember(id string, data interface{}) error {
+	return a.DB.UpdateMember(id, data)
+}
+
 func (a *ACR) addConnection(uuid string) {
 	atomic.AddInt32(&a.Count, 1)
 	logger.Debug("New connection %s, all %d", uuid, a.Count)

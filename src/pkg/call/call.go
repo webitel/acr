@@ -34,6 +34,8 @@ type IBridge interface {
 	GetRPCCommandsQueueName() string
 	AddRPCCommands(uuid string) rpc.ApiT
 	FireRPCEvent(body []byte, rk string) error
+	AddMember(data interface{}) error
+	UpdateMember(id string, data interface{}) error
 }
 
 var applications Applications
@@ -113,6 +115,7 @@ func init() {
 		"geoLocation":   GeoLocation,     //43
 		"tts":           TTS,             //44
 		"stt":           STT,             //45
+		"member":        Member,          //46
 
 	}
 

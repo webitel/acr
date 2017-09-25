@@ -14,7 +14,8 @@
     "blackListCollection": "blackList",
     "locationNumberCollection": "location",
     "emailCollection": "emailConfig",
-    "dialerCollection": "dialer"
+    "dialerCollection": "dialer",
+    "membersCollection": "members"
   },
   "pg": {
     "host": "postgres",
