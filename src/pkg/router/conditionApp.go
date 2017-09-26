@@ -15,6 +15,10 @@ import (
 	"time"
 )
 
+type TimeFnList map[string]func(time.Time) string
+
+var timeFnList TimeFnList
+
 type ConditionApp struct {
 	baseApp
 	expression string
@@ -69,6 +73,27 @@ var regSpace *regexp.Regexp
 func init() {
 	u0001 = regexp.MustCompile("\u0001")
 	regSpace = regexp.MustCompile(`\s`)
+	timeFnList = TimeFnList{
+		"year":          getStrYear,
+		"yday":          getStrYday,
+		"mon":           getStrMon,
+		"mday":          getStrMday,
+		"week":          getStrWeek,
+		"mweek":         getStrMweek,
+		"wday":          getStrWday,
+		"hour":          getStrHour,
+		"minute":        getStrMinute,
+		"minute_of_day": getStrMinOfDay,
+		"time_of_day":   getStrTimeOfDay,
+		"date_time":     getStrDateTime,
+	}
+}
+
+func ExecTimeFn(name string, date time.Time) string {
+	if fn, ok := timeFnList[name]; ok {
+		return fn(date)
+	}
+	return ""
 }
 
 func injectJsSysObject(vm *otto.Otto, i *Iterator) *otto.Object {
@@ -317,6 +342,44 @@ func injectJsSysObject(vm *otto.Otto, i *Iterator) *otto.Object {
 	})
 
 	return sys
+}
+
+func getStrYear(date time.Time) string {
+	return strconv.Itoa(date.Year())
+}
+func getStrYday(date time.Time) string {
+	return strconv.Itoa(date.YearDay())
+}
+func getStrMon(date time.Time) string {
+	return strconv.Itoa(int(date.Month()))
+}
+func getStrMday(date time.Time) string {
+	return strconv.Itoa(date.Day())
+}
+func getStrWeek(date time.Time) string {
+	_, week := date.ISOWeek()
+	return strconv.Itoa(week)
+}
+func getStrMweek(date time.Time) string {
+	return strconv.Itoa(numberOfTheWeekInMonth(date))
+}
+func getStrWday(date time.Time) string {
+	return strconv.Itoa(int(date.Weekday()) + 1)
+}
+func getStrHour(date time.Time) string {
+	return strconv.Itoa(date.Hour())
+}
+func getStrMinute(date time.Time) string {
+	return strconv.Itoa(date.Minute())
+}
+func getStrMinOfDay(date time.Time) string {
+	return strconv.Itoa(date.Hour()*60 + date.Minute())
+}
+func getStrTimeOfDay(date time.Time) string {
+	return leadingZeros(date.Hour()) + ":" + leadingZeros(date.Minute())
+}
+func getStrDateTime(date time.Time) string {
+	return date.Format("2006-01-02 15:04:05")
 }
 
 func stringDateTimeToNano(data, locationName string) (int64, error) {

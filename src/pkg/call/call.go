@@ -20,6 +20,7 @@ import (
 var regCompileVar *regexp.Regexp
 var regCompileGlobalVar *regexp.Regexp
 var regCompileLocalRegs *regexp.Regexp
+var regCompileTimeFn *regexp.Regexp
 
 type Applications map[string]func(c *Call, args interface{}) error
 
@@ -68,6 +69,7 @@ func init() {
 	regCompileVar = regexp.MustCompile(`\$\{([\s\S]*?)\}`)
 	regCompileGlobalVar = regexp.MustCompile(`\$\$\{([\s\S]*?)\}`)
 	regCompileLocalRegs = regexp.MustCompile(`&reg(\d+)\.\$(\d+)`)
+	regCompileTimeFn = regexp.MustCompile(`&(year|yday|mon|mday|week|mweek|wday|hour|minute|minute_of_day|time_of_day|date_time)\(\)`)
 
 	applications = Applications{
 		"answer":        Answer,          //1
@@ -250,6 +252,15 @@ func (c *Call) ParseString(args string) string {
 					return values[i]
 				}
 			}
+		}
+
+		return ""
+	})
+
+	a = regCompileTimeFn.ReplaceAllStringFunc(a, func(fn string) string {
+		r := regCompileTimeFn.FindStringSubmatch(fn)
+		if len(r) == 2 {
+			return router.ExecTimeFn(r[1], c.GetDate())
 		}
 
 		return ""
