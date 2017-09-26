@@ -19,6 +19,7 @@ type Call interface {
 	GetUuid() string
 	ValidateApp(string) bool
 	GetLocation() string
+	GetDomain() string
 }
 
 const (

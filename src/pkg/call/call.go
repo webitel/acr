@@ -118,6 +118,7 @@ func init() {
 		"tts":           TTS,             //44
 		"stt":           STT,             //45
 		"member":        Member,          //46
+		"limit":         Limit,           //47
 
 	}
 
@@ -127,6 +128,10 @@ func init() {
 		i++
 		logger.Info("Register application %v (%v)", tmp, i)
 	}
+}
+
+func (c *Call) GetDomain() string {
+	return c.Domain
 }
 
 func (c *Call) GetRouteId() string {

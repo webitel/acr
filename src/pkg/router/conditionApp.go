@@ -337,8 +337,39 @@ func injectJsSysObject(vm *otto.Otto, i *Iterator) *otto.Object {
 	})
 
 	sys.Set("limit", func(call otto.FunctionCall) (result otto.Value) {
-		//TODO
-		return
+		var tmp []string
+		var err error
+		var i1, i2 int
+		var lenParams int
+
+		param := call.Argument(0).String()
+		if param == "" {
+			result, _ = otto.ToValue(false)
+			return
+		}
+
+		tmp = strings.Split(param, ",")
+		lenParams = len(tmp)
+
+		if lenParams < 1 {
+			result, _ = otto.ToValue(false)
+			return
+		}
+
+		i1, _ = strconv.Atoi(i.Call.GetChannelVar("variable_limit_usage_" + i.Call.GetDomain() + "_" + tmp[0]))
+
+		if lenParams > 1 {
+			i2, err = strconv.Atoi(strings.Trim(tmp[1], " "))
+			if err != nil {
+				logger.Error("Call %s get limit: %s", i.Call.GetUuid(), err.Error())
+				return
+			}
+			result, _ = otto.ToValue(i1 <= i2)
+			return
+		} else {
+			result, _ = otto.ToValue(i1)
+			return
+		}
 	})
 
 	return sys
