@@ -6,6 +6,7 @@ package router
 
 import (
 	"fmt"
+	"github.com/kataras/iris/core/errors"
 	"github.com/robertkrimen/otto"
 	"github.com/webitel/acr/src/pkg/logger"
 	"regexp"
@@ -111,77 +112,147 @@ func injectJsSysObject(vm *otto.Otto, i *Iterator) *otto.Object {
 	})
 
 	sys.Set("year", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
 		param := call.Argument(0).String()
-		v, _ := vm.ToValue(parseDate(param, i.Call.GetDate().Year(), 9999))
+		if param == "" {
+			v, _ = otto.ToValue(i.Call.GetDate().Year())
+		} else {
+			v, _ = vm.ToValue(parseDate(param, i.Call.GetDate().Year(), 9999))
+		}
 		return v
 	})
 
 	sys.Set("yday", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
 		param := call.Argument(0).String()
-		v, _ := vm.ToValue(parseDate(param, i.Call.GetDate().YearDay(), 366))
+		if param == "" {
+			v, _ = otto.ToValue(i.Call.GetDate().YearDay())
+		} else {
+			v, _ = vm.ToValue(parseDate(param, i.Call.GetDate().YearDay(), 366))
+		}
 		return v
 	})
 
 	sys.Set("mon", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
 		param := call.Argument(0).String()
-		v, _ := vm.ToValue(parseDate(param, int(i.Call.GetDate().Month()), 12))
+
+		if param == "" {
+			v, _ = otto.ToValue(i.Call.GetDate().Month())
+		} else {
+			v, _ = vm.ToValue(parseDate(param, int(i.Call.GetDate().Month()), 12))
+		}
 		return v
 	})
 
 	sys.Set("mday", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
 		param := call.Argument(0).String()
-		v, _ := vm.ToValue(parseDate(param, int(i.Call.GetDate().Day()), 31))
+
+		if param == "" {
+			v, _ = otto.ToValue(i.Call.GetDate().Day())
+		} else {
+			v, _ = vm.ToValue(parseDate(param, int(i.Call.GetDate().Day()), 31))
+		}
 		return v
 	})
 
 	sys.Set("week", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
 		param := call.Argument(0).String()
 		_, week := i.Call.GetDate().ISOWeek()
-		v, _ := vm.ToValue(parseDate(param, week, 53))
+
+		if param == "" {
+			v, _ = otto.ToValue(week)
+		} else {
+			v, _ = vm.ToValue(parseDate(param, week, 53))
+		}
 		return v
 	})
 
 	sys.Set("mweek", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
 		param := call.Argument(0).String()
-		v, _ := vm.ToValue(parseDate(param, numberOfTheWeekInMonth(i.Call.GetDate()), 6))
+
+		if param == "" {
+			v, _ = otto.ToValue(numberOfTheWeekInMonth(i.Call.GetDate()))
+		} else {
+			v, _ = vm.ToValue(parseDate(param, numberOfTheWeekInMonth(i.Call.GetDate()), 6))
+		}
 		return v
 	})
 
 	sys.Set("wday", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
 		param := call.Argument(0).String()
-		v, _ := vm.ToValue(parseDate(param, int(i.Call.GetDate().Weekday())+1, 7))
+
+		if param == "" {
+			v, _ = otto.ToValue(i.Call.GetDate().Weekday() + 1)
+		} else {
+			v, _ = vm.ToValue(parseDate(param, int(i.Call.GetDate().Weekday())+1, 7))
+		}
 		return v
 	})
 
 	sys.Set("hour", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
 		param := call.Argument(0).String()
-		v, _ := vm.ToValue(parseDate(param, int(i.Call.GetDate().Hour()), 23))
+
+		if param == "" {
+			v, _ = otto.ToValue(i.Call.GetDate().Hour())
+		} else {
+			v, _ = vm.ToValue(parseDate(param, int(i.Call.GetDate().Hour()), 23))
+		}
+
 		return v
 	})
 
 	sys.Set("minute", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
 		param := call.Argument(0).String()
-		v, _ := vm.ToValue(parseDate(param, int(i.Call.GetDate().Minute()), 59))
+
+		if param == "" {
+			v, _ = otto.ToValue(i.Call.GetDate().Minute())
+		} else {
+			v, _ = vm.ToValue(parseDate(param, int(i.Call.GetDate().Minute()), 59))
+		}
+
 		return v
 	})
 
 	sys.Set("minute_of_day", func(call otto.FunctionCall) otto.Value {
+		var v otto.Value
+
 		param := call.Argument(0).String()
 		date := i.Call.GetDate()
-		v, _ := vm.ToValue(parseDate(param, date.Hour()*60+date.Minute(), 1440))
+		minOfDay := date.Hour()*60 + date.Minute()
+
+		if param == "" {
+			v, _ = otto.ToValue(minOfDay)
+		} else {
+			v, _ = vm.ToValue(parseDate(param, minOfDay, 1440))
+		}
+
 		return v
 	})
 
 	sys.Set("time_of_day", func(call otto.FunctionCall) (result otto.Value) {
+		var tmp []string
+
 		date := i.Call.GetDate()
+
+		if call.Argument(0).String() == "" {
+			result, _ = otto.ToValue(leadingZeros(date.Hour()) + ":" + leadingZeros(date.Minute()))
+			return
+		}
+
 		current := (date.Hour() * 10000) + (int(date.Minute()) * 100) + date.Second()
 		times := strings.Split(call.Argument(0).String(), ",")
-		var tmp []string
 
 		for _, v := range times {
 			tmp = strings.Split(v, "-")
 			if len(tmp) != 2 {
-				logger.Warning("Skip parse: ", v)
+				logger.Warning("Skip parse: %v", v)
 				continue
 			}
 			if current >= parseTime(tmp[0]) && current <= parseTime(tmp[1]) {
@@ -193,12 +264,103 @@ func injectJsSysObject(vm *otto.Otto, i *Iterator) *otto.Object {
 		return
 	})
 
+	sys.Set("date_time", func(call otto.FunctionCall) (result otto.Value) {
+		var tmp []string
+		var err error
+		var t1, t2 int64
+
+		date := i.Call.GetDate()
+
+		if call.Argument(0).String() == "" {
+			result, _ = otto.ToValue(date.Format("2006-01-02 15:04:05"))
+			fmt.Println(result)
+			return
+		}
+
+		currentNano := date.UnixNano()
+		times := strings.Split(call.Argument(0).String(), ",")
+
+		for _, v := range times {
+			tmp = strings.Split(v, "~")
+			if len(tmp) != 2 {
+				logger.Warning("Skip parse: %v", v)
+				continue
+			}
+			strings.Trim(tmp[0], tmp[0])
+			strings.Trim(tmp[1], tmp[1])
+
+			t1, err = stringDateTimeToNano(tmp[0], i.Call.GetLocation())
+			if err != nil {
+				logger.Error("Call %s parse date: %s", i.Call.GetUuid(), err.Error())
+				continue
+			}
+
+			t2, err = stringDateTimeToNano(tmp[1], i.Call.GetLocation())
+			if err != nil {
+				logger.Error("Call %s parse date: %s", i.Call.GetUuid(), err.Error())
+				continue
+			}
+			fmt.Println("%v = %v", t1, t2)
+
+			if currentNano >= t1 && currentNano <= t2 {
+				result, _ = vm.ToValue(true)
+				return
+			}
+
+		}
+		return
+	})
+
 	sys.Set("limit", func(call otto.FunctionCall) (result otto.Value) {
 		//TODO
 		return
 	})
 
 	return sys
+}
+
+func stringDateTimeToNano(data, locationName string) (int64, error) {
+	var t time.Time
+	var err error
+	var length = len(data)
+	var loc *time.Location
+
+	if locationName != "" {
+		loc, err = time.LoadLocation(locationName)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	if length == 19 {
+		if loc != nil {
+			t, err = time.ParseInLocation("2006-01-02 15:04:05", data, loc)
+		} else {
+			t, err = time.Parse("2006-01-02 15:04:05", data)
+		}
+	} else if length == 16 {
+		if loc != nil {
+			t, err = time.ParseInLocation("2006-01-02 15:04", data, loc)
+		} else {
+			t, err = time.Parse("2006-01-02 15:04", data)
+		}
+	} else {
+		return 0, errors.New("Bad parse string:" + data)
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	return t.UnixNano(), nil
+}
+
+func leadingZeros(data int) string {
+	if data < 10 {
+		return "0" + strconv.Itoa(data)
+	} else {
+		return strconv.Itoa(data)
+	}
 }
 
 func parseTime(str string) (result int) {

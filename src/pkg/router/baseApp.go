@@ -18,6 +18,7 @@ type Call interface {
 	ParseString(args string) string
 	GetUuid() string
 	ValidateApp(string) bool
+	GetLocation() string
 }
 
 const (

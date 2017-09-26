@@ -159,6 +159,10 @@ func (c *Call) GetDate() (now time.Time) {
 	return
 }
 
+func (c *Call) GetLocation() string {
+	return c.Timezone
+}
+
 func (c *Call) GetGlobalVar(name string) (val string) {
 	val, _ = c.acr.GetGlobalVar(c, name)
 	return val
