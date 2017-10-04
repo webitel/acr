@@ -7,8 +7,17 @@ package call
 import (
 	"fmt"
 	"github.com/webitel/acr/src/pkg/models"
+	"net/url"
 	"strconv"
 )
+
+func UrlEncoded(str string) string {
+	u, err := url.Parse(str)
+	if err != nil {
+		return url.QueryEscape(str)
+	}
+	return u.String()
+}
 
 func getStringValueFromMap(name string, params map[string]interface{}, def string) (res string) {
 	var ok bool

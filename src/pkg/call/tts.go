@@ -7,7 +7,6 @@ package call
 import (
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
-	"net/url"
 	"strconv"
 )
 
@@ -26,7 +25,7 @@ func TTS(c *Call, args interface{}) error {
 		return nil
 	}
 
-	text = url.QueryEscape(c.ParseString(text))
+	text = UrlEncoded(c.ParseString(text))
 
 	switch getStringValueFromMap("provider", props, "") {
 	case "microsoft":
@@ -123,7 +122,7 @@ func ttsGetCodecSettings(writeRateVar string) (rate string, format string) {
 
 func ttsAddCredential(key, token string) string {
 	if key != "" && token != "" {
-		return "&accessKey=" + url.QueryEscape(key) + "&accessToken=" + url.QueryEscape(token)
+		return "&accessKey=" + UrlEncoded(key) + "&accessToken=" + UrlEncoded(token)
 	}
 	return ""
 }

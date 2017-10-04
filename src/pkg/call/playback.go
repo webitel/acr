@@ -7,7 +7,6 @@ package call
 import (
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
-	"net/url"
 	"regexp"
 	"strings"
 )
@@ -136,7 +135,7 @@ func getPlaybackFileString(call *Call, typeFile, fileName string, refresh, noPre
 			if refresh {
 				filePath = "{refresh=true}"
 			}
-			filePath += "http_cache://" + cdrUri + "/sys/media/wav/" + url.QueryEscape(fileName) + "?stream=false&domain=" + url.QueryEscape(call.Domain) + "&.wav"
+			filePath += "http_cache://" + cdrUri + "/sys/media/wav/" + UrlEncoded(fileName) + "?stream=false&domain=" + UrlEncoded(call.Domain) + "&.wav"
 		}
 
 	case "silence":
@@ -165,7 +164,7 @@ func getPlaybackFileString(call *Call, typeFile, fileName string, refresh, noPre
 		cdrUri := call.GetGlobalVar("cdr_url")
 		if cdrUri != "" {
 			filePath = httpToShot.ReplaceAllLiteralString(cdrUri, "shout") + "/sys/media/mp3/" +
-				url.QueryEscape(fileName) + "?domain=" + url.QueryEscape(call.Domain)
+				UrlEncoded(fileName) + "?domain=" + UrlEncoded(call.Domain)
 		}
 	}
 
