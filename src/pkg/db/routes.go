@@ -14,7 +14,7 @@ func (db *DB) FindDefault(domainName, destinationNumber string) (models.CallFlow
 	def := models.CallFlow{}
 	res := db.pg.Debug().Table("callflow_default").
 		Select(`regexp_matches($1, destination_number) as dest, id, destination_number, name, debug, domain, fs_timezone, callflow, callflow_on_disconnect, version`, destinationNumber).
-		Where(`domain = $2 AND disabled <> TRUE`, domainName).
+		Where(`domain = $2 AND disabled IS NOT TRUE`, domainName).
 		Order(`"order" ASC`, true).
 		Limit(1).
 		Scan(&def)
@@ -47,7 +47,7 @@ func (db *DB) FindPublic(destinationNumber string) (models.CallFlow, error) {
 	def := models.CallFlow{}
 	res := db.pg.Debug().Table("callflow_public").
 		Select(`id, destination_number, name, debug, domain, fs_timezone, callflow, callflow_on_disconnect, version`).
-		Where(`destination_number @> ARRAY[$1]::varchar[] AND disabled <> TRUE`, destinationNumber).
+		Where(`destination_number @> ARRAY[$1]::varchar[] AND disabled IS NOT TRUE`, destinationNumber).
 		Limit(1).
 		Scan(&def)
 
