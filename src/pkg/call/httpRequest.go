@@ -154,7 +154,8 @@ func HttpRequest(c *Call, args interface{}) error {
 				}
 				for k, v = range props["exportVariables"].(map[string]interface{}) {
 					if str, ok = v.(string); ok {
-						err = SetVar(c, "all:"+k+"='"+gjson.GetBytes(body, str).String()+"'")
+						//TODO escape ?
+						err = SetVar(c, "all:"+k+"="+gjson.GetBytes(body, str).String()+"")
 						if err != nil {
 							logger.Error("Call %s httpRequest setVat error: %s", c.Uuid, err.Error())
 						}
