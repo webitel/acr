@@ -16,6 +16,7 @@ ENV WEBITEL_MAJOR 3
 ENV WEBITEL_REPO_BASE https://github.com/webitel
 
 WORKDIR /
+COPY --from=0 /usr/share/zoneinfo /usr/share/
 COPY --from=0 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=0 /go/src/github.com/webitel/acr/src/acr .
 COPY conf/config.json .
