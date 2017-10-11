@@ -70,8 +70,8 @@ func ttsMicrosoft(c *Call, props map[string]interface{}, text string) error {
 	var tmp string
 
 	if _, ok = props["voice"]; ok {
-		if _, ok = props["voice"].(models.Application); ok {
-			voice := props["voice"].(models.Application)
+		if _, ok = props["voice"].(map[string]interface{}); ok {
+			voice := props["voice"].(map[string]interface{})
 
 			if tmp = getStringValueFromMap("gender", voice, ""); tmp != "" {
 				query += "&gender=" + tmp
