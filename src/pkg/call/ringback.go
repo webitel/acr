@@ -26,7 +26,7 @@ func RingBack(c *Call, args interface{}) error {
 		}
 
 		if _, ok = props["call"]; ok {
-			if elem, ok = props["call"].(models.Application); ok {
+			if elem, ok = props["call"].(map[string]interface{}); ok {
 				err = setRingBack(c, elem, "ringback", all)
 				if err != nil {
 					return err
@@ -35,7 +35,7 @@ func RingBack(c *Call, args interface{}) error {
 		}
 
 		if _, ok = props["hold"]; ok {
-			if elem, ok = props["hold"].(models.Application); ok {
+			if elem, ok = props["hold"].(map[string]interface{}); ok {
 				err = setRingBack(c, elem, "hold_music", all)
 				if err != nil {
 					return err
@@ -44,7 +44,7 @@ func RingBack(c *Call, args interface{}) error {
 		}
 
 		if _, ok = props["transfer"]; ok {
-			if elem, ok = props["transfer"].(models.Application); ok {
+			if elem, ok = props["transfer"].(map[string]interface{}); ok {
 				err = setRingBack(c, elem, "transfer_ringback", all)
 				if err != nil {
 					return err
