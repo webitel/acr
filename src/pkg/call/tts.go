@@ -6,7 +6,6 @@ package call
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
-	"github.com/webitel/acr/src/pkg/models"
 	"strconv"
 )
 
@@ -52,8 +51,8 @@ func ttsDefault(c *Call, props map[string]interface{}, text string) error {
 		switch val.(type) {
 		case string:
 			query += "&" + key + "=" + val.(string)
-		case models.Application:
-			for keyObj, valObj = range val.(models.Application) {
+		case map[string]interface{}:
+			for keyObj, valObj = range val.(map[string]interface{}) {
 				if _, ok = valObj.(string); ok {
 					query += "&" + keyObj + "=" + valObj.(string)
 				}
