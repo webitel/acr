@@ -50,8 +50,8 @@ func Queue(c *Call, args interface{}) error {
 			switch props["startPosition"].(type) {
 			case string:
 				startPositionVarName = props["startPosition"].(string)
-			case models.Application:
-				startPositionVarName = getStringValueFromMap("var", props["startPosition"].(models.Application), startPositionVarName)
+			case map[string]interface{}:
+				startPositionVarName = getStringValueFromMap("var", props["startPosition"].(map[string]interface{}), startPositionVarName)
 			}
 
 			if startPositionVarName == "" {
