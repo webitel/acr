@@ -12,8 +12,16 @@ import (
 )
 
 type dialerCallFlowType struct {
-	Callflow models.ArrayApplications `bson:"_cf"`
+	Callflow []map[string]interface{} `bson:"_cf"`
 	AMD      map[string]interface{}   `bson:"amd"`
+}
+
+func transform(data []map[string]interface{}) models.ArrayApplications {
+	r := make(models.ArrayApplications, len(data))
+	for i, v := range data {
+		r[i] = models.Application(v)
+	}
+	return r
 }
 
 //originate [^^:domain_name=10.10.10.144:ignore_early_media=true:loopback_bowout=false:dlr_queue=58bd30b0a01699316e2d5ae2]loopback/12312321312312312/default &park()
@@ -76,7 +84,7 @@ func getDialerRoute(d *dialerCallFlowType) (r models.ArrayApplications) {
 		}
 	}
 
-	r = append(r, d.Callflow...)
+	r = append(r, transform(d.Callflow)...)
 	r = append(r, models.Application{"hangup": ""})
 	return
 }
