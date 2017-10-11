@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"github.com/tidwall/gjson"
 	"github.com/webitel/acr/src/pkg/logger"
-	"github.com/webitel/acr/src/pkg/models"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -48,8 +47,8 @@ func HttpRequest(c *Call, args interface{}) error {
 	}
 
 	if _, ok = props["path"]; ok {
-		if _, ok = props["path"].(models.Application); ok {
-			for k, v = range props["path"].(models.Application) {
+		if _, ok = props["path"].(map[string]interface{}); ok {
+			for k, v = range props["path"].(map[string]interface{}) {
 				str = parseMapValue(c, v)
 				urlParam.Path = strings.Replace(urlParam.Path, "${"+k+"}", str, -1)
 				urlParam.RawQuery = strings.Replace(urlParam.RawQuery, "${"+k+"}", str, -1)
@@ -58,8 +57,8 @@ func HttpRequest(c *Call, args interface{}) error {
 	}
 
 	if _, ok = props["headers"]; ok {
-		if _, ok = props["headers"].(models.Application); ok {
-			for k, v = range props["headers"].(models.Application) {
+		if _, ok = props["headers"].(map[string]interface{}); ok {
+			for k, v = range props["headers"].(map[string]interface{}) {
 				headers[strings.ToLower(k)] = parseMapValue(c, v)
 			}
 		}
@@ -74,11 +73,13 @@ func HttpRequest(c *Call, args interface{}) error {
 		case "application/x-www-form-urlencoded":
 			str = ""
 			switch props["data"].(type) {
-			case models.Application:
-				for k, v = range props["data"].(models.Application) {
+			case map[string]interface{}:
+				for k, v = range props["data"].(map[string]interface{}) {
 					str += "&" + k + "=" + parseMapValue(c, v)
 				}
-				str = str[1:]
+				if len(str) > 0 {
+					str = str[1:]
+				}
 			case string:
 				str = props["data"].(string)
 			}
@@ -145,15 +146,15 @@ func HttpRequest(c *Call, args interface{}) error {
 	str = res.Header.Get("content-type")
 	if strings.Index(str, "application/json") > -1 {
 		if _, ok = props["exportVariables"]; ok {
-			if _, ok = props["exportVariables"].(models.Application); ok {
+			if _, ok = props["exportVariables"].(map[string]interface{}); ok {
 				body, err = ioutil.ReadAll(res.Body)
 				if err != nil {
 					logger.Error("Call %s httpRequest read response error: %s", c.Uuid, err.Error())
 					return nil
 				}
-				for k, v = range props["exportVariables"].(models.Application) {
+				for k, v = range props["exportVariables"].(map[string]interface{}) {
 					if str, ok = v.(string); ok {
-						err = SetVar(c, "all:"+k+"="+gjson.GetBytes(body, str).String())
+						err = SetVar(c, "all:"+k+"='"+gjson.GetBytes(body, str).String()+"'")
 						if err != nil {
 							logger.Error("Call %s httpRequest setVat error: %s", c.Uuid, err.Error())
 						}
