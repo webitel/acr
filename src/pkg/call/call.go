@@ -243,7 +243,11 @@ func (c *Call) ParseString(args string) string {
 	})
 
 	a = regCompileVar.ReplaceAllStringFunc(a, func(varName string) string {
-		if strings.HasPrefix(varName, "${say_string ") || strings.HasPrefix(varName, "${hash(") { //TODO
+		if strings.HasPrefix(varName, "${say_string ") || strings.HasPrefix(varName, "${hash(") ||
+			strings.HasPrefix(varName, "${create_uuid(") ||
+			strings.HasPrefix(varName, "${sip_authorized}") ||
+			strings.HasPrefix(varName, "${verto_contact(") ||
+			strings.HasPrefix(varName, "${sofia_contact(") { //TODO
 			return varName
 		}
 		return c.GetChannelVar(regCompileVar.FindStringSubmatch(varName)[1])
