@@ -73,7 +73,7 @@ func setRingBack(c *Call, elem models.Application, varName string, all bool) err
 		getStringValueFromMap("type", elem, ""),
 		getStringValueFromMap("name", elem, ""),
 		getBoolValueFromMap("refresh", elem, false),
-		false,
+		true,
 		getStringValueFromMap("lang", elem, ""),
 		getStringValueFromMap("method", elem, ""),
 	)
