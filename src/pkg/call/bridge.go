@@ -161,7 +161,7 @@ func Bridge(c *Call, args interface{}) error {
 }
 
 func setSpyMap(c *Call, name string) {
-	c.SndMsg("hash", "insert/spymap/${domain_name}-"+name, true, false)
+	c.SndMsg("hash", "insert/spymap/${domain_name}-"+name+"/${uuid}", true, false)
 }
 
 func getProtoParameter(name string) string {
