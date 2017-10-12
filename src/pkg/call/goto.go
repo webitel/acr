@@ -41,6 +41,7 @@ func GoTo(c *Call, args interface{}) error {
 		logger.Error("Call %s transfer error: ", c.Uuid, err)
 		return err
 	}
+	c.SetBreak()
 	logger.Debug("Call %s transfer %s successful", c.Uuid, tag)
 
 	return nil
