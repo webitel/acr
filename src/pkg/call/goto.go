@@ -31,6 +31,17 @@ func GoTo(c *Call, args interface{}) error {
 		tag = tag[8:] + " XML default"
 	} else if strings.HasPrefix(tag, "public:") {
 		tag = tag[7:] + " XML public"
+	} else if strings.HasPrefix(tag, "socket:") {
+		tag = tag[7:]
+		_, err := c.SndMsg("socket", tag, false, false)
+		if err != nil {
+			logger.Error("Call %s socket error: ", c.Uuid, err)
+			return err
+		}
+		c.SetBreak()
+		c.Conn.Close()
+		return nil
+
 	} else {
 		logger.Error("Call %s bad parameters: %s", c.Uuid, args)
 		return nil
