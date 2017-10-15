@@ -214,7 +214,7 @@ func injectJsSysObject(vm *otto.Otto, i *Iterator) *otto.Object {
 		if param == "" {
 			v, _ = otto.ToValue(i.Call.GetDate().Weekday() + 1)
 		} else {
-			v, _ = vm.ToValue(parseDate(param, int(i.Call.GetDate().Weekday())+1, 7))
+			v, _ = vm.ToValue(parseDate(param, getWeekday(i.Call.GetDate()), 7))
 		}
 		return v
 	})
@@ -395,7 +395,7 @@ func getStrMweek(date time.Time) string {
 	return strconv.Itoa(numberOfTheWeekInMonth(date))
 }
 func getStrWday(date time.Time) string {
-	return strconv.Itoa(int(date.Weekday()) + 1)
+	return strconv.Itoa(getWeekday(date))
 }
 func getStrHour(date time.Time) string {
 	return strconv.Itoa(date.Hour())
@@ -539,4 +539,11 @@ func equalsDateTimeRange(datetime int, strRange string, maxVal int) (result bool
 
 	result = datetime >= min && datetime <= max
 	return
+}
+
+var weakdays = []int{7, 1, 2, 3, 4, 5, 6}
+
+//todo move helper (calendar use)
+func getWeekday(in time.Time) int {
+	return weakdays[in.Weekday()]
 }
