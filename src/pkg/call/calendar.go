@@ -28,6 +28,8 @@ type calendarT struct {
 	Except    []calendarExceptT `bson:"except"`
 }
 
+var weakdays = []int{7,1,2,3,4,5,6}
+
 func Calendar(c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
@@ -91,8 +93,9 @@ func Calendar(c *Call, args interface{}) error {
 	}
 
 	ok = false
-	currentWeek = int(current.Weekday())
+	currentWeek = getWeekday(current)
 	currentTimeOfDay = current.Hour()*60 + current.Minute()
+
 	for _, a := range calendar.Accept {
 		ok = (currentWeek == a.WeekDay) && between(currentTimeOfDay, a.StartTime, a.EndTime)
 		if ok {
@@ -133,4 +136,8 @@ func callbackCalendar(c *Call, varName string, res bool) error {
 	}
 
 	return SetVar(c, varName+"="+data)
+}
+
+func getWeekday(in time.Time) int {
+	return weakdays[in.Weekday()]
 }
