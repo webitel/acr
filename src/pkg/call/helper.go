@@ -31,7 +31,7 @@ func getStringValueFromMap(name string, params map[string]interface{}, def strin
 			return def
 
 		default:
-			return fmt.Sprintf("%v", v)
+			return fmt.Sprint(v)
 		}
 	}
 
