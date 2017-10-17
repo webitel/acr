@@ -24,17 +24,14 @@ func getStringValueFromMap(name string, params map[string]interface{}, def strin
 	var v interface{}
 
 	if v, ok = params[name]; ok {
+
 		switch v.(type) {
-		case bool:
-			if v.(bool) {
-				return "true"
-			} else {
-				return "false"
-			}
-		case string:
-			return v.(string)
-		case int:
-			return strconv.Itoa(v.(int))
+		case map[string]interface{}:
+		case []interface{}:
+			return def
+
+		default:
+			return fmt.Sprintf("%v", v)
 		}
 	}
 
