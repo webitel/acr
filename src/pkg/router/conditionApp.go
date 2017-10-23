@@ -541,7 +541,7 @@ func equalsDateTimeRange(datetime int, strRange string, maxVal int) (result bool
 	return
 }
 
-var weakdays = []int{7, 1, 2, 3, 4, 5, 6}
+var weakdays = []int{1, 2, 3, 4, 5, 6, 7}
 
 //todo move helper (calendar use)
 func getWeekday(in time.Time) int {
