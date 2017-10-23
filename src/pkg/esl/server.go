@@ -23,6 +23,7 @@ type onDisconnect func(c *SConn)
 
 type SConn struct {
 	EventSocket
+	contextName  string
 	ChannelData  Event
 	Uuid         string
 	SwitchUuid   string
@@ -165,6 +166,10 @@ func (c *SConn) GetDisconnected() bool {
 	return c.Disconnected
 }
 
+func (c *SConn) GetContextName() string {
+	return c.contextName
+}
+
 func handle(conn *SConn, s *Server) {
 	defer func() {
 		conn.disconnect(nil)
@@ -179,6 +184,8 @@ func handle(conn *SConn, s *Server) {
 		logger.Error("Server: connect connection error: %s", err.Error())
 		return
 	}
+
+	conn.contextName = data.Header.Get("Channel-Context")
 
 	conn.ChannelData = Event{
 		Message: data,

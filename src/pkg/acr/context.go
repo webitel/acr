@@ -13,7 +13,7 @@ const PUBLIC_CONTEXT = "public"
 
 func (a *ACR) routeContext(c *esl.SConn) {
 	setSoundLang(c)
-	context := c.ChannelData.Header.Get("Channel-Context")
+	//TODO move destination number to socket
 	dialerId := c.ChannelData.Header.Get("variable_dlr_queue")
 	destinationNumber := c.ChannelData.Header.Get("Channel-Destination-Number")
 	if destinationNumber == "" {
@@ -23,7 +23,7 @@ func (a *ACR) routeContext(c *esl.SConn) {
 		}
 	}
 
-	if context == PUBLIC_CONTEXT {
+	if c.GetContextName() == PUBLIC_CONTEXT {
 		logger.Debug("Call %s from context public to %s", c.Uuid, destinationNumber)
 		publicContext(a, c, destinationNumber)
 	} else if dialerId != "" {
