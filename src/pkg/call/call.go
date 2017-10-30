@@ -37,6 +37,7 @@ type IBridge interface {
 	FireRPCEvent(body []byte, rk string) error
 	AddMember(data interface{}) error
 	UpdateMember(id string, data interface{}) error
+	AddCallbackMember(domainName, queueName, number, widgetName string) error
 }
 
 var applications Applications
@@ -119,6 +120,7 @@ func init() {
 		"stt":           STT,             //45
 		"member":        Member,          //46
 		"limit":         Limit,           //47
+		"callback":      CallbackQueue,   //48
 
 	}
 

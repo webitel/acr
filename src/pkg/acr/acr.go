@@ -103,6 +103,10 @@ func (a *ACR) AddMember(data interface{}) error {
 	return a.DB.AddMember(data)
 }
 
+func (a *ACR) AddCallbackMember(domainName, queueName, number, widgetName string) error {
+	return a.DB.CreateCallbackMember(domainName, queueName, number, widgetName)
+}
+
 func (a *ACR) UpdateMember(id string, data interface{}) error {
 	return a.DB.UpdateMember(id, data)
 }
