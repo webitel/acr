@@ -34,7 +34,8 @@ type IBridge interface {
 	SetDomainVariable(domainName, key, value string) error
 	GetRPCCommandsQueueName() string
 	AddRPCCommands(uuid string) rpc.ApiT
-	FireRPCEvent(body []byte, rk string) error
+	FireRPCEventToEngine(rk string, option rpc.PublishingOption) error
+	FireRPCEventToStorage(rk string, option rpc.PublishingOption) error
 	AddMember(data interface{}) error
 	UpdateMember(id string, data interface{}) error
 	AddCallbackMember(domainName, queueName, number, widgetName string) error
@@ -121,7 +122,8 @@ func init() {
 		"member":        Member,          //46
 		"limit":         Limit,           //47
 		"callback":      CallbackQueue,   //48
-
+		"cdr":           CDR,             //49
+		//"stream":        Stream,
 	}
 
 	var tmp string
@@ -406,8 +408,11 @@ func (c *Call) FireDebugApplication(a router.App) {
 	if a.GetId() != "" {
 		c.debugMap["app-id"] = a.GetId()
 		c.debugMap["app-name"] = a.GetName()
+
 		if body, err := json.Marshal(c.debugMap); err == nil {
-			c.acr.FireRPCEvent(body, "*.broadcast.message."+c.GetRouteId())
+			c.acr.FireRPCEventToEngine("*.broadcast.message."+c.GetRouteId(), rpc.PublishingOption{
+				Body: body,
+			})
 		} else {
 			logger.Error("Call %s log marshal json message error: %s", c.Uuid, err.Error())
 		}

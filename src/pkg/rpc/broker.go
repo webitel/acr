@@ -25,6 +25,8 @@ type ApiT struct {
 	Args json.RawMessage `json:"exec-args"`
 }
 
+type PublishingOption amqp.Publishing
+
 const exchangeEventName = "ACR.Event"
 const exchangeEventFormat = "ACR-Hostname,Event-Name,Event-Subclass,Domain"
 
@@ -143,18 +145,21 @@ func (rpc *RPC) initExchange() error {
 	return nil
 }
 
-func (rpc *RPC) Fire(body []byte, rk string) error {
-	logger.Debug("RPC: send to engine %s %d bytes %s", rk, len(body), body)
+func (rpc *RPC) Fire(exchangeName string, rk string, options PublishingOption) error {
+	logger.Debug("RPC: send to engine %s %d bytes %s", rk, len(options.Body), options.Body)
 	return rpc.channel.Publish(
-		"engine",
+		exchangeName,
 		rk,
 		false,
 		false,
 		amqp.Publishing{
-			DeliveryMode: amqp.Persistent,
-			Timestamp:    time.Now(),
-			ContentType:  "text/json",
-			Body:         body,
+			DeliveryMode:  amqp.Persistent,
+			Timestamp:     time.Now(),
+			ContentType:   "text/json",
+			Body:          options.Body,
+			Headers:       options.Headers,
+			ReplyTo:       options.ReplyTo,
+			CorrelationId: options.CorrelationId,
 		},
 	)
 }

@@ -7,6 +7,7 @@ package call
 import (
 	"encoding/json"
 	"github.com/webitel/acr/src/pkg/logger"
+	"github.com/webitel/acr/src/pkg/rpc"
 )
 
 //err = c.acr.FireRPCEvent([]byte("IGOR"), "*.message.system")
@@ -24,7 +25,9 @@ func Log(c *Call, args interface{}) error {
 			msgJson["domain"] = c.Domain
 			msgJson["message"] = c.ParseString(data)
 			if body, err := json.Marshal(msgJson); err == nil {
-				c.acr.FireRPCEvent(body, "*.broadcast.message."+c.GetRouteId())
+				c.acr.FireRPCEventToEngine("*.broadcast.message."+c.GetRouteId(), rpc.PublishingOption{
+					Body: body,
+				})
 			} else {
 				logger.Error("Call %s log marshal json message error: %s", c.Uuid, err.Error())
 			}

@@ -129,8 +129,12 @@ func (a *ACR) AddRPCCommands(uuid string) rpc.ApiT {
 	return a.rpc.AddCommands(uuid)
 }
 
-func (a *ACR) FireRPCEvent(body []byte, rk string) error {
-	return a.rpc.Fire(body, rk)
+func (a *ACR) FireRPCEventToEngine(rk string, option rpc.PublishingOption) error {
+	return a.rpc.Fire("engine", rk, option)
+}
+
+func (a *ACR) FireRPCEventToStorage(rk string, option rpc.PublishingOption) error {
+	return a.rpc.Fire("Storage.Commands", rk, option)
 }
 
 func onConnect(c *esl.SConn) {
