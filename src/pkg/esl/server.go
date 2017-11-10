@@ -100,6 +100,13 @@ func (esl *SConn) BgApi(cmd string, arg ...string) (resp []byte, err error) {
 	return recv.Body, nil
 }
 
+func (conn *SConn) FireEvent(eventName string, m *Message) (Message, error) {
+	conn.rw.Lock() // ------------------ < LOCKED >
+	res, err := conn.call(m, 1e6, "sendevent "+eventName)
+	conn.rw.Unlock() // ---------------- < UNLOCK >
+	return res, err
+}
+
 func (conn *SConn) SndRecMsg(app string, arg string, look bool) (Event, error) {
 	u := uuid.NewV4().String()
 	c := make(chan Event, 1)

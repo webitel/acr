@@ -123,6 +123,7 @@ func init() {
 		"limit":         Limit,           //47
 		"callback":      CallbackQueue,   //48
 		"cdr":           CDR,             //49
+		"sendEvent":     SendEvent,
 		//"stream":        Stream,
 	}
 
