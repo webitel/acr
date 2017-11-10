@@ -46,6 +46,7 @@ func SendEvent(c *Call, args interface{}) error {
 		}
 	}
 	m.Header.Del("Event-Name")
+	m.Header.Add("variable_domain_name", c.Domain)
 
 	_, err := c.Conn.FireEvent("custom", &m)
 	if err != nil {
@@ -58,7 +59,7 @@ func SendEvent(c *Call, args interface{}) error {
 
 func isProtectedHeader(name string) bool {
 	switch name {
-	case "Event-Subclass", "Event-Name", "Content-Type", "Reply-Text", "Presence-Call-Direction", "Core-UUID":
+	case "Event-Subclass", "variable_domain_name", "Event-Name", "Content-Type", "Reply-Text", "Presence-Call-Direction", "Core-UUID":
 		return true
 	}
 
