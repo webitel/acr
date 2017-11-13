@@ -392,6 +392,11 @@ func routeIterator(call *Call) {
 				logger.Debug("Call %s stop connection", call.GetUuid())
 				break
 			}
+
+			if v.IsBreak() {
+				logger.Debug("Call %s break route", call.GetUuid())
+				break
+			}
 			continue
 		}
 		if call.debug {
@@ -441,6 +446,12 @@ func routeIteratorOnDisconnect(call *Call) {
 			fn(call, v.GetArgs())
 			continue
 		}
+
+		if v.IsBreak() {
+			logger.Debug("Call %s break route", call.GetUuid())
+			break
+		}
+
 		v.Execute(call.OnDisconnectIterator)
 	}
 }
@@ -468,6 +479,11 @@ func routeCallIterator(call *Call, iter *router.Iterator) {
 				return
 			}
 			continue
+		}
+
+		if v.IsBreak() {
+			logger.Debug("Call %s break route", call.GetUuid())
+			break
 		}
 		v.Execute(iter)
 	}
