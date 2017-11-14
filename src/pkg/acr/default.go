@@ -5,6 +5,7 @@
 package acr
 
 import (
+	"github.com/webitel/acr/src/pkg/call"
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
@@ -77,7 +78,7 @@ func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.Cal
 		}
 	}
 	setupPickupParameters(c, cf.Number, cf.Domain)
-	a.CreateCall(destinationNumber, c, cf)
+	a.CreateCall(destinationNumber, c, cf, call.CONTEXT_DEFAULT)
 }
 
 func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFlow) {
@@ -91,7 +92,7 @@ func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFl
 		}
 	}
 
-	a.CreateCall(destinationNumber, c, cf)
+	a.CreateCall(destinationNumber, c, cf, call.CONTEXT_DEFAULT)
 }
 
 func setupPickupParameters(c *esl.SConn, userId string, domainName string) {

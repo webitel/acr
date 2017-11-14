@@ -5,6 +5,7 @@
 package acr
 
 import (
+	"github.com/webitel/acr/src/pkg/call"
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
@@ -58,7 +59,7 @@ func dialerContext(a *ACR, c *esl.SConn, destinationNumber, dialerId string) {
 			Version:  2,
 		}
 
-		a.CreateCall(destinationNumber, c, &cf)
+		a.CreateCall(destinationNumber, c, &cf, call.CONTEXT_DIALER)
 	}
 
 	answerTime, err = strconv.Atoi(c.ChannelData.Header.Get("Caller-Channel-Answered-Time"))

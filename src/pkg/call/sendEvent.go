@@ -53,7 +53,7 @@ func SendEvent(c *Call, args interface{}) error {
 		logger.Error("Call %s sendEvent error: %s", c.Uuid, err.Error())
 		return err
 	}
-	logger.Error("Call %s sendEvent successful", c.Uuid)
+	logger.Debug("Call %s sendEvent successful", c.Uuid)
 	return nil
 }
 

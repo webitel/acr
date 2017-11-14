@@ -28,10 +28,10 @@ type ACR struct {
 
 var acr *ACR
 
-func (a *ACR) CreateCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow) {
+func (a *ACR) CreateCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, context call.ContextId) {
 	a.mx.Lock()
 	defer a.mx.Unlock()
-	a.calls[c] = call.MakeCall(destinationNumber, c, cf, a)
+	a.calls[c] = call.MakeCall(destinationNumber, c, cf, a, context)
 }
 
 func (a *ACR) GetGlobalVar(call *call.Call, varName string) (val string, ok bool) {

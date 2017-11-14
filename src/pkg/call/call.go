@@ -43,6 +43,14 @@ type IBridge interface {
 
 var applications Applications
 
+type ContextId int
+
+const (
+	CONTEXT_PUBLIC ContextId = 1 << iota
+	CONTEXT_DEFAULT
+	CONTEXT_DIALER
+)
+
 type Call struct {
 	routeId              int
 	Uuid                 string
@@ -61,6 +69,7 @@ type Call struct {
 	debugLog             bool
 	debugMap             map[string]interface{}
 	acr                  IBridge
+	context              ContextId
 }
 
 type domainVariablesT struct {
@@ -121,9 +130,10 @@ func init() {
 		"stt":           STT,             //45
 		"member":        Member,          //46
 		"limit":         Limit,           //47
-		"callback":      CallbackQueue,   //48
+		"callbackQueue": CallbackQueue,   //48
 		"cdr":           CDR,             //49
-		"sendEvent":     SendEvent,
+		"sendEvent":     SendEvent,       //50
+		"callback":      CallbackCall,    //51
 		//"stream":        Stream,
 	}
 
@@ -292,7 +302,7 @@ func (c *Call) ValidateApp(name string) (ok bool) {
 	return
 }
 
-func MakeCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, acr IBridge) *Call {
+func MakeCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, acr IBridge, context ContextId) *Call {
 
 	call := &Call{
 		routeId:           cf.Id,
@@ -307,6 +317,7 @@ func MakeCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, acr I
 		DestinationNumber: destinationNumber,
 		debugLog:          cf.Debug,
 		RegExp:            setupNumber(cf.Number, destinationNumber),
+		context:           context,
 	}
 
 	if c.ChannelData.Header.Get("variable_webitel_debug_acr") == "true" {

@@ -26,18 +26,18 @@ func CallbackQueue(c *Call, args interface{}) error {
 		setVar = getStringValueFromMap("setVar", props, "")
 
 		if err != nil {
-			logger.Error("Call %s callback db error %s", c.Uuid, err.Error())
+			logger.Error("Call %s callbackQueue db error %s", c.Uuid, err.Error())
 			if setVar != "" {
 				return SetVar(c, setVar+"='"+err.Error()+"'")
 			}
 		} else {
-			logger.Debug("Call %s callback add member %s successful", c.Uuid, number)
+			logger.Debug("Call %s callbackQueue add member %s successful", c.Uuid, number)
 			if setVar != "" {
 				return SetVar(c, setVar+"=OK")
 			}
 		}
 	} else {
-		logger.Error("Call %s callback bad arguments %s", c.Uuid, args)
+		logger.Error("Call %s callbackQueue bad arguments %s", c.Uuid, args)
 
 	}
 	return nil

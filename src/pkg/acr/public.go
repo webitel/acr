@@ -9,6 +9,7 @@ import (
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
+	"github.com/webitel/acr/src/pkg/call"
 )
 
 var defaultPublicRoute = config.Conf.Get("defaultPublicRout")
@@ -86,6 +87,6 @@ func createPublicCall(a *ACR, c *esl.SConn, destinationNumber string, cf *models
 		return
 	}
 
-	a.CreateCall(destinationNumber, c, cf)
+	a.CreateCall(destinationNumber, c, cf, call.CONTEXT_PUBLIC)
 	return
 }
