@@ -30,7 +30,7 @@ func (db *DB) FindExtension(destinationNumber string, domainName string) (models
 
 	def := models.CallFlow{}
 	res := db.pg.Debug().Table("callflow_extension").
-		Select(`id, destination_number, name, callflow, callflow_on_disconnect, version`).
+		Select(`id, destination_number, name, callflow, callflow_on_disconnect, version, domain`).
 		Where(`domain = $1 AND destination_number = $2 `, domainName, destinationNumber).
 		Limit(1).
 		Scan(&def)
