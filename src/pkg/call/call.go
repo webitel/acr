@@ -130,10 +130,9 @@ func init() {
 		"stt":           STT,             //45
 		"member":        Member,          //46
 		"limit":         Limit,           //47
-		"callbackQueue": CallbackQueue,   //48
+		"callback":      CallbackQueue,   //48
 		"cdr":           CDR,             //49
 		"sendEvent":     SendEvent,       //50
-		"callback":      CallbackCall,    //51
 		//"stream":        Stream,
 	}
 
