@@ -21,15 +21,15 @@ func (db *DB) FindDialerCallFlow(id, domainName string, dataStructure interface{
 	}
 
 	c := db.db.C(COLLECTION_DIALER)
-	return c.Find(bson.M{
+	return db.observeError(c.Find(bson.M{
 		"_id":    bson.ObjectIdHex(id),
 		"domain": domainName,
-	}).Select(bson.M{"_cf": 1, "amd": 1}).One(dataStructure)
+	}).Select(bson.M{"_cf": 1, "amd": 1}).One(dataStructure))
 }
 
 func (db *DB) AddMember(data interface{}) error {
 	c := db.db.C(COLLECTION_MEMBERS)
-	return c.Insert(data)
+	return db.observeError(c.Insert(data))
 }
 
 func (db *DB) UpdateMember(id string, data interface{}) error {
@@ -39,7 +39,7 @@ func (db *DB) UpdateMember(id string, data interface{}) error {
 	}
 
 	c := db.db.C(COLLECTION_MEMBERS)
-	return c.UpdateId(bson.ObjectIdHex(id), bson.M{
+	return db.observeError(c.UpdateId(bson.ObjectIdHex(id), bson.M{
 		"$set": data,
-	})
+	}))
 }

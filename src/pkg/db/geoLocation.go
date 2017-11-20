@@ -14,7 +14,7 @@ var COLLECTION_LOCATION = config.Conf.Get("mongodb:locationNumberCollection")
 func (db *DB) FindLocation(sysLength int, numbers []string, dataStructure interface{}) error {
 	c := db.db.C(COLLECTION_LOCATION)
 	//TODO use Find
-	return c.Pipe([]bson.M{
+	return db.observeError(c.Pipe([]bson.M{
 		{
 			"$match": bson.M{
 				"sysLength": sysLength,
@@ -48,5 +48,5 @@ func (db *DB) FindLocation(sysLength int, numbers []string, dataStructure interf
 				"city":        "$city",
 			},
 		},
-	}).One(dataStructure)
+	}).One(dataStructure))
 }

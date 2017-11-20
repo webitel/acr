@@ -13,8 +13,8 @@ var COLLECTION_CALENDAR = config.Conf.Get("mongodb:calendarCollection")
 
 func (db *DB) GetCalendar(name, domainName string, dataStructure interface{}) error {
 	c := db.db.C(COLLECTION_CALENDAR)
-	return c.Find(bson.M{
+	return db.observeError(c.Find(bson.M{
 		"name":   name,
 		"domain": domainName,
-	}).One(dataStructure)
+	}).One(dataStructure))
 }

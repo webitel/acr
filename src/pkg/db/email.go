@@ -14,7 +14,7 @@ var COLLECTION_EMAIL = config.Conf.Get("mongodb:emailCollection")
 func (db *DB) GetEmailConfig(domainName string, dataStructure interface{}) error {
 	c := db.db.C(COLLECTION_EMAIL)
 	//TODO use Find
-	return c.Pipe([]bson.M{
+	return db.observeError(c.Pipe([]bson.M{
 		{
 			"$match": bson.M{
 				"domain": domainName,
@@ -34,5 +34,5 @@ func (db *DB) GetEmailConfig(domainName string, dataStructure interface{}) error
 				"port":     "$options.port",
 			},
 		},
-	}).One(dataStructure)
+	}).One(dataStructure))
 }

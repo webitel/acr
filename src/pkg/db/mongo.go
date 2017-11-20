@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 type DB struct {
 	reconnecting bool
 	connected    bool
@@ -19,13 +18,14 @@ type DB struct {
 	db           *mgo.Database
 }
 
-func (db *DB) observeError(err error) {
+func (db *DB) observeError(err error) error {
 	if err != nil && err != mgo.ErrNotFound {
 		db.reconnect()
 	}
+	return err
 }
 
-// todo mutex ?
+// todo mutex
 func (db *DB) reconnect() {
 	db.connected = false
 	if db.reconnecting {
@@ -65,7 +65,6 @@ func (db *DB) connectToPg() {
 	db.migrateMongoToPg()
 }
 
-//TODO RECONNECT!!!
 func NewDB(uri string) *DB {
 	session, err := mgo.Dial(config.Conf.Get("mongodb:uri"))
 	if err != nil {

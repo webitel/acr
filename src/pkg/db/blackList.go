@@ -20,5 +20,7 @@ func (db *DB) CheckBlackList(domainName, name, number string) (err error, count 
 		"number": number,
 	}).Count()
 
+	db.observeError(err)
+
 	return
 }
