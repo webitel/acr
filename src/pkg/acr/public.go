@@ -76,7 +76,7 @@ func createPublicCall(a *ACR, c *esl.SConn, destinationNumber string, cf *models
 		logger.Debug("Call %s set timezone=%s", c.Uuid, cf.Timezone)
 	}
 
-	_, err = c.SndMsg("set", "domain_name="+cf.Domain, false, false)
+	_, err = c.SndMsg("set", "domain_name="+cf.Domain, false, true)
 	if err != nil {
 		logger.Error("Call %s error: %s", c.Uuid, err.Error())
 		return

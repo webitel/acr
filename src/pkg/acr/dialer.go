@@ -79,11 +79,11 @@ func dialerContext(a *ACR, c *esl.SConn, destinationNumber, dialerId string) {
 
 func getDialerRoute(d *dialerCallFlowType) (r models.ArrayApplications) {
 
-	if d.AMD != nil {
-		if isTrue("enabled", d.AMD) {
-			r = append(r, getAmdExpression(d.AMD)...)
-		}
-	}
+	//if d.AMD != nil {
+	//	if isTrue("enabled", d.AMD) {
+	//		r = append(r, getAmdExpression(d.AMD)...)
+	//	}
+	//}
 
 	r = append(r, transform(d.Callflow)...)
 	r = append(r, models.Application{"hangup": ""})

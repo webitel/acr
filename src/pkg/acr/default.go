@@ -17,14 +17,14 @@ func defaultContext(a *ACR, c *esl.SConn, destinationNumber string) {
 
 	_, err := c.SndMsg("unset", "sip_h_call", false, false)
 	if err != nil {
-		logger.Error("Bad unset sip_h_call: ", err)
+		logger.Error("Call %s bad unset sip_h_call: %s", c.Uuid, err.Error())
 	}
 
 	//TODO hash bad performance over 150cps
 	if callerIdNumber != "" {
 		_, err = c.SndMsg("hash", "insert/spymap/${domain_name}-"+callerIdNumber+"/${uuid}", false, false)
 		if err != nil {
-			logger.Error("Bad hash spymap: ", err)
+			logger.Error("Call %s bad hash spymap: ", c.Uuid, err.Error())
 		}
 	}
 
@@ -65,14 +65,14 @@ func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.Cal
 	if c.ChannelData.Header.Get("variable_webitel_direction") == "" {
 		_, err = c.SndMsg("set", "webitel_direction=internal", false, false)
 		if err != nil {
-			logger.Error("Bad set webitel_direction: ", err)
+			logger.Error("Call %s bad set webitel_direction: %s", c.Uuid, err.Error())
 		}
 	}
 
 	if cf.Timezone != "" {
 		_, err = c.SndMsg("set", "timezone="+cf.Timezone, false, false)
 		if err != nil {
-			logger.Error("Bad call %s set timezone: ", c.Uuid, err)
+			logger.Error("Call %s bad set timezone: %s", c.Uuid, err.Error())
 		} else {
 			logger.Debug("Call %s set timezone %s", c.Uuid, cf.Timezone)
 		}
@@ -88,7 +88,7 @@ func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFl
 	if c.ChannelData.Header.Get("variable_webitel_direction") == "" {
 		_, err = c.SndMsg("set", "webitel_direction=outbound", false, false)
 		if err != nil {
-			logger.Error("Bad set webitel_direction: ", err)
+			logger.Error("Bad set webitel_direction: %s", err.Error())
 		}
 	}
 
@@ -98,19 +98,19 @@ func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFl
 func setupPickupParameters(c *esl.SConn, userId string, domainName string) {
 	_, err := c.SndMsg("export", "dialed_extension="+userId, false, false)
 	if err != nil {
-		logger.Error("Bad call %s export dialed_extension: ", c.Uuid, err)
+		logger.Error("Bad call %s export dialed_extension: %s", c.Uuid, err.Error())
 	}
 	//TODO hash bad performance over 150cps
 	_, err = c.SndMsg("hash", "insert/"+domainName+"-call_return/"+userId+"/${caller_id_number}", false, false)
 	if err != nil {
-		logger.Error("Bad call %s hash call_return: ", c.Uuid, err)
+		logger.Error("Bad call %s hash call_return: %s", c.Uuid, err.Error())
 	}
 	_, err = c.SndMsg("hash", "insert/"+domainName+"-last_dial_ext/"+userId+"/${uuid}", false, false)
 	if err != nil {
-		logger.Error("Bad call %s hash last_dial_ext: ", c.Uuid, err)
+		logger.Error("Bad call %s hash last_dial_ext: %s", c.Uuid, err.Error())
 	}
 	_, err = c.SndMsg("hash", "insert/"+domainName+"-last_dial_ext/global/${uuid}", false, false)
 	if err != nil {
-		logger.Error("Bad call %s hash last_dial_ext/global: ", c.Uuid, err)
+		logger.Error("Bad call %s hash last_dial_ext/global: %s", c.Uuid, err.Error())
 	}
 }
