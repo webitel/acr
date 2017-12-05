@@ -4,8 +4,27 @@
 package call
 
 import (
+	"encoding/json"
 	"github.com/webitel/acr/src/pkg/logger"
 )
+
+type communication struct {
+	Number      string `json:"number"`
+	Priority    int    `json:"priority"`
+	Status      int    `json:"status"`
+	State       int    `json:"state"`
+	Description string `json:"description"`
+}
+
+type memberT struct {
+	CreatedOn      int64                  `json:"createdOn" bson:"createdOn"`
+	Name           string                 `json:"name"`
+	Dialer         string                 `json:"dialer"`
+	Priority       int                    `json:"priority"`
+	Expire         int                    `json:"expire"`
+	Variables      map[string]interface{} `json:"variables"`
+	Communications []communication        `json:"communications"`
+}
 
 func Member(c *Call, args interface{}) error {
 	var tmp string
@@ -20,12 +39,18 @@ func Member(c *Call, args interface{}) error {
 
 	tmp = getStringValueFromMap("id", props, "")
 
+	var b []byte
+	b, err = json.Marshal(props)
+
+	m := &memberT{}
+	json.Unmarshal([]byte(c.ParseString(string(b))), m)
+	m.CreatedOn = c.GetDate().Unix() * 1000
 	if tmp != "" {
 		delete(props, "id")
-		err = c.acr.UpdateMember(tmp, props)
+		err = c.acr.UpdateMember(tmp, &m)
 		tmp = "update"
 	} else {
-		err = c.acr.AddMember(props)
+		err = c.acr.AddMember(&m)
 		tmp = "add"
 	}
 
