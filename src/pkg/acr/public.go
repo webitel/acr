@@ -5,11 +5,11 @@
 package acr
 
 import (
+	"github.com/webitel/acr/src/pkg/call"
 	"github.com/webitel/acr/src/pkg/config"
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
-	"github.com/webitel/acr/src/pkg/call"
 )
 
 var defaultPublicRoute = config.Conf.Get("defaultPublicRout")
@@ -64,7 +64,7 @@ func createPublicCall(a *ACR, c *esl.SConn, destinationNumber string, cf *models
 			logger.Error("Call %s error: %s", c.Uuid, err.Error())
 			return
 		}
-		logger.Debug("Call %s set webitel_direction=inbound")
+		logger.Debug("Call %s set webitel_direction=inbound", c.Uuid)
 	}
 
 	if cf.Timezone != "" {
