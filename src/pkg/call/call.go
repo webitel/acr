@@ -336,22 +336,17 @@ func MakeCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, acr I
 		call.OnDisconnectIterator = nil
 	}
 
-	go setupDomainVariables(call)
+	go setupDomainVariables(call, cf.Variables)
 
 	return call
 }
 
-func setupDomainVariables(call *Call) {
+func setupDomainVariables(call *Call, variables map[string]string) {
 	var err error
-	var dVars models.DomainVariables
 
-	if dVars, err = call.acr.GetDomainVariables(call.Domain); err != nil {
-		logger.Error("Call %s set domain variables db error: %s", call.Uuid, err.Error())
-	}
-
-	if len(dVars.Variables) > 0 {
+	if len(variables) > 0 {
 		var dVarArr []interface{}
-		for k, v := range dVars.Variables {
+		for k, v := range variables {
 			dVarArr = append(dVarArr, k+"="+v)
 		}
 		err = SetVar(call, dVarArr)
@@ -360,7 +355,7 @@ func setupDomainVariables(call *Call) {
 		}
 	}
 
-	go routeIterator(call)
+	routeIterator(call)
 }
 
 func setupNumber(reg, dest string) map[string][]string {

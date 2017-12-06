@@ -54,9 +54,10 @@ func dialerContext(a *ACR, c *esl.SConn, destinationNumber, dialerId string) {
 
 	exec := func() {
 		cf := models.CallFlow{
-			Domain:   domainName,
-			Callflow: getDialerRoute(&dialer),
-			Version:  2,
+			Domain:    domainName,
+			Callflow:  getDialerRoute(&dialer),
+			Variables: getDomainVariables(a, domainName),
+			Version:   2,
 		}
 
 		a.CreateCall(destinationNumber, c, &cf, call.CONTEXT_DIALER)
@@ -158,4 +159,13 @@ func isTrue(name string, m map[string]interface{}) (ok bool) {
 		}
 	}
 	return
+}
+
+func getDomainVariables(a *ACR, domain string) map[string]string {
+	vars, err := a.GetDomainVariables(domain)
+	if err != nil {
+		logger.Warning("Dialer context %s set domain variables error: %s", domain, err.Error())
+	}
+
+	return vars.Variables
 }
