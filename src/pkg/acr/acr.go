@@ -111,6 +111,18 @@ func (a *ACR) UpdateMember(id string, data interface{}) error {
 	return a.DB.UpdateMember(id, data)
 }
 
+func (a *ACR) GetPrivateCallFlow(uuid string, domain string) (models.CallFlow, error) {
+	return a.DB.GetPrivateCallFlow(uuid, domain)
+}
+
+func (a *ACR) InsertPrivateCallFlow(uuid, domain, timeZone string, deadline int, apps models.ArrayApplications) error {
+	return a.DB.InsertPrivateCallFlow(uuid, domain, timeZone, deadline, apps)
+}
+
+func (a *ACR) RemovePrivateCallFlow(uuid, domain string) error {
+	return a.DB.RemovePrivateCallFlow(uuid, domain)
+}
+
 func (a *ACR) addConnection(uuid string) {
 	atomic.AddInt32(&a.Count, 1)
 	logger.Debug("New connection %s, all %d", uuid, a.Count)

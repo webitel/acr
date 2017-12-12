@@ -70,3 +70,54 @@ func (db *DB) FindPublic(destinationNumber string) (models.CallFlow, error) {
 
 	return def, res.Error
 }
+
+type privateCallFlow struct {
+	Uuid     string
+	Domain   string
+	Timezone string                   `json:"fs_timezone" gorm:"column:fs_timezone"`
+	Callflow models.ArrayApplications `json:"callflow" gorm:"column:callflow" sql:"type:json" bson:"callflow"`
+	Deadline int                      `json:"deadline" gorm:"column:deadline" sql:"type:json" bson:"deadline"`
+}
+
+func (db *DB) GetPrivateCallFlow(uuid string, domain string) (models.CallFlow, error) {
+	tmp := models.CallFlow{}
+
+	rows, err := db.pg.Debug().Raw(`WITH deadline as (
+	  DELETE FROM callflow_private
+	  WHERE created_on + callflow_private.deadline <= extract(EPOCH FROM now() at time zone 'utc')::INT
+	), current as (
+		  DELETE FROM callflow_private
+			WHERE uuid = $1 AND domain = $2
+			RETURNING domain as domain, fs_timezone as fs_timezone, callflow as callflow,
+				(select variables::JSON from callflow_variables where domain = $2 LIMIT 1)
+	)
+	SELECT * from current`, uuid, domain).Rows()
+	defer rows.Close()
+
+	if err != nil {
+		return tmp, err
+	}
+	if rows.Next() {
+		rows.Scan(&tmp.Domain, &tmp.Timezone, &tmp.Callflow, &tmp.Variables)
+	}
+
+	return tmp, nil
+}
+
+func (db *DB) InsertPrivateCallFlow(uuid, domain, timeZone string, deadline int, apps models.ArrayApplications) error {
+	v := privateCallFlow{
+		Uuid:     uuid,
+		Domain:   domain,
+		Timezone: timeZone,
+		Callflow: apps,
+		Deadline: deadline,
+	}
+
+	return db.pg.Debug().Table("callflow_private").Create(v).Error
+}
+
+func (db *DB) RemovePrivateCallFlow(uuid, domain string) error {
+	return db.pg.Debug().Table("callflow_private").
+		Where("uuid = $1 AND domain = $2", uuid, domain).
+		Delete(privateCallFlow{}).Error
+}

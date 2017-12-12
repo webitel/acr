@@ -6,6 +6,7 @@ package call
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
@@ -39,6 +40,9 @@ type IBridge interface {
 	AddMember(data interface{}) error
 	UpdateMember(id string, data interface{}) error
 	AddCallbackMember(domainName, queueName, number, widgetName string) error
+	GetPrivateCallFlow(uuid string, domain string) (models.CallFlow, error)
+	InsertPrivateCallFlow(uuid, domain, timeZone string, deadline int, apps models.ArrayApplications) error
+	RemovePrivateCallFlow(uuid, domain string) error
 }
 
 var applications Applications
@@ -49,6 +53,7 @@ const (
 	CONTEXT_PUBLIC ContextId = 1 << iota
 	CONTEXT_DEFAULT
 	CONTEXT_DIALER
+	CONTEXT_PRIVATE
 )
 
 type Call struct {
@@ -133,6 +138,7 @@ func init() {
 		"callback":      CallbackQueue,   //48
 		"cdr":           CDR,             //49
 		"sendEvent":     SendEvent,       //50
+		"originate":     Originate,       //51
 		//"stream":        Stream,
 	}
 
@@ -189,16 +195,26 @@ func (c *Call) GetGlobalVar(name string) (val string) {
 	return val
 }
 
-func (c *Call) SndMsg(app string, args string, look bool, dump bool) (esl.Event, error) {
-	//TODO
-	defer func() {
+func (c *Call) SndMsg(app string, args string, look bool, dump bool) (msg esl.Event, err error) {
+
+	defer func(uuid string) {
 		if r := recover(); r != nil {
-			logger.Error("Call recovered in %v", r)
+			logger.Error("Call %s recovered in %v", uuid, r)
+			switch x := r.(type) {
+			case string:
+				err = errors.New(x)
+			case error:
+				err = x
+			default:
+				err = errors.New("Unknown panic")
+			}
 		}
-	}()
+	}(c.Uuid)
+
 	args = c.ParseString(args)
 	logger.Notice("Execute %s -> %s", app, args)
-	return c.Conn.SndMsg(app, args, look, dump)
+	msg, err = c.Conn.SndMsg(app, args, look, dump)
+	return msg, err
 }
 
 func parseFreeSwitchArray(data string, pos int) string {
@@ -413,6 +429,8 @@ func routeIterator(call *Call) {
 	if call.debug {
 		call.FireDebugApplication(router.NewBaseApp("disconnect", "end"))
 	}
+
+	call.Conn.Close()
 }
 
 func (c *Call) FireDebugApplication(a router.App) {
