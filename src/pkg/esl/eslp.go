@@ -255,6 +255,10 @@ func (esl *EventSocket) Log(level int, logger LogFunc) error {
 // Api ( BLOCKING MODE ) execute( send/receive ) API cmd( arg(s)) request ...
 func (esl *EventSocket) Api(cmd string, arg ...string) (resp []byte, err error) {
 
+	if !esl.opened {
+		err = errors.New("Socket closed")
+		return
+	}
 	cmd = strings.TrimSpace(cmd)
 	// Trim explicit command name
 	if len(cmd) >= 3 && strings.EqualFold(cmd[:3], "api") {
@@ -559,6 +563,10 @@ func (esl *EventSocket) recv(timeout time.Duration, mq bool) (recv Message, err 
 			// Data Available !
 		}
 		// Parse package ...
+		if !esl.opened {
+			err = errors.New("Socket close")
+			return
+		}
 		recv, err = esl.rbuf.ReadMessage()
 		// Explicit error ?
 		if err != nil {

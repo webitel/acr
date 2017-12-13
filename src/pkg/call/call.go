@@ -389,6 +389,20 @@ func setupNumber(reg, dest string) map[string][]string {
 }
 
 func routeIterator(call *Call) {
+	defer func(uuid string) {
+		if r := recover(); r != nil {
+			logger.Error("Call %s recovered in %v", uuid, r)
+			switch x := r.(type) {
+			case string:
+				logger.Error("Call %s error: %v", call.Uuid, x)
+			case error:
+				logger.Error("Call %s error: %v", call.Uuid, x.Error())
+			default:
+				logger.Error("Call %s error: Unknown panicv", call.Uuid)
+			}
+		}
+	}(call.Uuid)
+
 	for {
 		if call.Conn.GetDisconnected() {
 			logger.Debug("Call %s disconnected", call.GetUuid())

@@ -179,7 +179,9 @@ func (c *SConn) GetContextName() string {
 
 func handle(conn *SConn, s *Server) {
 	defer func() {
+		conn.rw.Lock()
 		conn.disconnect(nil)
+		conn.rw.Unlock()
 	}()
 
 	conn.mx = &sync.Mutex{}
