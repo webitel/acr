@@ -10,7 +10,7 @@ import (
 
 func RecordSession(c *Call, args interface{}) error {
 
-	var action, typeFile, name, email, minSec, stereo, bridged, followTransfer string
+	var action, typeFile, name, email, minSec, stereo, bridged, followTransfer, emailTextTemplate, emailSubjectTemplate string
 	var err error
 
 	switch args.(type) {
@@ -37,6 +37,8 @@ func RecordSession(c *Call, args interface{}) error {
 
 			if _, ok = prop["email"]; ok {
 				email = parseEmail(prop["email"])
+				emailTextTemplate = c.ParseString(getStringValueFromMap("emailBody", prop, ""))
+				emailSubjectTemplate = c.ParseString(getStringValueFromMap("emailSubject", prop, ""))
 			} else {
 				email = "none"
 			}
@@ -52,6 +54,13 @@ func RecordSession(c *Call, args interface{}) error {
 		}
 	}
 
+	if emailTextTemplate == "" {
+		emailTextTemplate = "none"
+	}
+	if emailSubjectTemplate == "" {
+		emailSubjectTemplate = "none"
+	}
+
 	fileName := "${uuid}_" + name + "." + typeFile
 
 	if action == "start" {
@@ -61,7 +70,8 @@ func RecordSession(c *Call, args interface{}) error {
 			"RECORD_STEREO=" + stereo,
 			"RECORD_BRIDGE_REQ=" + bridged,
 			"recording_follow_transfer=" + followTransfer,
-			"record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} " + typeFile + " " + email + " " + name,
+			"record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} " + typeFile + " " + email +
+				" " + name + " " + UrlEncoded(emailSubjectTemplate) + " " + UrlEncoded(emailTextTemplate),
 		})
 
 		if err != nil {

@@ -9,14 +9,33 @@ import (
 	"github.com/webitel/acr/src/pkg/models"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 func UrlEncoded(str string) string {
-	u, err := url.Parse(str)
-	if err != nil {
-		return url.QueryEscape(str)
+	var res = url.Values{"": {str}}.Encode()
+
+	if len(res) < 2 {
+		return ""
 	}
-	return u.String()
+
+	return compatibleJSEncodeURIComponent(res[1:])
+	//u, err := url.ParseRequestURI(str)
+	//if err != nil {
+	//	return compatibleJSEncodeURIComponent(url.QueryEscape(str))
+	//}
+	//return compatibleJSEncodeURIComponent(u.String())
+}
+
+func compatibleJSEncodeURIComponent(str string) string {
+	resultStr := str
+	resultStr = strings.Replace(resultStr, "+", "%20", -1)
+	resultStr = strings.Replace(resultStr, "%21", "!", -1)
+	resultStr = strings.Replace(resultStr, "%27", "'", -1)
+	resultStr = strings.Replace(resultStr, "%28", "(", -1)
+	resultStr = strings.Replace(resultStr, "%29", ")", -1)
+	resultStr = strings.Replace(resultStr, "%2A", "*", -1)
+	return resultStr
 }
 
 func getStringValueFromMap(name string, params map[string]interface{}, def string) (res string) {

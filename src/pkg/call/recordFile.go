@@ -29,9 +29,19 @@ func RecordFile(c *Call, args interface{}) error {
 	var silenceThresh = getStringValueFromMap("silenceThresh", parameters, "200")
 	var silenceHits = getStringValueFromMap("silenceHits", parameters, "5")
 	var email = "none"
+	var emailTextTemplate, emailSubjectTemplate string
 
 	if _, ok = parameters["email"]; ok {
 		email = parseEmail(parameters["email"])
+		emailTextTemplate = c.ParseString(getStringValueFromMap("emailBody", parameters, ""))
+		emailSubjectTemplate = c.ParseString(getStringValueFromMap("emailSubject", parameters, ""))
+	}
+
+	if emailTextTemplate == "" {
+		emailTextTemplate = "none"
+	}
+	if emailSubjectTemplate == "" {
+		emailSubjectTemplate = "none"
 	}
 
 	if v := c.GetChannelVar(WEBITEL_RECORD_FILE_NAME); v != "" {
@@ -44,7 +54,8 @@ func RecordFile(c *Call, args interface{}) error {
 
 	err = SetVar(c, []interface{}{
 		"playback_terminators=" + terminators,
-		"record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} " + typeFile + " " + email + " " + name,
+		"record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} " + typeFile + " " + email + " " + name +
+			" " + UrlEncoded(emailSubjectTemplate) + " " + UrlEncoded(emailTextTemplate),
 	})
 
 	if err != nil {

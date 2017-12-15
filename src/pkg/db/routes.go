@@ -60,7 +60,7 @@ func (db *DB) FindPublic(destinationNumber string) (models.CallFlow, error) {
 			callflow_public.callflow as callflow, callflow_public.callflow_on_disconnect as callflow_on_disconnect,
 			callflow_public.version as version, cv.variables::JSON as variables`).
 		Joins("LEFT JOIN callflow_variables cv on cv.domain = callflow_public.domain").
-		Where(`$1 = ANY (callflow_public.destination_number ) AND disabled IS NOT TRUE`, destinationNumber).
+		Where(`$1 = ANY (callflow_public.destination_number) AND disabled IS NOT TRUE`, destinationNumber).
 		Limit(1).
 		Scan(&def)
 
