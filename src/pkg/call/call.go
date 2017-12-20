@@ -444,7 +444,7 @@ func routeIterator(call *Call) {
 		call.FireDebugApplication(router.NewBaseApp("disconnect", "end"))
 	}
 
-	call.Conn.Close()
+	//call.Conn.Close()
 }
 
 func (c *Call) FireDebugApplication(a router.App) {
