@@ -360,6 +360,10 @@ func MakeCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, acr I
 func setupDomainVariables(call *Call, variables map[string]string) {
 	var err error
 
+	if call.GetChannelVar("presence_data") == "" {
+		SetVar(call, "presence_data="+call.Domain)
+	}
+
 	if len(variables) > 0 {
 		var dVarArr []interface{}
 		for k, v := range variables {
