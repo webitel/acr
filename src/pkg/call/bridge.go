@@ -99,17 +99,17 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		separator = ":_:"
 	}
 
-	if tmpArr, ok = getArrayStringFromMap("global", props); ok {
-		dialString += "<" + strings.Join(tmpArr, ",") + ">"
+	if tmpArr, ok = getArrayStringFromMap("global", props); ok && len(tmpArr) > 0 {
+		dialString += "<" + strings.Join(validateArrayVariables(tmpArr), ",") + ">"
 	}
 
 	dialString += "{" + "domain_name=" + c.Domain
 
-	if tmpArr, ok = getArrayStringFromMap("parameters", props); ok {
-		params = tmpArr
+	if tmpArr, ok = getArrayStringFromMap("parameters", props); ok && len(tmpArr) > 0 {
+		params = validateArrayVariables(tmpArr)
 	}
 
-	if tmpArr, ok = getArrayStringFromMap("codecs", props); ok {
+	if tmpArr, ok = getArrayStringFromMap("codecs", props); ok && len(tmpArr) > 0 {
 		params = append(params, "absolute_codec_string='"+strings.Join(tmpArr, ",")+"'")
 	}
 
@@ -120,7 +120,6 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 	dialString += "}"
 
 	for _, endpoint := range endpoints {
-
 		addBridgeEndpoint(c, &dialString, endpoint)
 		dialString += separator
 	}
@@ -165,22 +164,22 @@ func addBridgeEndpoint(c *Call, dialString *string, endpoint map[string]interfac
 
 	switch getStringValueFromMap("type", endpoint, "") {
 	case "sipGateway":
-		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok {
-			*dialString += "[" + strings.Join(tmpArr, ",") + "]"
+		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
+			*dialString += "[" + strings.Join(validateArrayVariables(tmpArr), ",") + "]"
 		}
 		*dialString += "sofia/gateway/" + getStringValueFromMap("name", endpoint, "_undef_") + "/" +
 			getStringValueFromMap("dialString", endpoint, "_undef_")
 
 	case "sipUri":
-		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok {
-			*dialString += "[" + strings.Join(tmpArr, ",") + "]"
+		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
+			*dialString += "[" + strings.Join(validateArrayVariables(tmpArr), ",") + "]"
 		}
 		*dialString += "sofia/" + getStringValueFromMap("profile", endpoint, "external") + "/" +
 			getStringValueFromMap("dialString", endpoint, "_undef_") + "@" + getStringValueFromMap("host", endpoint, "")
 
 	case "sipDevice":
-		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok {
-			*dialString += "[" + strings.Join(tmpArr, ",") + "]"
+		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
+			*dialString += "[" + strings.Join(validateArrayVariables(tmpArr), ",") + "]"
 		}
 		*dialString += "sofia/" + getStringValueFromMap("profile", endpoint, "external") + "/" +
 			getStringValueFromMap("name", endpoint, "_undef_") + "%" +
@@ -189,8 +188,8 @@ func addBridgeEndpoint(c *Call, dialString *string, endpoint map[string]interfac
 	case "device":
 		setSpyMap(c, getStringValueFromMap("name", endpoint, ""))
 
-		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok {
-			*dialString += "[" + strings.Join(tmpArr, ",") + "]"
+		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
+			*dialString += "[" + strings.Join(validateArrayVariables(tmpArr), ",") + "]"
 		}
 		*dialString += "user/" + getStringValueFromMap("name", endpoint, "_undef") + "@${domain_name}"
 
@@ -200,8 +199,8 @@ func addBridgeEndpoint(c *Call, dialString *string, endpoint map[string]interfac
 		case "sip":
 			*dialString += getProtoParameter(getStringValueFromMap("name", endpoint, "_undef_"))
 
-			if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok {
-				*dialString += "," + strings.Join(tmpArr, ",")
+			if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
+				*dialString += "," + strings.Join(validateArrayVariables(tmpArr), ",")
 			}
 			*dialString += "]${sofia_contact(*/" + getStringValueFromMap("name", endpoint, "_undef") +
 				"@${domain_name})}"
@@ -209,16 +208,16 @@ func addBridgeEndpoint(c *Call, dialString *string, endpoint map[string]interfac
 		case "webrtc":
 			*dialString += getProtoParameter(getStringValueFromMap("name", endpoint, "_undef_"))
 
-			if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok {
-				*dialString += "," + strings.Join(tmpArr, ",")
+			if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
+				*dialString += "," + strings.Join(validateArrayVariables(tmpArr), ",")
 			}
 
 			*dialString += "]${verto_contact(" + getStringValueFromMap("name", endpoint, "_undef_") +
 				"@${domain_name})}"
 
 		default:
-			if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok {
-				*dialString += "[" + strings.Join(tmpArr, ",") + "]"
+			if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
+				*dialString += "[" + strings.Join(validateArrayVariables(tmpArr), ",") + "]"
 			}
 
 			*dialString += "user/" + getStringValueFromMap("name", endpoint, "_undef_") + "@" +

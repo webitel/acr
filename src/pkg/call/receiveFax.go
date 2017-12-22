@@ -58,7 +58,7 @@ func ReceiveFax(c *Call, args interface{}) error {
 	vars = append(vars, "execute_on_fax_success=lua FaxUpload.lua ${uuid} ${domain_name} "+email,
 		"execute_on_fax_failure=system /bin/rm /recordings/${uuid}.tif")
 
-	err = SetVar(c, vars)
+	err = multiSetVar(c, vars)
 	if err != nil {
 		logger.Error("Call %s receiveFax set vars error: %s", c.Uuid, err.Error())
 		return err

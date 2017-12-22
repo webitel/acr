@@ -64,7 +64,7 @@ func RecordSession(c *Call, args interface{}) error {
 	fileName := "${uuid}_" + name + "." + typeFile
 
 	if action == "start" {
-		err = SetVar(c, []interface{}{
+		err = multiSetVar(c, []string{
 			WEBITEL_RECORD_FILE_NAME + "=" + fileName,
 			"RECORD_MIN_SEC=" + minSec,
 			"RECORD_STEREO=" + stereo,

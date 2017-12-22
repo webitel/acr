@@ -31,6 +31,17 @@
   "application": {
     "loglevel": "trace"
   },
+  "protectedVariables": [
+    "api_on_",
+    "execute_on_",
+    "exec_",
+    "api_after_bridge",
+    "api_before_bridge",
+    "api_hangup_hook",
+    "api_reporting_hook",
+    "record_post_process_exec_api",
+    "session_in_hangup_hook"
+  ],
   "broker": {
     "enable": true,
     "connectionString": "amqp://webitel:secret@10.10.10.200:5672?heartbeat=0",
