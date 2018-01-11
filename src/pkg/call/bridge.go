@@ -208,9 +208,12 @@ func setBridgeQueue(c *Call, props map[string]interface{}) error {
 
 func unsetBridgeQueue(c *Call, queue map[string]interface{}) (err error) {
 	for key, _ := range queue {
-		if key == "playback" {
+		switch key {
+		case "playback":
 			err = UnSet(c, "campon_hold_music")
-		} else {
+		case "enable":
+			err = UnSet(c, "campon")
+		default:
 			err = UnSet(c, "campon_"+key)
 		}
 
