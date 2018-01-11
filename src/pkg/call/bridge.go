@@ -70,7 +70,7 @@ func bridgeUuid(c *Call, legA, legB string, resVar string) error {
 }
 
 func bridgeChannel(c *Call, props map[string]interface{}) error {
-	var ok, useQueue bool
+	var ok bool
 	var strategy, separator, dialString, pickup, p string
 	var tmpArr, params []string
 	var endpoints models.ArrayApplications
@@ -103,19 +103,14 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		separator = ":_:"
 	}
 
-	if tmpArr, ok = getArrayStringFromMap("global", props); ok && len(tmpArr) > 0 {
-		dialString += "<" + strings.Join(validateArrayVariables(tmpArr), ",") + ">"
-	}
-
 	if _, ok = props["queue"]; ok {
 		if queue, ok = props["queue"].(map[string]interface{}); ok && getBoolValueFromMap("enable", queue, false) {
-			err = setBridgeQueue(c, queue)
-			if err == nil {
-				useQueue = true
-			} else {
-				return err
-			}
+			dialString += getBridgeQueueParameters(c, queue)
 		}
+	}
+
+	if tmpArr, ok = getArrayStringFromMap("global", props); ok && len(tmpArr) > 0 {
+		dialString += "<" + strings.Join(validateArrayVariables(tmpArr), ",") + ">"
 	}
 
 	dialString += "{" + "domain_name=" + c.Domain
@@ -162,14 +157,10 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		c.SetBreak()
 	}
 
-	if useQueue {
-		return unsetBridgeQueue(c, queue)
-	}
-
 	return nil
 }
 
-func setBridgeQueue(c *Call, props map[string]interface{}) error {
+func getBridgeQueueParameters(c *Call, props map[string]interface{}) string {
 	var s string
 	v := []string{"campon=true"}
 
@@ -203,25 +194,7 @@ func setBridgeQueue(c *Call, props map[string]interface{}) error {
 
 	}
 
-	return multiSetVar(c, v)
-}
-
-func unsetBridgeQueue(c *Call, queue map[string]interface{}) (err error) {
-	for key, _ := range queue {
-		switch key {
-		case "playback":
-			err = UnSet(c, "campon_hold_music")
-		case "enable":
-			err = UnSet(c, "campon")
-		default:
-			err = UnSet(c, "campon_"+key)
-		}
-
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return "%[" + strings.Join(v, ",") + "]"
 }
 
 func setSpyMap(c *Call, name string) {
