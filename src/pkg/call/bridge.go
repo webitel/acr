@@ -6,6 +6,7 @@ package call
 
 import (
 	"fmt"
+	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
 	"strings"
@@ -69,10 +70,13 @@ func bridgeUuid(c *Call, legA, legB string, resVar string) error {
 }
 
 func bridgeChannel(c *Call, props map[string]interface{}) error {
-	var ok bool
+	var ok, useQueue bool
 	var strategy, separator, dialString, pickup, p string
 	var tmpArr, params []string
 	var endpoints models.ArrayApplications
+	var e esl.Event
+	var err error
+	var queue map[string]interface{}
 
 	if _, ok = props["endpoints"]; !ok {
 		logger.Error("Call %s bridge endpoints is required", c.Uuid)
@@ -103,6 +107,17 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		dialString += "<" + strings.Join(validateArrayVariables(tmpArr), ",") + ">"
 	}
 
+	if _, ok = props["queue"]; ok {
+		if queue, ok = props["queue"].(map[string]interface{}); ok && getBoolValueFromMap("enable", queue, false) {
+			err = setBridgeQueue(c, queue)
+			if err == nil {
+				useQueue = true
+			} else {
+				return err
+			}
+		}
+	}
+
 	dialString += "{" + "domain_name=" + c.Domain
 
 	if tmpArr, ok = getArrayStringFromMap("parameters", props); ok && len(tmpArr) > 0 {
@@ -129,15 +144,15 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		if p == "" {
 			if tmpArr, ok = getArrayStringFromMap("pickup", props); ok {
 				for _, p = range tmpArr {
-					pickup += ",pickup/" + p + "@${domain_name}"
+					pickup += separator + "pickup/" + p + "@${domain_name}"
 				}
 			}
 		} else {
-			pickup = ",pickup/" + p + "@${domain_name}"
+			pickup = separator + "pickup/" + p + "@${domain_name}"
 		}
 	}
 
-	e, err := c.SndMsg("bridge", dialString[:len(dialString)-len(separator)]+pickup, true, true)
+	e, err = c.SndMsg("bridge", dialString[:len(dialString)-len(separator)]+pickup, true, true)
 	if err != nil {
 		logger.Error("Call %s bridge error: %s", c.Uuid, err)
 		return err
@@ -147,6 +162,62 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		c.SetBreak()
 	}
 
+	if useQueue {
+		return unsetBridgeQueue(c, queue)
+	}
+
+	return nil
+}
+
+func setBridgeQueue(c *Call, props map[string]interface{}) error {
+	var s string
+	v := []string{"campon=true"}
+
+	if s = getStringValueFromMap("retries", props, ""); s != "" {
+		v = append(v, "campon_retries="+s)
+	}
+	if s = getStringValueFromMap("timeout", props, ""); s != "" {
+		v = append(v, "campon_timeout="+s)
+	}
+	if s = getStringValueFromMap("sleep", props, ""); s != "" {
+		v = append(v, "campon_sleep="+s)
+	}
+
+	if _, ok := props["playback"]; ok {
+		var play map[string]interface{}
+		if play, ok = props["playback"].(map[string]interface{}); ok {
+			name := getStringValueFromMap("name", play, "")
+			if name != "" {
+				name = getPlaybackFileString(
+					c,
+					getStringValueFromMap("type", play, ""),
+					name,
+					getBoolValueFromMap("refresh", play, false),
+					false,
+					getStringValueFromMap("lang", play, ""),
+					getStringValueFromMap("method", play, ""),
+				)
+				v = append(v, "campon_hold_music="+name)
+			}
+		}
+
+	}
+
+	return multiSetVar(c, v)
+}
+
+func unsetBridgeQueue(c *Call, queue map[string]interface{}) (err error) {
+	for key, _ := range queue {
+		if key == "playback" {
+			err = UnSet(c, "campon_hold_music")
+		} else {
+			err = UnSet(c, "campon_"+key)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
