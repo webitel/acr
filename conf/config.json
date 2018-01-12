@@ -15,7 +15,8 @@
     "locationNumberCollection": "location",
     "emailCollection": "emailConfig",
     "dialerCollection": "dialer",
-    "membersCollection": "members"
+    "membersCollection": "members",
+    "mediaFileCollection": "mediaFile"
   },
   "pg": {
     "host": "postgres",

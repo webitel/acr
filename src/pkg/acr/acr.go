@@ -123,6 +123,18 @@ func (a *ACR) RemovePrivateCallFlow(uuid, domain string) error {
 	return a.DB.RemovePrivateCallFlow(uuid, domain)
 }
 
+func (a *ACR) ExistsMediaFile(name, typeFile, domainName string) bool {
+	return a.DB.ExistsMediaFile(name, typeFile, domainName)
+}
+
+func (a *ACR) ExistsDialer(name, domain string) bool {
+	return a.DB.ExistsDialer(name, domain)
+}
+
+func (a *ACR) ExistsQueue(name, domain string) bool {
+	return a.DB.ExistsQueue(name, domain)
+}
+
 func (a *ACR) addConnection(uuid string) {
 	atomic.AddInt32(&a.Count, 1)
 	logger.Debug("New connection %s, all %d", uuid, a.Count)

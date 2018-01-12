@@ -20,6 +20,7 @@ type Call interface {
 	ValidateApp(string) bool
 	GetLocation() string
 	GetDomain() string
+	ExistsResource(resource string, props map[string]interface{}) bool
 }
 
 const (

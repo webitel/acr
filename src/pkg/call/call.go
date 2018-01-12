@@ -43,6 +43,9 @@ type IBridge interface {
 	GetPrivateCallFlow(uuid string, domain string) (models.CallFlow, error)
 	InsertPrivateCallFlow(uuid, domain, timeZone string, deadline int, apps models.ArrayApplications) error
 	RemovePrivateCallFlow(uuid, domain string) error
+	ExistsMediaFile(name, typeFile, domainName string) bool
+	ExistsDialer(name, domain string) bool
+	ExistsQueue(name, domain string) bool
 }
 
 var applications Applications
@@ -139,6 +142,7 @@ func init() {
 		"cdr":           CDR,             //49
 		"sendEvent":     SendEvent,       //50
 		"originate":     Originate,       //51
+		"exists":        Exists,          //52
 		//"stream":        Stream,
 	}
 

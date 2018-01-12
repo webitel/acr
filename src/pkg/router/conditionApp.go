@@ -372,6 +372,45 @@ func injectJsSysObject(vm *otto.Otto, i *Iterator) *otto.Object {
 		}
 	})
 
+	sys.Set("exists", func(call otto.FunctionCall) (result otto.Value) {
+		param := call.Argument(0).String()
+		if param == "" {
+			result, _ = otto.ToValue(false)
+			return
+		}
+
+		args := strings.SplitN(param, ",", -1)
+
+		if len(args) < 2 {
+			logger.Warning("Call %s bad condition exists parameters %v", i.Call.GetUuid(), args)
+			result, _ = otto.ToValue(false)
+			return
+		}
+
+		for i, v := range args {
+			args[i] = strings.Trim(v, " ")
+		}
+
+		appArgs := make(map[string]interface{})
+		switch {
+		case args[0] == "media":
+			appArgs["name"] = args[1]
+			if len(args) > 2 {
+				appArgs["type"] = args[2]
+			}
+
+		case args[0] == "dialer" || args[0] == "account" || args[0] == "queue":
+			appArgs["name"] = args[1]
+
+		default:
+			result, _ = otto.ToValue(false)
+			return
+		}
+
+		result, _ = otto.ToValue(i.Call.ExistsResource(args[0], appArgs))
+		return
+	})
+
 	return sys
 }
 
