@@ -108,7 +108,15 @@ func (conn *SConn) FireEvent(eventName string, m *Message) (Message, error) {
 }
 
 func (conn *SConn) SndRecMsg(app string, arg string, look bool) (Event, error) {
-	u := uuid.NewV4().String()
+	var err error
+	guid, err := uuid.NewV4()
+
+	if err != nil {
+		return Event{}, err
+	}
+
+	u := guid.String()
+
 	c := make(chan Event, 1)
 
 	conn.rw.Lock() // ------------------ < LOCKED >
@@ -118,7 +126,7 @@ func (conn *SConn) SndRecMsg(app string, arg string, look bool) (Event, error) {
 	}
 
 	conn.cbWrapper[u] = c
-	_, err := conn.call(&Message{
+	_, err = conn.call(&Message{
 		Header: Header{
 			"call-command":     []string{"execute"},
 			"execute-app-name": []string{app},
