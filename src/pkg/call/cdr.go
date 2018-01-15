@@ -55,7 +55,9 @@ func CDR(c *Call, args interface{}) error {
 			return err
 		}
 
+		logger.Debug("Call %s CDR send request", c.Uuid)
 		d := c.acr.AddRPCCommands(c.Uuid)
+		logger.Debug("Call %s CDR receive response", c.Uuid)
 		if d.Args != nil {
 			for k, v = range exportsVars {
 				if _, ok = v.(string); ok {
