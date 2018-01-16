@@ -177,17 +177,8 @@ func getBridgeQueueParameters(c *Call, props map[string]interface{}) string {
 	if _, ok := props["playback"]; ok {
 		var play map[string]interface{}
 		if play, ok = props["playback"].(map[string]interface{}); ok {
-			name := getStringValueFromMap("name", play, "")
+			name := playbackGetFileString(c, play)
 			if name != "" {
-				name = getPlaybackFileString(
-					c,
-					getStringValueFromMap("type", play, ""),
-					name,
-					getBoolValueFromMap("refresh", play, false),
-					false,
-					getStringValueFromMap("lang", play, ""),
-					getStringValueFromMap("method", play, ""),
-				)
 				v = append(v, "campon_hold_music="+name)
 			}
 		}

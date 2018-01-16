@@ -146,7 +146,7 @@ func (rpc *RPC) initExchange() error {
 }
 
 func (rpc *RPC) Fire(exchangeName string, rk string, options PublishingOption) error {
-	logger.Debug("RPC: send to engine %s %d bytes %s", rk, len(options.Body), options.Body)
+	logger.Debug("RPC: send to %s %s %d bytes %s", exchangeName, rk, len(options.Body), options.Body)
 	return rpc.channel.Publish(
 		exchangeName,
 		rk,

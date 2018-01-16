@@ -14,46 +14,13 @@ import (
 var httpToShot = regexp.MustCompile(`https?`)
 
 func Playback(c *Call, args interface{}) error {
-	var filePath, name, typeFile, lang, method, terminator string
-	var ok, refresh bool
+	var filePath, terminator string
+	var ok bool
 	var props, getDigits map[string]interface{}
-	var files models.ArrayApplications
 
 	if props, ok = args.(map[string]interface{}); ok {
-		name = getStringValueFromMap("name", props, "")
 		terminator = getStringValueFromMap("terminator", props, "#")
-
-		if name != "" {
-			typeFile = getStringValueFromMap("type", props, "")
-			lang = getStringValueFromMap("lang", props, "")
-			method = getStringValueFromMap("method", props, "")
-
-			refresh = false
-
-			if _, ok = props["refresh"]; ok {
-				refresh, _ = props["refresh"].(bool)
-			}
-
-			filePath = getPlaybackFileString(c, typeFile, name, refresh, false, lang, method)
-
-		} else if _, ok = props["files"]; ok {
-			if files, ok = getArrayFromMap(props["files"]); ok {
-				for _, file := range files {
-					name = getStringValueFromMap("name", file, "")
-					typeFile = getStringValueFromMap("type", file, "")
-					lang = getStringValueFromMap("lang", file, "")
-					method = getStringValueFromMap("method", file, "")
-					refresh = false
-					if _, ok = props["refresh"]; ok {
-						refresh, _ = props["refresh"].(bool)
-					}
-					filePath += "!" + getPlaybackFileString(c, typeFile, name, refresh, false, lang, method)
-				}
-				if len(filePath) > 0 {
-					filePath = "file_string://" + filePath[1:]
-				}
-			}
-		}
+		filePath = playbackGetFileString(c, props)
 
 		if filePath != "" {
 
@@ -65,11 +32,51 @@ func Playback(c *Call, args interface{}) error {
 				return playbackSinge(c, filePath, getStringValueFromMap("broadcast", props, ""), terminator)
 			}
 		}
-
 	}
 
 	logger.Error("Call %s playback bad arguments %s", c.Uuid, args)
 	return nil
+}
+
+func playbackGetFileString(c *Call, props map[string]interface{}) (filePath string) {
+	var name, typeFile, lang, method string
+	var ok, refresh bool
+	var files models.ArrayApplications
+
+	name = getStringValueFromMap("name", props, "")
+	if name != "" {
+		typeFile = getStringValueFromMap("type", props, "")
+		lang = getStringValueFromMap("lang", props, "")
+		method = getStringValueFromMap("method", props, "")
+
+		refresh = false
+
+		if _, ok = props["refresh"]; ok {
+			refresh, _ = props["refresh"].(bool)
+		}
+
+		filePath = getPlaybackFileString(c, typeFile, name, refresh, false, lang, method)
+
+	} else if _, ok = props["files"]; ok {
+		if files, ok = getArrayFromMap(props["files"]); ok {
+			for _, file := range files {
+				name = getStringValueFromMap("name", file, "")
+				typeFile = getStringValueFromMap("type", file, "")
+				lang = getStringValueFromMap("lang", file, "")
+				method = getStringValueFromMap("method", file, "")
+				refresh = false
+				if _, ok = props["refresh"]; ok {
+					refresh, _ = props["refresh"].(bool)
+				}
+				filePath += "!" + getPlaybackFileString(c, typeFile, name, refresh, false, lang, method)
+			}
+			if len(filePath) > 0 {
+				filePath = "file_string://" + filePath[1:]
+			}
+		}
+	}
+
+	return
 }
 
 func playbackGetDigits(call *Call, getDigitProps map[string]interface{}, filePath, terminator string) error {
