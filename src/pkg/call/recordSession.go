@@ -27,7 +27,7 @@ func RecordSession(c *Call, args interface{}) error {
 		minSec = "2"
 		stereo = "true"
 		bridged = "true"
-		followTransfer = "true"
+		followTransfer = "false"
 
 	case map[string]interface{}:
 		if prop, ok := args.(map[string]interface{}); ok {
@@ -46,7 +46,7 @@ func RecordSession(c *Call, args interface{}) error {
 			minSec = getStringValueFromMap("minSec", prop, "2")
 			stereo = getStringValueFromMap("stereo", prop, "true")
 			bridged = getStringValueFromMap("bridged", prop, "true")
-			followTransfer = getStringValueFromMap("followTransfer", prop, "true")
+			followTransfer = getStringValueFromMap("followTransfer", prop, "false")
 
 		} else {
 			//TODO
@@ -63,15 +63,16 @@ func RecordSession(c *Call, args interface{}) error {
 
 	fileName := "${uuid}_" + name + "." + typeFile
 
+	SetVar(c, "all:"+WEBITEL_RECORD_FILE_NAME+"="+fileName)
+	c.Conn.SndMsg("export", "record_post_process_exec_app=lua:RecordUpload.lua ${uuid} ${domain_name} "+typeFile+" "+email+
+		" "+name+" "+UrlEncoded(emailSubjectTemplate)+" "+UrlEncoded(emailTextTemplate), true, true)
+
 	if action == "start" {
 		err = multiSetVar(c, []string{
-			WEBITEL_RECORD_FILE_NAME + "=" + fileName,
 			"RECORD_MIN_SEC=" + minSec,
 			"RECORD_STEREO=" + stereo,
 			"RECORD_BRIDGE_REQ=" + bridged,
 			"recording_follow_transfer=" + followTransfer,
-			"record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} " + typeFile + " " + email +
-				" " + name + " " + UrlEncoded(emailSubjectTemplate) + " " + UrlEncoded(emailTextTemplate),
 		})
 
 		if err != nil {
