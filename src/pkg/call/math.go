@@ -29,13 +29,7 @@ func Math(c *Call, args interface{}) error {
 		fnName = getStringValueFromMap("fn", props, "random")
 
 		if _args, ok = props["data"]; ok {
-			if _, ok = _args.(string); ok {
-				for _, ch := range c.ParseString(_args.(string)) {
-					argsElem = append(argsElem, string(ch))
-				}
-			} else {
-				argsElem = parseArgsToArrayInterface(c, _args)
-			}
+			argsElem = parseArgsToArrayInterface(c, _args)
 		} else {
 			argsElem = []interface{}{}
 		}
