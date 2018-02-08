@@ -281,6 +281,7 @@ func (c *Call) ParseString(args string) string {
 			strings.HasPrefix(varName, "${create_uuid(") ||
 			strings.HasPrefix(varName, "${sip_authorized}") ||
 			strings.HasPrefix(varName, "${verto_contact(") ||
+			strings.HasPrefix(varName, "${expr(") ||
 			strings.HasPrefix(varName, "${sofia_contact(") { //TODO
 			return varName
 		}
