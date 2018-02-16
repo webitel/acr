@@ -109,9 +109,13 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		}
 	}
 
+	dialString += "<domain_name="+ c.Domain
+
 	if tmpArr, ok = getArrayStringFromMap("global", props); ok && len(tmpArr) > 0 {
-		dialString += "<" + strings.Join(validateArrayVariables(tmpArr), ",") + ">"
+		dialString += "," + strings.Join(validateArrayVariables(tmpArr), ",")
 	}
+
+	dialString += ">"
 
 	dialString += "{" + "domain_name=" + c.Domain
 
