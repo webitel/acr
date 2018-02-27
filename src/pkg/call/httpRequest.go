@@ -49,7 +49,7 @@ func HttpRequest(c *Call, args interface{}) error {
 		}
 	}
 
-	urlParam, err = url.Parse(uri)
+	urlParam, err = url.Parse(strings.Trim(uri, " "))
 	if err != nil {
 		logger.Error("Call %s httpRequest parse url error: %s", c.Uuid, err.Error())
 		return nil
