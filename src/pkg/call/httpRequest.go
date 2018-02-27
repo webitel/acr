@@ -40,20 +40,19 @@ func HttpRequest(c *Call, args interface{}) error {
 		return nil
 	}
 
-	urlParam, err = url.Parse(uri)
-	if err != nil {
-		logger.Error("Call %s httpRequest parse url error: %s", c.Uuid, err.Error())
-		return nil
-	}
-
 	if _, ok = props["path"]; ok {
 		if _, ok = props["path"].(map[string]interface{}); ok {
 			for k, v = range props["path"].(map[string]interface{}) {
 				str = parseMapValue(c, v)
-				urlParam.Path = strings.Replace(urlParam.Path, "${"+k+"}", str, -1)
-				urlParam.RawQuery = strings.Replace(urlParam.RawQuery, "${"+k+"}", str, -1)
+				uri = strings.Replace(uri, "${"+k+"}", str, -1)
 			}
 		}
+	}
+
+	urlParam, err = url.Parse(uri)
+	if err != nil {
+		logger.Error("Call %s httpRequest parse url error: %s", c.Uuid, err.Error())
+		return nil
 	}
 
 	if _, ok = props["headers"]; ok {
