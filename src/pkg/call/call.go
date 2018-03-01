@@ -46,6 +46,7 @@ type IBridge interface {
 	ExistsMediaFile(name, typeFile, domainName string) bool
 	ExistsDialer(name, domain string) bool
 	ExistsQueue(name, domain string) bool
+	FindUuidByPresence(presence string) (string)
 }
 
 var applications Applications

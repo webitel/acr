@@ -6,6 +6,7 @@ package call
 
 import (
 	"github.com/webitel/acr/src/pkg/logger"
+	"fmt"
 )
 
 //todo need test spy=false
@@ -35,43 +36,31 @@ func Eavesdrop(c *Call, args interface{}) error {
 			return err
 		}
 
-		if user == "all" {
-			err = SetVar(c, "eavesdrop_require_group="+c.Domain)
-			if err != nil {
-				logger.Error("Call %s eavesdrop set eavesdrop_require_group error: %v", c.Uuid, err.Error())
-				return err
-			}
-
-			_, err = c.SndMsg("eavesdrop", c.Domain, true, true)
-			if err != nil {
-				logger.Error("Call %s all eavesdrop error: %s", c.Uuid, err.Error())
-				return err
-			}
-
-		} else {
-			user = c.ParseString(user)
-			if _, ok = props["spy"]; ok {
-				if _, ok = props["spy"].(bool); ok {
-					if props["spy"].(bool) {
-						ok = true
-					} else {
-						ok = false
-					}
+		user = c.ParseString(user)
+		if _, ok = props["spy"]; ok {
+			if _, ok = props["spy"].(bool); ok {
+				if props["spy"].(bool) {
+					ok = true
+				} else {
+					ok = false
 				}
 			}
-			if ok {
-				app = "userspy"
-				data = user + "@${domain_name}"
-			} else {
-				app = "eavesdrop"
-				data = "${hash(select/spymap/${domain_name}-" + user + ")}"
-			}
+		}
 
-			_, err = c.SndMsg(app, data, true, true)
-			if err != nil {
-				logger.Error("Call %s %s error: %s", c.Uuid, app, err.Error())
-				return err
-			}
+		user = fmt.Sprintf("%s@%s", user, c.Domain)
+
+		if ok {
+			app = "userspy"
+			data = fmt.Sprintf("%s %s", user, c.acr.FindUuidByPresence(user))
+		} else {
+			app = "eavesdrop"
+			data = c.acr.FindUuidByPresence(user)
+		}
+
+		_, err = c.SndMsg(app, data, true, true)
+		if err != nil {
+			logger.Error("Call %s %s error: %s", c.Uuid, app, err.Error())
+			return err
 		}
 
 	} else {

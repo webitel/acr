@@ -135,6 +135,10 @@ func (a *ACR) ExistsQueue(name, domain string) bool {
 	return a.DB.ExistsQueue(name, domain)
 }
 
+func (a *ACR) FindUuidByPresence(presence string) (string)   {
+	return a.DB.FindUuidByPresence (presence)
+}
+
 func (a *ACR) addConnection(uuid string) {
 	atomic.AddInt32(&a.Count, 1)
 	logger.Debug("New connection %s, all %d", uuid, a.Count)
