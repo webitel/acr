@@ -41,7 +41,8 @@
     "api_hangup_hook",
     "api_reporting_hook",
     "record_post_process_exec_api",
-    "session_in_hangup_hook"
+    "session_in_hangup_hook",
+    "domain_name"
   ],
   "broker": {
     "enable": true,

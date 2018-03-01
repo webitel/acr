@@ -13,19 +13,10 @@ import (
 
 func defaultContext(a *ACR, c *esl.SConn, destinationNumber string) {
 	domainName := c.ChannelData.Header.Get("variable_domain_name")
-	callerIdNumber := c.ChannelData.Header.Get("Channel-Caller-ID-Number")
 
 	_, err := c.SndMsg("unset", "sip_h_call", false, false)
 	if err != nil {
 		logger.Error("Call %s bad unset sip_h_call: %s", c.Uuid, err.Error())
-	}
-
-	//TODO hash bad performance over 150cps
-	if callerIdNumber != "" {
-		_, err = c.SndMsg("hash", "insert/spymap/${domain_name}-"+callerIdNumber+"/${uuid}", false, false)
-		if err != nil {
-			logger.Error("Call %s bad hash spymap: ", c.Uuid, err.Error())
-		}
 	}
 
 	cf := models.CallFlow{}
@@ -77,7 +68,7 @@ func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.Cal
 			logger.Debug("Call %s set timezone %s", c.Uuid, cf.Timezone)
 		}
 	}
-	setupPickupParameters(c, cf.Number, cf.Domain)
+
 	a.CreateCall(destinationNumber, c, cf, call.CONTEXT_DEFAULT)
 }
 
@@ -93,24 +84,4 @@ func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFl
 	}
 
 	a.CreateCall(destinationNumber, c, cf, call.CONTEXT_DEFAULT)
-}
-
-func setupPickupParameters(c *esl.SConn, userId string, domainName string) {
-	_, err := c.SndMsg("export", "dialed_extension="+userId, false, false)
-	if err != nil {
-		logger.Error("Bad call %s export dialed_extension: %s", c.Uuid, err.Error())
-	}
-	//TODO hash bad performance over 150cps
-	_, err = c.SndMsg("hash", "insert/"+domainName+"-call_return/"+userId+"/${caller_id_number}", false, false)
-	if err != nil {
-		logger.Error("Bad call %s hash call_return: %s", c.Uuid, err.Error())
-	}
-	_, err = c.SndMsg("hash", "insert/"+domainName+"-last_dial_ext/"+userId+"/${uuid}", false, false)
-	if err != nil {
-		logger.Error("Bad call %s hash last_dial_ext: %s", c.Uuid, err.Error())
-	}
-	_, err = c.SndMsg("hash", "insert/"+domainName+"-last_dial_ext/global/${uuid}", false, false)
-	if err != nil {
-		logger.Error("Bad call %s hash last_dial_ext/global: %s", c.Uuid, err.Error())
-	}
 }

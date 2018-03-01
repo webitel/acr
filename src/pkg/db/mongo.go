@@ -53,7 +53,7 @@ func (db *DB) connectToPg() {
 
 	pg, err := gorm.Open("postgres", dbInfo)
 	if err != nil {
-		logger.Debug("Connect to PG %s error: ", dbInfo, err.Error())
+		logger.Debug("Connect to PG %s error: %s", dbInfo, err.Error())
 		time.Sleep(time.Second)
 		db.connectToPg()
 		return
