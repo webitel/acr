@@ -54,7 +54,7 @@ func RecordFile(c *Call, args interface{}) error {
 
 	vars := []string{
 		"playback_terminators=" + terminators,
-		"record_post_process_exec_api=luarun:RecordUpload.lua ${uuid} ${domain_name} " + typeFile + " " + email + " " + name +
+		"record_post_process_exec_api=luarun:RecordFileUpload.lua ${uuid} ${domain_name} " + typeFile + " " + email + " " + name +
 			" " + UrlEncoded(emailSubjectTemplate) + " " + UrlEncoded(emailTextTemplate),
 	}
 	err = multiSetVar(c, vars)
@@ -64,7 +64,7 @@ func RecordFile(c *Call, args interface{}) error {
 		return err
 	}
 
-	_, err = c.SndMsg("record", "/recordings/${uuid}_"+name+"."+typeFile+" "+maxSec+" "+silenceThresh+" "+silenceHits, true, false)
+	_, err = c.SndMsg("record", "/recordings/${uuid}_"+name+"."+typeFile+" "+maxSec+" "+silenceThresh+" "+silenceHits, true, true)
 	if err != nil {
 		logger.Error("Call %s record error: %s", c.Uuid, err.Error())
 		return err
