@@ -176,21 +176,23 @@ func addBridgeEndpoint(c *Call, endpoint map[string]interface{}) string {
 			getStringValueFromMap("domainName", endpoint, "") + "^" + getStringValueFromMap("dialString", endpoint, "")
 
 	case "device":
-		dialString += "[presence_id=" + getStringValueFromMap("name", endpoint, "_undef") + "@${domain_name}"
-		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
-			dialString += "," + strings.Join(validateArrayVariables(tmpArr), ",")
-		}
-
-		dialString += "]user/" + getStringValueFromMap("name", endpoint, "_undef") + "@${domain_name}"
-
-	case "user":
-		dialString += "[presence_id=" + getStringValueFromMap("name", endpoint, "_undef") + "@" + getStringValueFromMap("domainName", endpoint, "${domain_name}")
+		userId := getStringValueFromMap("name", endpoint, "_undef")
+		dialString += fmt.Sprintf("[dialed_user='%s',dialed_domain='%s',presence_id='%s@%s'", userId, c.Domain, userId, c.Domain)
 		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
 			dialString += "," + strings.Join(validateArrayVariables(tmpArr), ",") + "]"
 		}
 
-		dialString += "]user/" + getStringValueFromMap("name", endpoint, "_undef_") + "@" +
-			getStringValueFromMap("domainName", endpoint, "${domain_name}")
+		dialString += fmt.Sprintf("]user/%s@%s", userId, c.Domain)
+
+	case "user":
+		userId := getStringValueFromMap("name", endpoint, "_undef")
+		domainName := getStringValueFromMap("domainName", endpoint, "${domain_name}")
+		dialString += fmt.Sprintf("[dialed_user='%s',dialed_domain='%s',presence_id='%s@%s'", userId, domainName, userId, domainName)
+		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
+			dialString += "," + strings.Join(validateArrayVariables(tmpArr), ",") + "]"
+		}
+
+		dialString += fmt.Sprintf("]user/%s@%s", userId, domainName)
 	}
 	return dialString
 }
