@@ -104,13 +104,13 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf models.ArrayApplications) {
 				condApp := NewConditionApplication(id, configFlags, root)
 				if tmp, ok = tmpMap["then"]; ok {
 					if _, ok = tmp.([]interface{}); ok {
-						i.parseCallFlowArray(condApp._then, arrInterfaceToArrayApplication(tmp.([]interface{})))
+						i.parseCallFlowArray(condApp._then, ArrInterfaceToArrayApplication(tmp.([]interface{})))
 					}
 				}
 
 				if tmp, ok = tmpMap["else"]; ok {
 					if _, ok = tmp.([]interface{}); ok {
-						i.parseCallFlowArray(condApp._else, arrInterfaceToArrayApplication(tmp.([]interface{})))
+						i.parseCallFlowArray(condApp._else, ArrInterfaceToArrayApplication(tmp.([]interface{})))
 					}
 				}
 
@@ -130,7 +130,7 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf models.ArrayApplications) {
 					if _, ok = tmpMap["name"].(string); ok {
 						if _, ok = tmpMap["actions"]; ok {
 							if _, ok = tmpMap["actions"].([]interface{}); ok {
-								i.Functions[tmpMap["name"].(string)] = NewIterator(arrInterfaceToArrayApplication(tmpMap["actions"].([]interface{})), i.Call)
+								i.Functions[tmpMap["name"].(string)] = NewIterator(ArrInterfaceToArrayApplication(tmpMap["actions"].([]interface{})), i.Call)
 								continue
 							}
 						}
@@ -154,7 +154,7 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf models.ArrayApplications) {
 						for caseName, caseValue := range tmpMap["case"].(map[string]interface{}) {
 							if _, ok = caseValue.([]interface{}); ok {
 								switchApp.cases[caseName] = NewNode(root)
-								i.parseCallFlowArray(switchApp.cases[caseName], arrInterfaceToArrayApplication(caseValue.([]interface{})))
+								i.parseCallFlowArray(switchApp.cases[caseName], ArrInterfaceToArrayApplication(caseValue.([]interface{})))
 							}
 						}
 					}
@@ -236,7 +236,7 @@ func parseApp(m models.Application, c Call) (appName string, args interface{}, a
 	return
 }
 
-func arrInterfaceToArrayApplication(src []interface{}) models.ArrayApplications {
+func ArrInterfaceToArrayApplication(src []interface{}) models.ArrayApplications {
 	res := make(models.ArrayApplications, len(src))
 	var ok bool
 	for k, v := range src {

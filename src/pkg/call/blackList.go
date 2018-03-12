@@ -46,7 +46,9 @@ func BlackList(c *Call, args interface{}) error {
 
 		if count > 0 {
 			if _, ok = props["actions"]; ok {
-				actions, ok = props["actions"].(models.ArrayApplications)
+				if _, ok = props["actions"].([]interface{}); ok {
+					actions = router.ArrInterfaceToArrayApplication(props["actions"].([]interface{}))
+				}
 			}
 
 			if len(actions) == 0 {
