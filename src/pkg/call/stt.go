@@ -50,6 +50,6 @@ func STT(c *Call, args interface{}) error {
 
 	d := c.acr.AddRPCCommands(c.Uuid)
 
-	SetVar(c, varName+"="+gjson.GetBytes(d.Args, "stt.result.0.alternative.0.transcript").String())
+	SetVar(c, varName+"="+gjson.GetBytes(d.Args, "stt.results.0.alternatives.0.transcript").String())
 	return nil
 }
