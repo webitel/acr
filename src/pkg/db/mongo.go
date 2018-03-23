@@ -48,7 +48,7 @@ func (db *DB) reconnect() {
 }
 
 func (db *DB) connectToPg() {
-	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable host=%s",
+	dbInfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable host=%s application_name=ACR.v1",
 		config.Conf.Get("pg:user"), config.Conf.Get("pg:password"), config.Conf.Get("pg:dbName"), config.Conf.Get("pg:host"))
 
 	pg, err := gorm.Open("postgres", dbInfo)
