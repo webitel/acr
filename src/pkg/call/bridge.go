@@ -140,7 +140,18 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		return err
 	}
 
-	if e.Header.Get("variable_bridge_hangup_cause") == "NORMAL_CLEARING" && e.Header.Get("variable_hangup_after_bridge") == "true" {
+	//TODO
+	if e.Header.Get("variable_last_bridge_hangup_cause") == "NORMAL_CLEARING" && e.Header.Get("variable_hangup_after_bridge") == "true" {
+		c.SetBreak()
+		//return Hangup(c, "NORMAL_CLEARING")
+	}
+
+	//TODO
+	if e.Header.Get("variable_last_bridge_hangup_cause") == "ORIGINATOR_CANCEL" &&
+		e.Header.Get("variable_originate_disposition") == "ORIGINATOR_CANCEL" &&
+		e.Header.Get("variable_sip_redirect_dialstring") != "" &&
+		e.Header.Get("variable_webitel_detect_redirect") != "false" {
+		logger.Warning("Call %s detect sip redirect to %s, break this route", c.Uuid, e.Header.Get("variable_sip_redirect_dialstring"))
 		c.SetBreak()
 	}
 
@@ -191,4 +202,14 @@ func addBridgeEndpoint(c *Call, endpoint map[string]interface{}) string {
 			getStringValueFromMap("domainName", endpoint, "${domain_name}"))
 	}
 	return dialString
+}
+
+func countSipRedirectCount(headers esl.Header) (count int) {
+	for {
+		if headers.Exists(fmt.Sprintf("variable_sip_redirect_contact_%d", count)) {
+			count++
+		} else {
+			return count
+		}
+	}
 }
