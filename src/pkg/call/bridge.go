@@ -140,8 +140,8 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		return err
 	}
 
-	//TODO
-	if e.Header.Get("variable_last_bridge_hangup_cause") == "NORMAL_CLEARING" && e.Header.Get("variable_hangup_after_bridge") == "true" {
+	//TODO variable_last_bridge_hangup_cause variable_bridge_hangup_cause
+	if e.Header.Get("variable_bridge_hangup_cause") == "NORMAL_CLEARING" && e.Header.Get("variable_hangup_after_bridge") == "true" {
 		c.SetBreak()
 		//return Hangup(c, "NORMAL_CLEARING")
 	}
