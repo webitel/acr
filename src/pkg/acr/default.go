@@ -14,9 +14,9 @@ import (
 func defaultContext(a *ACR, c *esl.SConn, destinationNumber string) {
 	domainName := c.ChannelData.Header.Get("variable_domain_name")
 
-	_, err := c.SndMsg("unset", "sip_h_call", false, false)
+	_, err := c.SndMsg("unset", "sip_h_call-info", false, true)
 	if err != nil {
-		logger.Error("Call %s bad unset sip_h_call: %s", c.Uuid, err.Error())
+		logger.Error("Call %s bad unset sip_h_call-info: %s", c.Uuid, err.Error())
 	}
 
 	cf := models.CallFlow{}
