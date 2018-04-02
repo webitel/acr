@@ -7,7 +7,6 @@ package call
 import (
 	"encoding/json"
 	"errors"
-	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
 	"github.com/webitel/acr/src/pkg/router"
@@ -16,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"github.com/webitel/acr/src/pkg/esl"
 )
 
 var regCompileVar *regexp.Regexp
@@ -72,7 +72,7 @@ type Call struct {
 	OnDisconnectIterator *router.Iterator
 	LocalVariables       map[string]string
 	RegExp               map[string][]string
-	Conn                 *esl.SConn
+	Conn                 *esl.Connection
 	breakCall            bool
 	debug                bool
 	debugLog             bool
@@ -323,7 +323,7 @@ func (c *Call) ValidateApp(name string) (ok bool) {
 	return
 }
 
-func MakeCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, acr IBridge, context ContextId) *Call {
+func MakeCall(destinationNumber string, c *esl.Connection, cf *models.CallFlow, acr IBridge, context ContextId) *Call {
 
 	call := &Call{
 		routeId:           cf.Id,

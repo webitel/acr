@@ -11,7 +11,7 @@ import (
 	"github.com/webitel/acr/src/pkg/models"
 )
 
-func defaultContext(a *ACR, c *esl.SConn, destinationNumber string) {
+func defaultContext(a *ACR, c *esl.Connection, destinationNumber string) {
 	domainName := c.ChannelData.Header.Get("variable_domain_name")
 
 	_, err := c.SndMsg("unset", "sip_h_call-info", false, true)
@@ -49,7 +49,7 @@ func defaultContext(a *ACR, c *esl.SConn, destinationNumber string) {
 	c.Hangup(HANGUP_NO_ROUTE_DESTINATION)
 }
 
-func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFlow) {
+func internalCall(destinationNumber string, a *ACR, c *esl.Connection, cf *models.CallFlow) {
 	logger.Debug("Call %s is internal", c.Uuid)
 	var err error
 
@@ -72,7 +72,7 @@ func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.Cal
 	a.CreateCall(destinationNumber, c, cf, call.CONTEXT_DEFAULT)
 }
 
-func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFlow) {
+func worldCall(destinationNumber string, a *ACR, c *esl.Connection, cf *models.CallFlow) {
 	var err error
 	logger.Debug("Call %s is default context %s %s", c.Uuid, cf.Name, cf.Number)
 

@@ -14,7 +14,7 @@ import (
 
 var defaultPublicRoute = config.Conf.Get("defaultPublicRout")
 
-func publicContext(a *ACR, c *esl.SConn, destinationNumber string) {
+func publicContext(a *ACR, c *esl.Connection, destinationNumber string) {
 
 	var cf models.CallFlow
 	var def string
@@ -56,7 +56,7 @@ func publicContext(a *ACR, c *esl.SConn, destinationNumber string) {
 	c.Hangup(HANGUP_NO_ROUTE_DESTINATION)
 }
 
-func createPublicCall(a *ACR, c *esl.SConn, destinationNumber string, cf *models.CallFlow) {
+func createPublicCall(a *ACR, c *esl.Connection, destinationNumber string, cf *models.CallFlow) {
 	var err error
 	if c.ChannelData.Header.Get("variable_webitel_direction") == "" {
 		_, err = c.SndMsg("set", "webitel_direction=inbound", false, false)

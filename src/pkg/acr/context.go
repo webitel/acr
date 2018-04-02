@@ -14,7 +14,7 @@ const DEFAULT_CONTEXT = "default"
 const DIALER_CONTEXT = "dialer"
 const PRIVATE_CONTEXT = "private"
 
-func (a *ACR) routeContext(c *esl.SConn) {
+func (a *ACR) routeContext(c *esl.Connection) {
 	setSoundLang(c)
 	//TODO move destination number to socket
 	dialerId := c.ChannelData.Header.Get("variable_dlr_queue")
@@ -45,7 +45,7 @@ func (a *ACR) routeContext(c *esl.SConn) {
 	}
 }
 
-func setSoundLang(c *esl.SConn) {
+func setSoundLang(c *esl.Connection) {
 	var e error
 	if c.ChannelData.Header.Get("variable_default_language") == "ru" {
 		_, e = c.SndMsg("set", "sound_prefix=/$${sounds_dir}/ru/RU/elena", true, false)

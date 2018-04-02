@@ -27,7 +27,7 @@ func transform(data []map[string]interface{}) models.ArrayApplications {
 
 //originate [^^:domain_name=10.10.10.144:ignore_early_media=true:loopback_bowout=false:dlr_queue=58bd30b0a01699316e2d5ae2]loopback/12312321312312312/default &park()
 
-func dialerContext(a *ACR, c *esl.SConn, destinationNumber, dialerId string) {
+func dialerContext(a *ACR, c *esl.Connection, destinationNumber, dialerId string) {
 	var dialer dialerCallFlowType
 	var domainName string
 	var answerTime int

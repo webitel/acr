@@ -6,7 +6,7 @@ import (
 	"github.com/webitel/acr/src/pkg/logger"
 )
 
-func privateContext(a *ACR, c *esl.SConn, uuid string) {
+func privateContext(a *ACR, c *esl.Connection, uuid string) {
 	callFlow, err := a.DB.GetPrivateCallFlow(uuid, c.ChannelData.Header.Get("variable_domain_name"))
 	if err != nil {
 		logger.Error("Call %s find callflow db error: %s", c.Uuid, err.Error())

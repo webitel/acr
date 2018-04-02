@@ -21,14 +21,14 @@ type ACR struct {
 	DB         *db.DB
 	GlobalVars map[string]map[string]string
 	Count      int32
-	calls      map[*esl.SConn]*call.Call
+	calls      map[*esl.Connection]*call.Call
 	mx         *sync.Mutex
 	rpc        *rpc.RPC
 }
 
 var acr *ACR
 
-func (a *ACR) CreateCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, context call.ContextId) {
+func (a *ACR) CreateCall(destinationNumber string, c *esl.Connection, cf *models.CallFlow, context call.ContextId) {
 	a.mx.Lock()
 	defer a.mx.Unlock()
 	a.calls[c] = call.MakeCall(destinationNumber, c, cf, a, context)
@@ -43,7 +43,7 @@ func (a *ACR) GetGlobalVarBySwitchId(switchId, varName string) (val string, ok b
 	return
 }
 
-func (a *ACR) initGlobalVar(c *esl.SConn) {
+func (a *ACR) initGlobalVar(c *esl.Connection) {
 	if c.SwitchUuid == "" {
 		logger.Error("Bad connection 'Core-UUID': ", c.ChannelData)
 		return
@@ -165,13 +165,13 @@ func (a *ACR) FireRPCEventToStorage(rk string, option rpc.PublishingOption) erro
 	return a.rpc.Fire("Storage.Commands", rk, option)
 }
 
-func onConnect(c *esl.SConn) {
+func onConnect(c *esl.Connection) {
 	acr.addConnection(c.Uuid)
 	acr.initGlobalVar(c)
 	acr.routeContext(c)
 }
 
-func onDisconnect(con *esl.SConn) {
+func onDisconnect(con *esl.Connection) {
 	acr.rpc.RemoveCommands(con.Uuid, rpc.ApiT{})
 	acr.mx.Lock()
 	defer acr.mx.Unlock()
@@ -196,7 +196,7 @@ func New() {
 
 	acr = &ACR{
 		DB:    db.NewDB(config.Conf.Get("mongodb:uri")),
-		calls: make(map[*esl.SConn]*call.Call),
+		calls: make(map[*esl.Connection]*call.Call),
 		rpc:   rpc.New(),
 	}
 	acr.mx = &sync.Mutex{}
