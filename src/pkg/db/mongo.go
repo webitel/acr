@@ -71,10 +71,11 @@ func NewDB(uri string) *DB {
 		logger.Error("Connect to %v mongo error: %v", config.Conf.Get("mongodb:uri"), err.Error())
 		return NewDB(uri)
 	}
-	logger.Debug("Connect to mongo success")
+
+	logger.Debug("Connect to mongo: %s success", config.Conf.Get("mongodb:uri"))
 	db := &DB{
 		session: session,
-		db:      session.DB("webitel"),
+		db:      session.DB(""),
 	}
 	db.connectToPg()
 	return db
