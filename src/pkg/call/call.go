@@ -47,6 +47,8 @@ type IBridge interface {
 	ExistsDialer(name, domain string) bool
 	ExistsQueue(name, domain string) bool
 	FindUuidByPresence(presence string) (string)
+	CountAvailableAgent(queueName string) (count int)
+	CountAvailableMembers(queueName string) (count int)
 }
 
 var applications Applications
@@ -144,6 +146,7 @@ func init() {
 		"sendEvent":     SendEvent,       //50
 		"originate":     Originate,       //51
 		"exists":        Exists,          //52
+		"queueStatus":   QueueStatus,     //53
 		//"stream":        Stream,
 	}
 

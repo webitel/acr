@@ -139,6 +139,14 @@ func (a *ACR) FindUuidByPresence(presence string) (string)   {
 	return a.DB.FindUuidByPresence (presence)
 }
 
+func (a *ACR) CountAvailableAgent(queueName string) (count int)  {
+	return a.DB.CountAvailableAgent(queueName)
+}
+
+func (a *ACR) CountAvailableMembers(queueName string) (count int)  {
+	return a.DB.CountAvailableMembers(queueName)
+}
+
 func (a *ACR) addConnection(uuid string) {
 	atomic.AddInt32(&a.Count, 1)
 	logger.Debug("New connection %s, all %d", uuid, a.Count)
