@@ -9,8 +9,6 @@ env:
 
 before_install:
   - if [ ! -z "$TRAVIS_TAG" ]; then sed -i 's/ENV VERSION/ENV VERSION '${TRAVIS_TAG}'#'${TRAVIS_BUILD_NUMBER}'-sha1:'${TRAVIS_COMMIT:0:7}'/g' Dockerfile; else sed -i 's/ENV VERSION/ENV VERSION master#'${TRAVIS_BUILD_NUMBER}'-sha1:'${TRAVIS_COMMIT:0:7}'/g' Dockerfile; fi
-  - sudo apt-get update && sudo apt-get -y --quiet -o Dpkg::Options::="--force-confdef"
-    -o Dpkg::Options::="--force-confold" install docker-ce
 
 install:
   - docker login --username=$DOCKER_HUB_USERNAME --password=$DOCKER_HUB_PASSWORD
