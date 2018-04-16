@@ -19,7 +19,6 @@ func publicContext(a *ACR, c *esl.SConn, destinationNumber string) {
 	var cf models.CallFlow
 	var def string
 	var err error
-	var ok bool
 
 	cf, err = a.DB.FindPublic(destinationNumber)
 	if err != nil {
@@ -36,7 +35,7 @@ func publicContext(a *ACR, c *esl.SConn, destinationNumber string) {
 	if defaultPublicRoute != "" && defaultPublicRoute != "<nil>" {
 		def = defaultPublicRoute
 	} else {
-		def, ok = a.GetGlobalVarBySwitchId(c.ChannelData.Header.Get("Core-UUID"), "webitel_default_public_route")
+		def, _ = a.GetGlobalVarBySwitchId(c.ChannelData.Header.Get("Core-UUID"), "webitel_default_public_route")
 	}
 
 	if def != "" {
@@ -46,7 +45,7 @@ func publicContext(a *ACR, c *esl.SConn, destinationNumber string) {
 			c.Hangup(HANGUP_NORMAL_TEMPORARY_FAILURE)
 			return
 		}
-		if ok {
+		if cf.Id != 0 {
 			createPublicCall(a, c, def, &cf)
 			return
 		}
