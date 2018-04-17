@@ -12,9 +12,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"fmt"
+	"sync/atomic"
 )
-
-
 
 
 func main() {
@@ -22,12 +21,18 @@ func main() {
 		setDebug()
 	}
 
+	var i int64 = 0
+
 	a := func(connection fs.Connection) {
-		fmt.Println("OK a", connection)
-		connection.Hangup("USER_BUSY")
+		atomic.AddInt64(&i, 1)
+		connection.Execute("hangup", "USER_BUSY")
 	}
 	b := func(connection fs.Connection) {
-		fmt.Println("OK b", connection)
+		atomic.AddInt64(&i, -1)
+		//if connection.GetVar("Event-Name") != "CHANNEL_HANGUP_COMPLETE" {
+		//	panic(connection.GetVar("Event-Name"))
+		//}
+		fmt.Println("count: ", i)
 	}
 	s := fs.NewEsl(":10030" ,a ,b)
 	s.Listen()

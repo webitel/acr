@@ -15,6 +15,7 @@ type Server struct {
 	addr string
 	onConnect handler
 	onDisconnect handler
+	count int64
 }
 
 func (s *Server) Listen()  {
@@ -38,25 +39,40 @@ func (s *Server) handleConnection(connection *esl.Connection)  {
 		logger.Error("subscribe: %s", err.Error())
 		return
 	}
-	_, err = connection.Send("linger 10")
+
+	_, err = connection.Send("filter Event-Name CHANNEL_HANGUP_COMPLETE")
+	if err != nil {
+		logger.Error("CHANNEL_HANGUP_COMPLETE: %s", err.Error())
+		return
+	}
+
+	_, err = connection.Send("linger")
 	if err != nil {
 		logger.Error("linger: %s", err.Error())
 		return
 	}
 
-	con.context = con.channelData.Header["Channel-Context"]
+	con.context = con.channelData.Get("Channel-Context")
+	con.uuid = con.channelData.Get("Unique-Id")
 
 	go s.onConnect(con)
 
-	var ev *esl.Event
 	for {
-		ev, err = connection.ReadEvent()
+		con.Lock()
+		con.ev, err = connection.ReadEvent()
+		con.Unlock()
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
 		}
 
-		if ev.Header["Event-Name"] == "CHANNEL_HANGUP_COMPLETE" {
+		if con.ev.Header["Event-Name"] == "CHANNEL_EXECUTE_COMPLETE" {
+			//fmt.Println("OK: ", con.ev.Get("Application-Uuid"), con.ev.Get("Application-Data"))
+			//con.ev.PrettyPrint()
+			continue
+		}
+
+		if con.ev.Header["Event-Name"] == "CHANNEL_HANGUP_COMPLETE" {
 			//ev.PrettyPrint()
 			break
 		}

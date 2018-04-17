@@ -9,6 +9,7 @@ type Server interface {
 }
 
 type Connection interface {
+	GetVar(name string) (string)
 	Hangup(cause string) (err error)
 	Execute(app, args string) (err error)
 }
