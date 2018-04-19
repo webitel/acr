@@ -34,19 +34,13 @@ func (s *Server) handleConnection(connection *esl.Connection)  {
 		logger.Error("connect: %s", err.Error())
 		return
 	}
-	_, err = connection.Send("myevents")
+	_, err = connection.Send("events CHANNEL_HANGUP_COMPLETE")
 	if err != nil {
 		logger.Error("subscribe: %s", err.Error())
 		return
 	}
 
-	_, err = connection.Send("filter Event-Name CHANNEL_HANGUP_COMPLETE")
-	if err != nil {
-		logger.Error("CHANNEL_HANGUP_COMPLETE: %s", err.Error())
-		return
-	}
-
-	_, err = connection.Send("linger")
+	_, err = connection.Send("linger 10")
 	if err != nil {
 		logger.Error("linger: %s", err.Error())
 		return
@@ -57,7 +51,9 @@ func (s *Server) handleConnection(connection *esl.Connection)  {
 
 	go s.onConnect(con)
 
-	for {
+	var loop  = true
+
+	for loop {
 		con.Lock()
 		con.ev, err = connection.ReadEvent()
 		con.Unlock()
@@ -66,15 +62,11 @@ func (s *Server) handleConnection(connection *esl.Connection)  {
 			continue
 		}
 
-		if con.ev.Header["Event-Name"] == "CHANNEL_EXECUTE_COMPLETE" {
-			//fmt.Println("OK: ", con.ev.Get("Application-Uuid"), con.ev.Get("Application-Data"))
-			//con.ev.PrettyPrint()
-			continue
-		}
-
-		if con.ev.Header["Event-Name"] == "CHANNEL_HANGUP_COMPLETE" {
-			//ev.PrettyPrint()
-			break
+		switch con.ev.Header["Event-Name"] {
+		case "CHANNEL_EXECUTE_COMPLETE":
+			fmt.Println("OK: ", con.ev.Get("Application-Uuid"), con.ev.Get("Application-Data"))
+		case "CHANNEL_HANGUP_COMPLETE":
+			loop = false
 		}
 	}
 	connection.Send("exit")
