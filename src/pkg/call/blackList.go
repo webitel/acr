@@ -60,10 +60,6 @@ func BlackList(c *Call, args interface{}) error {
 						"break": true,
 					},
 				}
-			} else {
-				actions = append(actions, map[string]interface{}{
-					"break": true,
-				})
 			}
 
 			iterator := router.NewIterator(actions, c)
