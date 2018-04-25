@@ -59,6 +59,10 @@ func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.Cal
 			logger.Error("Call %s bad set webitel_direction: %s", c.Uuid, err.Error())
 		}
 	}
+	_, err = c.SndMsg("export", "nolocal:sip_redirect_context=default", false, false)
+	if err != nil {
+		logger.Error("Call %s bad export sip_redirect_context: %s", c.Uuid, err.Error())
+	}
 
 	if cf.Timezone != "" {
 		_, err = c.SndMsg("set", "timezone="+cf.Timezone, false, false)
