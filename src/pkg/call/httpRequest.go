@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"fmt"
+	"gopkg.in/xmlpath.v2"
 )
 
 func HttpRequest(c *Call, args interface{}) error {
@@ -68,8 +70,13 @@ func HttpRequest(c *Call, args interface{}) error {
 	}
 
 	if _, ok = props["data"]; ok {
-		switch strings.ToLower(headers["content-type"]) {
-		case "application/x-www-form-urlencoded":
+
+		if strings.Index(headers["content-type"],"text/xml") > -1 || strings.Index(headers["content-type"],"application/soap+xml") > -1 {
+			switch props["data"].(type) {
+			case string:
+				body = []byte(c.ParseString(getStringValueFromMap("data", props, "")))
+			}
+		} else if strings.HasPrefix(headers["content-type"],"application/x-www-form-urlencoded") {
 			str = ""
 			switch props["data"].(type) {
 			case map[string]interface{}:
@@ -86,13 +93,12 @@ func HttpRequest(c *Call, args interface{}) error {
 			if len(str) > 0 {
 				body = []byte(strings.Replace(c.ParseString(str), " ", "+", -1))
 			}
-
-			//case "application/json":
-		default:
-
+		} else {
+			//JSON default
 			body, err = json.Marshal(props["data"])
 			if err != nil {
 				logger.Error("Call %s httpRequest marshal data error: %s", c.Uuid, err.Error())
+				return nil
 			} else {
 				body = []byte(c.ParseString(string(body)))
 			}
@@ -162,7 +168,42 @@ func HttpRequest(c *Call, args interface{}) error {
 				}
 			}
 		}
+	} else if strings.Index(str, "text/xml") > -1 {
+		var xml *xmlpath.Node
+		var path *xmlpath.Path
+
+		xml, err = xmlpath.Parse(res.Body)
+		if err != nil {
+			logger.Error("Call %s httpRequest read XML error: %s", c.Uuid, err.Error())
+			return nil
+		}
+
+		for k, v = range props["exportVariables"].(map[string]interface{}) {
+			if str, ok = v.(string); ok {
+				path, err = xmlpath.Compile(str)
+				if err != nil {
+					logger.Error("Call %s httpRequest skip xml path %s by error: %s", c.Uuid, str, err.Error())
+					continue
+				}
+
+				if str, ok = path.String(xml); ok {
+					err = SetVar(c, "all:"+k+"="+str)
+					if err != nil {
+						logger.Error("Call %s httpRequest setVat error: %s", c.Uuid, err.Error())
+					}
+				} else {
+					logger.Debug("Call %s httpRequest not found path %s", c.Uuid, str)
+				}
+			}
+		}
+
 	} else {
+		body, err = ioutil.ReadAll(res.Body)
+		if err != nil {
+			logger.Error("Call %s httpRequest read response error: %s", c.Uuid, err.Error())
+			return nil
+		}
+		fmt.Println(string(body))
 		logger.Warning("Call %s httpRequest no support parse content-type %s", c.Uuid, str)
 	}
 
