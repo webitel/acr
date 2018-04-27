@@ -172,6 +172,11 @@ func HttpRequest(c *Call, args interface{}) error {
 		var xml *xmlpath.Node
 		var path *xmlpath.Path
 
+		if _, ok = props["exportVariables"]; !ok {
+			logger.Debug("Call %s httpRequest no exportVariables", c.Uuid)
+			return nil
+		}
+
 		xml, err = xmlpath.Parse(res.Body)
 		if err != nil {
 			logger.Error("Call %s httpRequest read XML error: %s", c.Uuid, err.Error())
