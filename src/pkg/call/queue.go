@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"fmt"
 )
 
 var validQueueName = regexp.MustCompile(`^[a-zA-Z0-9+_-]+$`)
@@ -63,6 +64,26 @@ func Queue(c *Call, args interface{}) error {
 					"var": varName,
 				})
 			}(startPositionVarName)
+		}
+
+		if transferAfterBridge := getStringValueFromMap("transferAfterBridge", props, ""); transferAfterBridge != "" {
+			transferAfterBridge := strings.SplitN(transferAfterBridge, ":", 2)
+			var num = ""
+			var profile = ""
+
+			if len(transferAfterBridge) == 2 {
+				num = transferAfterBridge[1]
+				profile = transferAfterBridge[0]
+			} else {
+				num = transferAfterBridge[0]
+				profile = c.Conn.GetContextName()
+			}
+
+			if num != "" {
+				c.SndMsg("multiset",
+					fmt.Sprintf("^^~exec_after_bridge_app=transfer~exec_after_bridge_arg='%s XML %s'", num, profile), true, false)
+			}
+
 		}
 
 		e, err := c.SndMsg("callcenter", name, true, true)
