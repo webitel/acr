@@ -56,7 +56,7 @@ var applications Applications
 type ContextId int
 
 const (
-	CONTEXT_PUBLIC ContextId = 1 << iota
+	CONTEXT_PUBLIC  ContextId = 1 << iota
 	CONTEXT_DEFAULT
 	CONTEXT_DIALER
 	CONTEXT_PRIVATE
@@ -147,6 +147,7 @@ func init() {
 		"originate":     Originate,       //51
 		"exists":        Exists,          //52
 		"queueStatus":   QueueStatus,     //53
+		"js":            JavaScript,      //54
 		//"stream":        Stream,
 	}
 
