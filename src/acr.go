@@ -25,7 +25,15 @@ func main() {
 
 	a := func(connection fs.Connection) {
 		atomic.AddInt64(&i, 1)
-		connection.Execute("hangup", "USER_BUSY")
+		e, err := connection.Execute("answer", "")
+		if err != nil {
+			panic(err)
+		}
+		if e != nil {
+			fmt.Println("ok", e.Get("Event-Name"))
+		} else {
+			panic(e)
+		}
 	}
 	b := func(connection fs.Connection) {
 		atomic.AddInt64(&i, -1)

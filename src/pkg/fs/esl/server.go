@@ -19,7 +19,8 @@ type Server struct {
 }
 
 func (s *Server) Listen()  {
-	esl.ListenAndServe(s.addr, s.handleConnection)
+	err := esl.ListenAndServe(s.addr, s.handleConnection)
+	logger.Error("Stop server: %s", err.Error())
 }
 
 func (s *Server) handleConnection(connection *esl.Connection)  {
@@ -27,6 +28,8 @@ func (s *Server) handleConnection(connection *esl.Connection)  {
 	var err error
 	con := &Connection{
 		esl:connection,
+		cbWrapper: make(map[string]chan *Event),
+		exit: make(chan bool, 1),
 	}
 
 	con.channelData, err = connection.Send("connect")
@@ -34,13 +37,19 @@ func (s *Server) handleConnection(connection *esl.Connection)  {
 		logger.Error("connect: %s", err.Error())
 		return
 	}
-	_, err = connection.Send("events CHANNEL_HANGUP_COMPLETE")
+	_, err = connection.Send("myevents")
+	if err != nil {
+		logger.Error("myevents: %s", err.Error())
+		return
+	}
+
+	_, err = connection.Send("events CHANNEL_HANGUP_COMPLETE CHANNEL_EXECUTE_COMPLETE")
 	if err != nil {
 		logger.Error("subscribe: %s", err.Error())
 		return
 	}
 
-	_, err = connection.Send("linger 10")
+	_, err = connection.Send("linger 30")
 	if err != nil {
 		logger.Error("linger: %s", err.Error())
 		return
@@ -52,24 +61,28 @@ func (s *Server) handleConnection(connection *esl.Connection)  {
 	go s.onConnect(con)
 
 	var loop  = true
+	var e *esl.Event
 
 	for loop {
-		con.Lock()
-		con.ev, err = connection.ReadEvent()
-		con.Unlock()
+		e, err = connection.ReadEvent()
 		if err != nil {
 			fmt.Println(err.Error())
 			continue
 		}
 
+		if e != nil {
+			con.ev = e
+		}
+
 		switch con.ev.Header["Event-Name"] {
 		case "CHANNEL_EXECUTE_COMPLETE":
-			fmt.Println("OK: ", con.ev.Get("Application-Uuid"), con.ev.Get("Application-Data"))
+			con.OnExecuteComplete()
 		case "CHANNEL_HANGUP_COMPLETE":
 			loop = false
 		}
 	}
 	connection.Send("exit")
+	con.exit <- true
 	s.onDisconnect(con)
 }
 
