@@ -7,17 +7,21 @@ package call
 import (
 	"encoding/json"
 	"github.com/webitel/acr/src/pkg/logger"
+	"strings"
 )
 
 func ExportVars(c *Call, args interface{}) error {
 
 	if data, ok := args.([]interface{}); ok {
 		vars := make(map[string]string)
+		keys := make([]string, 0, len(data))
+
 		var v interface{}
 		var tmp string
 		for _, v = range data {
 			if tmp, ok = v.(string); ok {
 				vars[tmp] = c.Conn.ChannelData.Header.Get("variable_" + tmp)
+				keys = append(keys, tmp)
 			}
 		}
 
@@ -33,13 +37,13 @@ func ExportVars(c *Call, args interface{}) error {
 				return err
 			}
 
-			err = SetVar(c, "cc_export_vars=webitel_data")
+			err = SetVar(c, "cc_export_vars=webitel_data," +strings.Join(keys, ","))
 			if err != nil {
 				logger.Error("Call %s exportVars set cc_export_vars error: %s", err.Error())
 				return err
 			}
 
-			logger.Debug("Call %s exportVars: %s successful", c.Uuid, vars)
+			logger.Debug("Call %s exportVars: %v successful", c.Uuid, vars)
 		}
 	} else {
 		logger.Error("Call %s exportVars bad arguments %s", c.Uuid, args)
