@@ -32,6 +32,10 @@ func String(c *Call, args interface{}) error {
 
 		if fnName == "reverse" {
 			value = reverse(data)
+		} else if fnName == "charAt" {
+			if pos := getIntValueFromMap("args", props, -1); pos > -1 {
+				value = charAt(data, pos)
+			}
 		} else {
 			if _args, ok = props["args"]; ok {
 				argsElem = parseArgsToArrayInterface(c, _args)
@@ -90,4 +94,11 @@ func reverse(s string) string {
 		runes[i], runes[j] = runes[j], runes[i]
 	}
 	return string(runes)
+}
+
+func charAt(s string, pos int) string  {
+	if len(s) > pos {
+		return string(s[pos])
+	}
+	return ""
 }
