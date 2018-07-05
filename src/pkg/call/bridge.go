@@ -120,7 +120,7 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 	dialString += "}group/"
 
 	if _, ok = props["pickup"]; ok {
-		p = getStringValueFromMap("pickup", props, "")
+		p = c.ParseString(getStringValueFromMap("pickup", props, ""))
 	}
 
 	var _endpointsStr []string
