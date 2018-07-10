@@ -77,7 +77,7 @@ func SendEmail(c *Call, args interface{}) error {
 		m.SetBody("text/html", message)
 
 		d := gomail.NewDialer(conf.Host, conf.Port, conf.User, conf.Password)
-		if conf.Secure {
+		if !conf.Secure {
 			d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 		}
 
