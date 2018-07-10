@@ -131,19 +131,23 @@ func (a *ACR) ExistsDialer(name, domain string) bool {
 	return a.DB.ExistsDialer(name, domain)
 }
 
+func (a *ACR) ExistsMemberInDialer(name, domain string, member interface{}) bool {
+	return a.DB.ExistsMemberInDialer(name, domain, member)
+}
+
 func (a *ACR) ExistsQueue(name, domain string) bool {
 	return a.DB.ExistsQueue(name, domain)
 }
 
-func (a *ACR) FindUuidByPresence(presence string) (string)   {
-	return a.DB.FindUuidByPresence (presence)
+func (a *ACR) FindUuidByPresence(presence string) string {
+	return a.DB.FindUuidByPresence(presence)
 }
 
-func (a *ACR) CountAvailableAgent(queueName string) (count int)  {
+func (a *ACR) CountAvailableAgent(queueName string) (count int) {
 	return a.DB.CountAvailableAgent(queueName)
 }
 
-func (a *ACR) CountAvailableMembers(queueName string) (count int)  {
+func (a *ACR) CountAvailableMembers(queueName string) (count int) {
 	return a.DB.CountAvailableMembers(queueName)
 }
 

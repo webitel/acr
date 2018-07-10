@@ -39,7 +39,7 @@ func exists(c *Call, resource string, props map[string]interface{}) bool {
 	case "media":
 		return existsMedia(c, getStringValueFromMap("name", props, ""), getStringValueFromMap("type", props, ""))
 	case "dialer":
-		return existsDialer(c, getStringValueFromMap("name", props, ""))
+		return existsDialer(c, getStringValueFromMap("name", props, ""), props["member"])
 	case "account":
 		return ExistsAccount(c, getStringValueFromMap("name", props, ""))
 	case "queue":
@@ -56,12 +56,16 @@ func existsMedia(c *Call, name, typeFile string) bool {
 	return c.acr.ExistsMediaFile(name, typeFile, c.Domain)
 }
 
-func existsDialer(c *Call, name string) bool {
+func existsDialer(c *Call, name string, member interface{}) bool {
 	name = c.ParseString(name)
 	if name == "" {
 		return false
 	}
-	return c.acr.ExistsDialer(name, c.Domain)
+	if member == nil {
+		return c.acr.ExistsDialer(name, c.Domain)
+	} else {
+		return c.acr.ExistsMemberInDialer(name, c.Domain, member)
+	}
 }
 
 func existsQueue(c *Call, name string) bool {

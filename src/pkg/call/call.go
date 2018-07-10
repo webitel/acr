@@ -44,9 +44,10 @@ type IBridge interface {
 	InsertPrivateCallFlow(uuid, domain, timeZone string, deadline int, apps models.ArrayApplications) error
 	RemovePrivateCallFlow(uuid, domain string) error
 	ExistsMediaFile(name, typeFile, domainName string) bool
-	ExistsDialer(name, domain string) bool
+	ExistsDialer(name string, domain string) bool
+	ExistsMemberInDialer(dialer string, domain string, member interface{}) bool
 	ExistsQueue(name, domain string) bool
-	FindUuidByPresence(presence string) (string)
+	FindUuidByPresence(presence string) string
 	CountAvailableAgent(queueName string) (count int)
 	CountAvailableMembers(queueName string) (count int)
 }
@@ -56,7 +57,7 @@ var applications Applications
 type ContextId int
 
 const (
-	CONTEXT_PUBLIC  ContextId = 1 << iota
+	CONTEXT_PUBLIC ContextId = 1 << iota
 	CONTEXT_DEFAULT
 	CONTEXT_DIALER
 	CONTEXT_PRIVATE
