@@ -45,7 +45,7 @@ type IBridge interface {
 	RemovePrivateCallFlow(uuid, domain string) error
 	ExistsMediaFile(name, typeFile, domainName string) bool
 	ExistsDialer(name string, domain string) bool
-	ExistsMemberInDialer(dialer string, domain string, member interface{}) bool
+	ExistsMemberInDialer(dialer string, domain string, data []byte) bool
 	ExistsQueue(name, domain string) bool
 	FindUuidByPresence(presence string) string
 	CountAvailableAgent(queueName string) (count int)

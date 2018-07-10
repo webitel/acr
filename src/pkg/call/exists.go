@@ -2,6 +2,7 @@ package call
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/webitel/acr/src/pkg/logger"
 )
@@ -64,7 +65,11 @@ func existsDialer(c *Call, name string, member interface{}) bool {
 	if member == nil {
 		return c.acr.ExistsDialer(name, c.Domain)
 	} else {
-		return c.acr.ExistsMemberInDialer(name, c.Domain, member)
+		body, err := json.Marshal(member)
+		if err != nil {
+			return false
+		}
+		return c.acr.ExistsMemberInDialer(name, c.Domain, []byte(c.ParseString(string(body))))
 	}
 }
 

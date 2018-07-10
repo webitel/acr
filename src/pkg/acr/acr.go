@@ -131,8 +131,8 @@ func (a *ACR) ExistsDialer(name, domain string) bool {
 	return a.DB.ExistsDialer(name, domain)
 }
 
-func (a *ACR) ExistsMemberInDialer(name, domain string, member interface{}) bool {
-	return a.DB.ExistsMemberInDialer(name, domain, member)
+func (a *ACR) ExistsMemberInDialer(name, domain string, data []byte) bool {
+	return a.DB.ExistsMemberInDialer(name, domain, data)
 }
 
 func (a *ACR) ExistsQueue(name, domain string) bool {

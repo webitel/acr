@@ -61,7 +61,7 @@ type memberRequest struct {
 	Variables map[string]interface{} `json:"variables"`
 }
 
-func (db *DB) ExistsMemberInDialer(dialer, domain string, member interface{}) bool {
+func (db *DB) ExistsMemberInDialer(dialer, domain string, data []byte) bool {
 	c := db.db.C(COLLECTION_MEMBERS)
 
 	filter := bson.M{
@@ -69,11 +69,9 @@ func (db *DB) ExistsMemberInDialer(dialer, domain string, member interface{}) bo
 		"domain": domain,
 	}
 	var r memberRequest
-	b, err := json.Marshal(member)
-	if err != nil {
-		return false
-	}
-	if err = json.Unmarshal(b, &r); err != nil {
+	var err error
+
+	if err = json.Unmarshal(data, &r); err != nil {
 		return false
 	}
 
