@@ -29,9 +29,10 @@ func Exists(c *Call, args interface{}) error {
 	}
 
 	if exists(c, resource, props) {
+		logger.Debug("Call %s exists %s TRUE successful", c.Uuid, resource)
 		return SetVar(c, varName+"=true")
 	}
-
+	logger.Debug("Call %s exists %s FALSE successful", c.Uuid, resource)
 	return SetVar(c, varName+"=false")
 }
 
@@ -62,11 +63,13 @@ func existsDialer(c *Call, name string, member interface{}) bool {
 	if name == "" {
 		return false
 	}
+	logger.Debug("Call %s existsDialer %s %v", c.Uuid, name, member)
 	if member == nil {
 		return c.acr.ExistsDialer(name, c.Domain)
 	} else {
 		body, err := json.Marshal(member)
 		if err != nil {
+			logger.Error("Call %s marshal: ", err.Error())
 			return false
 		}
 		return c.acr.ExistsMemberInDialer(name, c.Domain, []byte(c.ParseString(string(body))))
