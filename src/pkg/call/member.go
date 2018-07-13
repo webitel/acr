@@ -20,6 +20,7 @@ type memberT struct {
 	CreatedOn      int64                  `json:"createdOn" bson:"createdOn"`
 	Name           string                 `json:"name"`
 	Dialer         string                 `json:"dialer"`
+	Domain         string                 `json:"domain"`
 	Priority       int                    `json:"priority"`
 	Expire         int                    `json:"expire"`
 	Variables      map[string]interface{} `json:"variables"`
@@ -50,6 +51,7 @@ func Member(c *Call, args interface{}) error {
 		err = c.acr.UpdateMember(tmp, &m)
 		tmp = "update"
 	} else {
+		m.Domain = c.Domain
 		err = c.acr.AddMember(&m)
 		tmp = "add"
 	}
