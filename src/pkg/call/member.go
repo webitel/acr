@@ -52,6 +52,10 @@ func Member(c *Call, args interface{}) error {
 		tmp = "update"
 	} else {
 		m.Domain = c.Domain
+		if m.Dialer == "" {
+			logger.Error("Call %s member argument dialer is required", c.Uuid, args)
+			return nil
+		}
 		err = c.acr.AddMember(&m)
 		tmp = "add"
 	}
