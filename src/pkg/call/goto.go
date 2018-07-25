@@ -20,7 +20,7 @@ func GoTo(c *Call, args interface{}) error {
 	}
 
 	if strings.HasPrefix(tag, "local:") {
-		if c.Iterator.Goto(tag[6:]) {
+		if c.Iterator.Goto(c.ParseString(tag[6:])) {
 			logger.Debug("Call %s go to tag %s", c.Uuid, tag)
 		} else {
 			logger.Warning("Call %s not found tag %s", c.Uuid, tag)
