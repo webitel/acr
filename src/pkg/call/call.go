@@ -22,6 +22,7 @@ var regCompileVar *regexp.Regexp
 var regCompileGlobalVar *regexp.Regexp
 var regCompileLocalRegs *regexp.Regexp
 var regCompileTimeFn *regexp.Regexp
+var regCompileReg *regexp.Regexp
 
 type Applications map[string]func(c *Call, args interface{}) error
 
@@ -63,6 +64,8 @@ const (
 	CONTEXT_PRIVATE
 )
 
+type regExp map[string][]string
+
 type Call struct {
 	routeId              int
 	Uuid                 string
@@ -74,7 +77,7 @@ type Call struct {
 	Iterator             *router.Iterator
 	OnDisconnectIterator *router.Iterator
 	LocalVariables       map[string]string
-	RegExp               map[string][]string
+	RegExp               regExp
 	Conn                 *esl.SConn
 	breakCall            bool
 	debug                bool
@@ -84,11 +87,22 @@ type Call struct {
 	context              ContextId
 }
 
+func (r regExp) Get(position string, idx int) string {
+	if v, ok := r[position]; ok {
+		if len(v) > idx {
+			return v[idx]
+		}
+	}
+
+	return ""
+}
+
 type domainVariablesT struct {
 	Variables map[string]string `bson:"variables"`
 }
 
 func init() {
+	regCompileReg = regexp.MustCompile(`\$(\d+)`)
 	regCompileVar = regexp.MustCompile(`\$\{([\s\S]*?)\}`)
 	regCompileGlobalVar = regexp.MustCompile(`\$\$\{([\s\S]*?)\}`)
 	regCompileLocalRegs = regexp.MustCompile(`&reg(\d+)\.\$(\d+)`)
@@ -291,7 +305,11 @@ func (c *Call) ParseString(args string) string {
 			strings.HasPrefix(varName, "${sofia_contact(") { //TODO
 			return varName
 		}
-		return c.GetChannelVar(regCompileVar.FindStringSubmatch(varName)[1])
+		t := regCompileVar.FindStringSubmatch(varName)
+		if idx, err := strconv.Atoi(t[1]); err == nil {
+			return c.RegExp.Get("0", idx)
+		}
+		return c.GetChannelVar(t[1])
 	})
 
 	a = regCompileLocalRegs.ReplaceAllStringFunc(a, func(varName string) string {
@@ -304,6 +322,16 @@ func (c *Call) ParseString(args string) string {
 			}
 		}
 
+		return ""
+	})
+
+	a = regCompileReg.ReplaceAllStringFunc(a, func(s string) string {
+		r := regCompileReg.FindStringSubmatch(s)
+		if len(r) == 2 {
+			if idx, err := strconv.Atoi(r[1]); err == nil {
+				return c.RegExp.Get("0", idx)
+			}
+		}
 		return ""
 	})
 
