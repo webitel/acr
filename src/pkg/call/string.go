@@ -96,7 +96,7 @@ func reverse(s string) string {
 	return string(runes)
 }
 
-func charAt(s string, pos int) string  {
+func charAt(s string, pos int) string {
 	if len(s) > pos {
 		return string(s[pos])
 	}

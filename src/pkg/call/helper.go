@@ -147,13 +147,14 @@ func getArrayStringFromMap(name string, params map[string]interface{}) (res []st
 
 func parseArgsToArrayInterface(c *Call, _args interface{}) (argsElem []interface{}) {
 	var ok bool
+	var str string
 	switch _args.(type) {
 	case []interface{}:
 		for _, e := range _args.([]interface{}) {
-			if _, ok = e.(string); ok {
-				argsElem = append(argsElem, c.ParseString(e.(string)))
-			} else {
+			if str, ok = e.(string); ok && !regCompileLocalRegs.MatchString(str) && regCompileReg.MatchString(str) {
 				argsElem = append(argsElem, e)
+			} else {
+				argsElem = append(argsElem, c.ParseString(str))
 			}
 		}
 	case string:
@@ -164,6 +165,7 @@ func parseArgsToArrayInterface(c *Call, _args interface{}) (argsElem []interface
 	default:
 		argsElem = []interface{}{_args}
 	}
+
 	return
 }
 
