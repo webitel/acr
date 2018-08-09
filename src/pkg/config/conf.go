@@ -2,8 +2,8 @@ package config
 
 import (
 	"flag"
-	. "github.com/Nomon/gonfig"
 	"github.com/webitel/acr/src/pkg/logger"
+	. "github.com/webitel/gonfig"
 	"os"
 )
 
