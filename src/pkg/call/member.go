@@ -9,11 +9,12 @@ import (
 )
 
 type communication struct {
-	Number      string `json:"number"`
-	Priority    int    `json:"priority"`
-	Status      int    `json:"status"`
-	State       int    `json:"state"`
-	Description string `json:"description"`
+	Number      string  `json:"number"`
+	Priority    int     `json:"priority"`
+	Status      int     `json:"status"`
+	State       int     `json:"state"`
+	Type        *string `json:"type"`
+	Description string  `json:"description"`
 }
 
 type memberT struct {
