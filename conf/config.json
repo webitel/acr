@@ -24,8 +24,7 @@
     "dbName": "webitel",
     "user": "webitel",
     "password": "webitel",
-    "sslMode": "disable",
-    "maxConnection": 100
+    "sslMode": "disable"
   },
 
   "defaultPublicRout": "",

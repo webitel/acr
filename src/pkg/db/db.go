@@ -7,6 +7,7 @@ import (
 	"github.com/webitel/acr/src/pkg/config"
 	"github.com/webitel/acr/src/pkg/logger"
 	"gopkg.in/mgo.v2"
+	"strconv"
 	"time"
 )
 
@@ -60,7 +61,12 @@ func (db *DB) connectToPg() {
 	}
 	logger.Debug("Connect to PG %s - success", dbInfo)
 	pg.Debug()
-	pg.DB().SetMaxOpenConns(100)
+
+	if config.Conf.Get("pg:max") != "" {
+		var maxConnection int
+		maxConnection, _ = strconv.Atoi(config.Conf.Get("pg:max"))
+		pg.DB().SetMaxOpenConns(maxConnection)
+	}
 	db.pg = pg
 	db.migrateMongoToPg()
 }
