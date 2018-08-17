@@ -9,6 +9,14 @@ import (
 	"time"
 )
 
+const (
+	calendarStatusAhead   = "ahead"
+	calendarStatusExpire  = "expire"
+	calendarStatusHoliday = "holiday"
+	calendarStatusInTime  = "true"
+	calendarStatusOutTime = "false"
+)
+
 type calendarAcceptT struct {
 	WeekDay   int `bson:"weekDay"`
 	StartTime int `bson:"startTime"`
@@ -28,13 +36,14 @@ type calendarT struct {
 	Except    []calendarExceptT `bson:"except"`
 }
 
-var weakdays = []int{7,1,2,3,4,5,6}
+var weakdays = []int{7, 1, 2, 3, 4, 5, 6}
 
 func Calendar(c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var name, varName string
 	var calendar calendarT
+	var extended bool
 
 	var current, tmpDate time.Time
 	var loc *time.Location
@@ -55,6 +64,8 @@ func Calendar(c *Call, args interface{}) error {
 		logger.Error("Call %s calendar setVar is required", c.Uuid)
 		return nil
 	}
+
+	extended = getBoolValueFromMap("extended", props, false)
 
 	err := c.acr.GetCalendar(name, c.Domain, &calendar)
 	if err != nil {
@@ -83,29 +94,14 @@ func Calendar(c *Call, args interface{}) error {
 	timestamp = current.UnixNano() / 1000000
 
 	if calendar.StartDate > 0 && timestamp < calendar.StartDate {
-		return callbackCalendar(c, varName, false)
+		return callbackCalendar(c, varName, calendarStatusAhead, extended)
 	} else if calendar.EndDate > 0 && timestamp > calendar.EndDate {
-		return callbackCalendar(c, varName, false)
-	}
-
-	if len(calendar.Accept) == 0 {
-		return callbackCalendar(c, varName, false)
+		return callbackCalendar(c, varName, calendarStatusExpire, extended)
 	}
 
 	ok = false
 	currentWeek = getWeekday(current)
 	currentTimeOfDay = current.Hour()*60 + current.Minute()
-
-	for _, a := range calendar.Accept {
-		ok = (currentWeek == a.WeekDay) && between(currentTimeOfDay, a.StartTime, a.EndTime)
-		if ok {
-			break
-		}
-	}
-
-	if !ok {
-		return callbackCalendar(c, varName, false)
-	}
 
 	if len(calendar.Except) > 0 {
 		currentDay = current.Day()
@@ -119,23 +115,38 @@ func Calendar(c *Call, args interface{}) error {
 			}
 
 			if tmpDate.Day() == currentDay && int(tmpDate.Month()) == currentMonth && (a.Repeat == 1 || (a.Repeat == 0 && tmpDate.Year() == currentYear)) {
-				return callbackCalendar(c, varName, false)
+				return callbackCalendar(c, varName, calendarStatusHoliday, extended)
 			}
 		}
 	}
 
-	return callbackCalendar(c, varName, true)
-}
+	if len(calendar.Accept) > 0 {
+		for _, a := range calendar.Accept {
+			ok = (currentWeek == a.WeekDay) && between(currentTimeOfDay, a.StartTime, a.EndTime)
+			if ok {
+				break
+			}
+		}
 
-func callbackCalendar(c *Call, varName string, res bool) error {
-	var data string
-	if res {
-		data = "true"
-	} else {
-		data = "false"
+		if !ok {
+			return callbackCalendar(c, varName, calendarStatusOutTime, extended)
+		}
 	}
 
-	return SetVar(c, varName+"="+data)
+	return callbackCalendar(c, varName, calendarStatusInTime, extended)
+}
+
+func callbackCalendar(c *Call, varName string, res string, extendsResponse bool) error {
+	if extendsResponse {
+		return SetVar(c, varName+"="+res)
+	}
+
+	switch res {
+	case calendarStatusInTime:
+		return SetVar(c, varName+"="+calendarStatusInTime)
+	default:
+		return SetVar(c, varName+"="+calendarStatusOutTime)
+	}
 }
 
 func getWeekday(in time.Time) int {
