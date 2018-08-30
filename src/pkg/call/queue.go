@@ -5,13 +5,13 @@
 package call
 
 import (
+	"fmt"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
 	"github.com/webitel/acr/src/pkg/router"
 	"regexp"
 	"strings"
 	"time"
-	"fmt"
 )
 
 var validQueueName = regexp.MustCompile(`^[a-zA-Z0-9+_-]+$`)
@@ -80,8 +80,8 @@ func Queue(c *Call, args interface{}) error {
 			}
 
 			if num != "" {
-				c.SndMsg("multiset",
-					fmt.Sprintf("^^~exec_after_bridge_app=transfer~exec_after_bridge_arg='%s XML %s'", num, profile), true, false)
+				c.SndMsg("set",
+					fmt.Sprintf("transfer_after_bridge=%s:XML:%s", num, profile), true, false)
 			}
 
 		}
