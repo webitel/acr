@@ -31,7 +31,7 @@ func compatibleJSEncodeURIComponent(str string) string {
 	resultStr := str
 	resultStr = strings.Replace(resultStr, "+", "%20", -1)
 	resultStr = strings.Replace(resultStr, "%21", "!", -1)
-	resultStr = strings.Replace(resultStr, "%27", "'", -1)
+	//resultStr = strings.Replace(resultStr, "%27", "'", -1)
 	resultStr = strings.Replace(resultStr, "%28", "(", -1)
 	resultStr = strings.Replace(resultStr, "%29", ")", -1)
 	resultStr = strings.Replace(resultStr, "%2A", "*", -1)
