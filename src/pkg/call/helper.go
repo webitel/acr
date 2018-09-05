@@ -151,10 +151,14 @@ func parseArgsToArrayInterface(c *Call, _args interface{}) (argsElem []interface
 	switch _args.(type) {
 	case []interface{}:
 		for _, e := range _args.([]interface{}) {
-			if str, ok = e.(string); ok && !regCompileLocalRegs.MatchString(str) && regCompileReg.MatchString(str) {
-				argsElem = append(argsElem, e)
+			if str, ok = e.(string); ok {
+				if !regCompileLocalRegs.MatchString(str) && regCompileReg.MatchString(str) {
+					argsElem = append(argsElem, e)
+				} else {
+					argsElem = append(argsElem, c.ParseString(str))
+				}
 			} else {
-				argsElem = append(argsElem, c.ParseString(str))
+				argsElem = append(argsElem, e)
 			}
 		}
 	case string:
