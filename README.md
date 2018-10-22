@@ -15,7 +15,7 @@ You can set any en vars to modify default config file settings
 
 ## Supported Docker versions
 
-This image is officially supported on Docker version `17.05` and newest.
+This image is officially supported on Docker version `18.03` and newest.
 
 ## User Feedback
 
