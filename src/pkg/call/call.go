@@ -7,6 +7,7 @@ package call
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/webitel/acr/src/pkg/esl"
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
@@ -377,6 +378,11 @@ func MakeCall(destinationNumber string, c *esl.SConn, cf *models.CallFlow, acr I
 	if c.ChannelData.Header.Get("variable_webitel_debug_acr") == "true" {
 		call.debug = true
 	}
+
+	SetVar(call, []string{
+		fmt.Sprintf("webitel_acr_schema_id=%d", cf.Id),
+		fmt.Sprintf("webitel_acr_schema_name=%s", cf.Name),
+	})
 
 	if call.debug {
 		call.debugMap["action"] = "execute"
