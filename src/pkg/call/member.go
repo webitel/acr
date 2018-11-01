@@ -6,6 +6,7 @@ package call
 import (
 	"encoding/json"
 	"github.com/webitel/acr/src/pkg/logger"
+	"strconv"
 )
 
 type communication struct {
@@ -37,6 +38,13 @@ func Member(c *Call, args interface{}) error {
 	if props, ok = args.(map[string]interface{}); !ok {
 		logger.Error("Call %s member bad arguments %s", c.Uuid, args)
 		return nil
+	}
+
+	if _, ok = props["expire"]; ok {
+		tmp = getStringValueFromMap("expire", props, "")
+		if tmp != "" {
+			props["expire"], _ = strconv.Atoi(c.ParseString(tmp))
+		}
 	}
 
 	tmp = getStringValueFromMap("id", props, "")
