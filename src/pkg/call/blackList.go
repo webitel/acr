@@ -28,8 +28,8 @@ func BlackList(c *Call, args interface{}) error {
 			return nil
 		}
 
-		varName = getStringValueFromMap("variable", props, "caller_id_number")
-		number = c.ParseString("${" + varName + "}")
+		varName = getStringValueFromMap("number", props, "caller_id_number")
+		number = c.ParseString(varName)
 
 		if number == "" {
 			logger.Error("Call %s blackList number is require", c.Uuid)
@@ -64,6 +64,11 @@ func BlackList(c *Call, args interface{}) error {
 
 			iterator := router.NewIterator(actions, c)
 			routeCallIterator(c, iterator)
+
+			if c.GetBreak() {
+				logger.Debug("Call %s break from blacklist", c.Uuid)
+			}
+
 			logger.Debug("Call %s blackList number %s bared", c.Uuid, number)
 		} else {
 			logger.Debug("Call %s blackList skip number %s", c.Uuid, number)
