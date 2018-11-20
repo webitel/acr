@@ -192,6 +192,10 @@ func (c *Call) AddRegExp(data []string) {
 }
 
 func (c *Call) SetBreak() {
+	if c.GetBreak() {
+		return
+	}
+	logger.Debug("Call %s set break route", c.Uuid)
 	c.breakCall = true
 }
 
@@ -478,7 +482,7 @@ func routeIterator(call *Call) {
 			}
 
 			if v.IsBreak() {
-				logger.Debug("Call %s break route", call.GetUuid())
+				call.SetBreak()
 				break
 			}
 			continue
@@ -542,6 +546,7 @@ func routeIteratorOnDisconnect(call *Call) {
 	}
 }
 
+//TODO
 func routeCallIterator(call *Call, iter *router.Iterator) {
 	for {
 		if call.Conn.GetDisconnected() {
@@ -564,13 +569,15 @@ func routeCallIterator(call *Call, iter *router.Iterator) {
 				logger.Debug("Call %s stop connection", call.GetUuid())
 				return
 			}
+
+			if v.IsBreak() {
+				call.SetBreak()
+				break
+			}
+
 			continue
 		}
 
-		if v.IsBreak() {
-			logger.Debug("Call %s break route", call.GetUuid())
-			break
-		}
 		v.Execute(iter)
 	}
 }

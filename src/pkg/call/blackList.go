@@ -65,10 +65,6 @@ func BlackList(c *Call, args interface{}) error {
 			iterator := router.NewIterator(actions, c)
 			routeCallIterator(c, iterator)
 
-			if c.GetBreak() {
-				logger.Debug("Call %s break from blacklist", c.Uuid)
-			}
-
 			logger.Debug("Call %s blackList number %s bared", c.Uuid, number)
 		} else {
 			logger.Debug("Call %s blackList skip number %s", c.Uuid, number)
