@@ -51,19 +51,19 @@ func publicContext(a *ACR, c *esl.SConn, destinationNumber string) {
 		}
 	}
 
+	if setDirection(c, "inbound") != nil {
+		return
+	}
+
 	logger.Warning("Call %s: no found public context number %s", c.Uuid, destinationNumber)
 	c.Hangup(HANGUP_NO_ROUTE_DESTINATION)
 }
 
 func createPublicCall(a *ACR, c *esl.SConn, destinationNumber string, cf *models.CallFlow) {
 	var err error
-	if c.ChannelData.Header.Get("variable_webitel_direction") == "" {
-		_, err = c.SndMsg("set", "webitel_direction=inbound", false, false)
-		if err != nil {
-			logger.Error("Call %s error: %s", c.Uuid, err.Error())
-			return
-		}
-		logger.Debug("Call %s set webitel_direction=inbound", c.Uuid)
+
+	if setDirection(c, "inbound") != nil {
+		return
 	}
 
 	if cf.Timezone != "" {

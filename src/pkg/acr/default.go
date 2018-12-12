@@ -45,6 +45,10 @@ func defaultContext(a *ACR, c *esl.SConn, destinationNumber string) {
 		return
 	}
 
+	if setDirection(c, "outbound") != nil {
+		return
+	}
+
 	logger.Debug("Call %s: no found default context number %s", c.Uuid, destinationNumber)
 	c.Hangup(HANGUP_NO_ROUTE_DESTINATION)
 }
@@ -53,12 +57,10 @@ func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.Cal
 	logger.Debug("Call %s is internal", c.Uuid)
 	var err error
 
-	if c.ChannelData.Header.Get("variable_webitel_direction") == "" {
-		_, err = c.SndMsg("set", "webitel_direction=internal", false, false)
-		if err != nil {
-			logger.Error("Call %s bad set webitel_direction: %s", c.Uuid, err.Error())
-		}
+	if setDirection(c, "internal") != nil {
+		return
 	}
+
 	_, err = c.SndMsg("export", "nolocal:sip_redirect_context=default", false, false)
 	if err != nil {
 		logger.Error("Call %s bad export sip_redirect_context: %s", c.Uuid, err.Error())
@@ -77,14 +79,10 @@ func internalCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.Cal
 }
 
 func worldCall(destinationNumber string, a *ACR, c *esl.SConn, cf *models.CallFlow) {
-	var err error
 	logger.Debug("Call %s is default context %s %s", c.Uuid, cf.Name, cf.Number)
 
-	if c.ChannelData.Header.Get("variable_webitel_direction") == "" {
-		_, err = c.SndMsg("set", "webitel_direction=outbound", false, false)
-		if err != nil {
-			logger.Error("Bad set webitel_direction: %s", err.Error())
-		}
+	if setDirection(c, "outbound") != nil {
+		return
 	}
 
 	a.CreateCall(destinationNumber, c, cf, call.CONTEXT_DEFAULT)
