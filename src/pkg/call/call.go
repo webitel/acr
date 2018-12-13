@@ -164,6 +164,7 @@ func init() {
 		"exists":        Exists,          //52
 		"queueStatus":   QueueStatus,     //53
 		"js":            JavaScript,      //54
+		"findUser":      FindUser,        //55
 		//"stream":        Stream,
 	}
 
