@@ -165,6 +165,7 @@ func init() {
 		"queueStatus":   QueueStatus,     //53
 		"js":            JavaScript,      //54
 		"findUser":      FindUser,        //55
+		"setUser":       SetUser,         //56
 		//"stream":        Stream,
 	}
 

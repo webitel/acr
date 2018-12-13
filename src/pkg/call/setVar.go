@@ -114,7 +114,7 @@ func validateVariable(vars []byte, quote bool) string {
 
 	if l == 2 {
 		res[1] = bytes.TrimSpace(res[1])
-		if len(res[1]) == 0 {
+		if len(res[1]) == 0 && quote {
 			res[1] = []byte("''")
 		} else if quote {
 			if !bytes.HasPrefix(res[1], []byte("'")) {
