@@ -84,6 +84,10 @@ func ttsMicrosoft(c *Call, props map[string]interface{}, text string) error {
 		}
 	}
 
+	if tmp = getStringValueFromMap("region", props, ""); tmp != "" {
+		query += "&region=" + tmp
+	}
+
 	return ttsToPlayback(c, props, query, "microsoft")
 }
 
