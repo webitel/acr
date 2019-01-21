@@ -42,6 +42,7 @@ type IBridge interface {
 	AddMember(data interface{}) error
 	UpdateMember(id string, data interface{}) error
 	AddCallbackMember(domainName, queueName, number, widgetName string) (error, int)
+	AddCallbackMemberComment(memberId int, domainName, createdBy, text string) (error, int)
 	GetPrivateCallFlow(uuid string, domain string) (models.CallFlow, error)
 	InsertPrivateCallFlow(uuid, domain, timeZone string, deadline int, apps models.ArrayApplications) error
 	RemovePrivateCallFlow(uuid, domain string) error

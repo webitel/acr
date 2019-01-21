@@ -107,6 +107,10 @@ func (a *ACR) AddCallbackMember(domainName, queueName, number, widgetName string
 	return a.DB.CreateCallbackMember(domainName, queueName, number, widgetName)
 }
 
+func (a *ACR) AddCallbackMemberComment(memberId int, domainName, createdBy, text string) (error, int) {
+	return a.DB.CreateCallbackMemberComment(memberId, domainName, createdBy, text)
+}
+
 func (a *ACR) UpdateMember(id string, data interface{}) error {
 	return a.DB.UpdateMember(id, data)
 }

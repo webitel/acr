@@ -86,3 +86,8 @@ func NewDB(uri string) *DB {
 	db.connectToPg()
 	return db
 }
+
+// GetMillis is a convience method to get milliseconds since epoch.
+func GetMillis() int64 {
+	return time.Now().UnixNano() / int64(time.Millisecond)
+}

@@ -12,7 +12,7 @@ import (
 func CallbackQueue(c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
-	var number, setVar string
+	var number, setVar, comment string
 	var err error
 	var id = 0
 
@@ -34,6 +34,10 @@ func CallbackQueue(c *Call, args interface{}) error {
 			}
 		} else {
 			logger.Debug("Call %s callbackQueue add member (%d) %s successful", c.Uuid, id, number)
+			comment = getStringValueFromMap("comment", props, "")
+			if comment != "" {
+				c.acr.AddCallbackMemberComment(id, c.Domain, "ACR", c.ParseString(comment))
+			}
 			if setVar != "" {
 				return SetVar(c, fmt.Sprintf("%s=%d", setVar, id))
 			}
