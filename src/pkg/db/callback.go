@@ -11,17 +11,18 @@ import (
 const sqlCreateCallbackMember = `
 INSERT INTO callback_members (domain, queue_id, number, widget_id)
 VALUES (?, (SELECT id FROM callback_queue WHERE name = ? AND domain = ? LIMIT 1), ?, (SELECT id
-																					 FROM widget WHERE name = ? AND domain = ? LIMIT 1) );
+																					 FROM widget WHERE name = ? AND domain = ? LIMIT 1) )
+returning id;
 `
 
-func (db *DB) CreateCallbackMember(domainName, queueName, number, widgetName string) error {
-
+func (db *DB) CreateCallbackMember(domainName, queueName, number, widgetName string) (error, int) {
+	var id = 0
 	res := db.pg.Debug().
-		Exec(sqlCreateCallbackMember, domainName, queueName, domainName, number, widgetName, domainName)
+		Raw(sqlCreateCallbackMember, domainName, queueName, domainName, number, widgetName, domainName)
 
 	if res.Error == gorm.ErrRecordNotFound {
-		return nil
+		return nil, id
 	}
-
-	return res.Error
+	res.Row().Scan(&id)
+	return res.Error, id
 }

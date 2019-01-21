@@ -5,6 +5,7 @@
 package call
 
 import (
+	"fmt"
 	"github.com/webitel/acr/src/pkg/logger"
 )
 
@@ -13,10 +14,11 @@ func CallbackQueue(c *Call, args interface{}) error {
 	var ok bool
 	var number, setVar string
 	var err error
+	var id = 0
 
 	if props, ok = args.(map[string]interface{}); ok {
 		number = c.ParseString(getStringValueFromMap("number", props, "${caller_id_number}"))
-		err = c.acr.AddCallbackMember(
+		err, id = c.acr.AddCallbackMember(
 			c.Domain,
 			getStringValueFromMap("queue", props, ""),
 			number,
@@ -31,9 +33,9 @@ func CallbackQueue(c *Call, args interface{}) error {
 				return SetVar(c, setVar+"='"+err.Error()+"'")
 			}
 		} else {
-			logger.Debug("Call %s callbackQueue add member %s successful", c.Uuid, number)
+			logger.Debug("Call %s callbackQueue add member (%d) %s successful", c.Uuid, id, number)
 			if setVar != "" {
-				return SetVar(c, setVar+"=OK")
+				return SetVar(c, fmt.Sprintf("%s=%d", setVar, id))
 			}
 		}
 	} else {

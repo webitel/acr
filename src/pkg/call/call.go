@@ -41,7 +41,7 @@ type IBridge interface {
 	FireRPCEventToStorage(rk string, option rpc.PublishingOption) error
 	AddMember(data interface{}) error
 	UpdateMember(id string, data interface{}) error
-	AddCallbackMember(domainName, queueName, number, widgetName string) error
+	AddCallbackMember(domainName, queueName, number, widgetName string) (error, int)
 	GetPrivateCallFlow(uuid string, domain string) (models.CallFlow, error)
 	InsertPrivateCallFlow(uuid, domain, timeZone string, deadline int, apps models.ArrayApplications) error
 	RemovePrivateCallFlow(uuid, domain string) error

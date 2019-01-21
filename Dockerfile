@@ -1,5 +1,5 @@
 # vim:set ft=dockerfile:
-FROM golang:1.10
+FROM golang:1.11
 
 COPY src /go/src/github.com/webitel/acr/src
 WORKDIR /go/src/github.com/webitel/acr/src/

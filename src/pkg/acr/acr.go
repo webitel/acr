@@ -103,7 +103,7 @@ func (a *ACR) AddMember(data interface{}) error {
 	return a.DB.AddMember(data)
 }
 
-func (a *ACR) AddCallbackMember(domainName, queueName, number, widgetName string) error {
+func (a *ACR) AddCallbackMember(domainName, queueName, number, widgetName string) (error, int) {
 	return a.DB.CreateCallbackMember(domainName, queueName, number, widgetName)
 }
 
