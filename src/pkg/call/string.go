@@ -7,6 +7,12 @@ package call
 import (
 	"github.com/robertkrimen/otto"
 	"github.com/webitel/acr/src/pkg/logger"
+
+	"crypto/md5"
+	"crypto/sha256"
+	"crypto/sha512"
+	"encoding/base64"
+	"fmt"
 )
 
 func String(c *Call, args interface{}) error {
@@ -30,13 +36,32 @@ func String(c *Call, args interface{}) error {
 
 		data = c.ParseString(getStringValueFromMap("data", props, ""))
 
-		if fnName == "reverse" {
+		switch fnName {
+		case "reverse":
 			value = reverse(data)
-		} else if fnName == "charAt" {
+			break
+		case "charAt":
 			if pos := getIntValueFromMap("args", props, -1); pos > -1 {
 				value = charAt(data, pos)
 			}
-		} else {
+			break
+		case "base64":
+			mode := ""
+			if _args, ok = props["args"]; ok {
+				mode = parseInterfaceToString(_args)
+			}
+			value = base64Fn(mode, data)
+			break
+		case "MD5":
+			value = md5Fn(data)
+			break
+		case "SHA-256":
+			value = sha256Fn(data)
+			break
+		case "SHA-512":
+			value = sha512Fn(data)
+			break
+		default:
 			if _args, ok = props["args"]; ok {
 				argsElem = parseArgsToArrayInterface(c, _args)
 			} else {
@@ -101,4 +126,26 @@ func charAt(s string, pos int) string {
 		return string(s[pos])
 	}
 	return ""
+}
+
+func base64Fn(mode, data string) string {
+	if mode == "encoder" {
+		return base64.StdEncoding.EncodeToString([]byte(data))
+	} else if mode == "decoder" {
+		body, _ := base64.StdEncoding.DecodeString(data)
+		return string(body)
+	}
+	return ""
+}
+
+func md5Fn(data string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(data)))
+}
+
+func sha256Fn(data string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(data)))
+}
+
+func sha512Fn(data string) string {
+	return fmt.Sprintf("%x", sha512.Sum512([]byte(data)))
 }
