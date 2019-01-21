@@ -7,16 +7,16 @@ package call
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/tidwall/gjson"
 	"github.com/webitel/acr/src/pkg/logger"
+	"gopkg.in/xmlpath.v2"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
-	"gopkg.in/xmlpath.v2"
 )
 
 func HttpRequest(c *Call, args interface{}) error {
@@ -71,28 +71,24 @@ func HttpRequest(c *Call, args interface{}) error {
 
 	if _, ok = props["data"]; ok {
 
-		if strings.Index(headers["content-type"],"text/xml") > -1 || strings.Index(headers["content-type"],"application/soap+xml") > -1 {
+		if strings.Index(headers["content-type"], "text/xml") > -1 || strings.Index(headers["content-type"], "application/soap+xml") > -1 {
 			switch props["data"].(type) {
 			case string:
 				body = []byte(c.ParseString(getStringValueFromMap("data", props, "")))
 			}
-		} else if strings.HasPrefix(headers["content-type"],"application/x-www-form-urlencoded") {
+		} else if strings.HasPrefix(headers["content-type"], "application/x-www-form-urlencoded") {
 			str = ""
+			urlEncodeData := url.Values{}
 			switch props["data"].(type) {
 			case map[string]interface{}:
 				for k, v = range props["data"].(map[string]interface{}) {
-					str += "&" + k + "=" + parseMapValue(c, v)
+					urlEncodeData.Set(k, parseMapValue(c, v))
 				}
-				if len(str) > 0 {
-					str = str[1:]
-				}
+				str = urlEncodeData.Encode()
 			case string:
 				str = props["data"].(string)
 			}
-
-			if len(str) > 0 {
-				body = []byte(strings.Replace(c.ParseString(str), " ", "+", -1))
-			}
+			body = []byte(str)
 		} else {
 			//JSON default
 			body, err = json.Marshal(props["data"])
