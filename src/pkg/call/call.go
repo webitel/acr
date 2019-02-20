@@ -53,6 +53,9 @@ type IBridge interface {
 	FindUuidByPresence(presence string) string
 	CountAvailableAgent(queueName string) (count int)
 	CountAvailableMembers(queueName string) (count int)
+	AddToDomainCache(call *Call, key string, value string, expireSec int64)
+	GetFromDomainCache(call *Call, key string) (string, bool)
+	RemoveFromDomainCache(call *Call, key string)
 }
 
 var applications Applications
@@ -167,6 +170,7 @@ func init() {
 		"js":            JavaScript,      //54
 		"findUser":      FindUser,        //55
 		"setUser":       SetUser,         //56
+		"cache":         Cache,           //57
 		//"stream":        Stream,
 	}
 

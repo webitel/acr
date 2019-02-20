@@ -6,6 +6,7 @@ package acr
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/webitel/acr/src/pkg/call"
 	"github.com/webitel/acr/src/pkg/config"
 	"github.com/webitel/acr/src/pkg/db"
@@ -13,17 +14,23 @@ import (
 	"github.com/webitel/acr/src/pkg/logger"
 	"github.com/webitel/acr/src/pkg/models"
 	"github.com/webitel/acr/src/pkg/rpc"
+	"github.com/webitel/acr/src/pkg/utils"
 	"sync"
 	"sync/atomic"
 )
 
+const (
+	CALL_CACHE_SIZE = 10000
+)
+
 type ACR struct {
-	DB         *db.DB
-	GlobalVars map[string]map[string]string
-	Count      int32
-	calls      map[*esl.SConn]*call.Call
-	mx         *sync.Mutex
-	rpc        *rpc.RPC
+	DB          *db.DB
+	GlobalVars  map[string]map[string]string
+	Count       int32
+	calls       map[*esl.SConn]*call.Call
+	mx          *sync.Mutex
+	rpc         *rpc.RPC
+	domainCache *utils.Cache
 }
 
 var acr *ACR
@@ -181,6 +188,23 @@ func (a *ACR) FireRPCEventToStorage(rk string, option rpc.PublishingOption) erro
 	return a.rpc.Fire("Storage.Commands", rk, option)
 }
 
+func (a *ACR) AddToDomainCache(call *call.Call, key, value string, expireSec int64) {
+	a.domainCache.AddWithExpiresInSecs(makeDomainKey(call.Domain, key), value, expireSec)
+}
+
+func (a *ACR) GetFromDomainCache(call *call.Call, key string) (string, bool) {
+	v, ok := a.domainCache.Get(makeDomainKey(call.Domain, key))
+	return fmt.Sprintf("%v", v), ok
+}
+
+func (a *ACR) RemoveFromDomainCache(call *call.Call, key string) {
+	a.domainCache.Remove(makeDomainKey(call.Domain, key))
+}
+
+func makeDomainKey(domain, key string) string {
+	return fmt.Sprintf("%s-%v", domain, key)
+}
+
 func onConnect(c *esl.SConn) {
 	acr.addConnection(c.Uuid)
 	acr.initGlobalVar(c)
@@ -211,9 +235,10 @@ func onDisconnect(con *esl.SConn) {
 func New() {
 
 	acr = &ACR{
-		DB:    db.NewDB(config.Conf.Get("mongodb:uri")),
-		calls: make(map[*esl.SConn]*call.Call),
-		rpc:   rpc.New(),
+		DB:          db.NewDB(config.Conf.Get("mongodb:uri")),
+		calls:       make(map[*esl.SConn]*call.Call),
+		rpc:         rpc.New(),
+		domainCache: utils.NewLru(utils.ParseIntValueFromString(config.Conf.Get("application:maxCallCacheSize"), CALL_CACHE_SIZE)),
 	}
 	acr.mx = &sync.Mutex{}
 	acr.GlobalVars = make(map[string]map[string]string)
