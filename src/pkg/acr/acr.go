@@ -150,6 +150,10 @@ func (a *ACR) ExistsQueue(name, domain string) bool {
 	return a.DB.ExistsQueue(name, domain)
 }
 
+func (a *ACR) ExistsCallbackQueue(name, domain string) bool {
+	return a.DB.ExistsCallbackQueue(name, domain)
+}
+
 func (a *ACR) FindUuidByPresence(presence string) string {
 	return a.DB.FindUuidByPresence(presence)
 }

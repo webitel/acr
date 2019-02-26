@@ -120,3 +120,9 @@ func (db *DB) ExistsQueue(name, domain string) bool {
 
 	return count > 0
 }
+
+func (db *DB) ExistsCallbackQueue(name, domain string) bool {
+	var count int
+	db.pg.Raw(`SELECT 1 FROM callback_queue WHERE domain = $1 AND name like $2`, domain, name).Count(&count)
+	return count > 0
+}

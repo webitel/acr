@@ -50,6 +50,7 @@ type IBridge interface {
 	ExistsDialer(name string, domain string) bool
 	ExistsMemberInDialer(dialer string, domain string, data []byte) bool
 	ExistsQueue(name, domain string) bool
+	ExistsCallbackQueue(name, domain string) bool
 	FindUuidByPresence(presence string) string
 	CountAvailableAgent(queueName string) (count int)
 	CountAvailableMembers(queueName string) (count int)

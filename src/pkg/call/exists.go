@@ -46,6 +46,8 @@ func exists(c *Call, resource string, props map[string]interface{}) bool {
 		return ExistsAccount(c, getStringValueFromMap("name", props, ""))
 	case "queue":
 		return existsQueue(c, getStringValueFromMap("name", props, ""))
+	case "callback":
+		return existsCallbackQueue(c, getStringValueFromMap("name", props, ""))
 	}
 	return false
 }
@@ -82,6 +84,14 @@ func existsQueue(c *Call, name string) bool {
 		return false
 	}
 	return c.acr.ExistsQueue(name, c.Domain)
+}
+
+func existsCallbackQueue(c *Call, name string) bool {
+	name = c.ParseString(name)
+	if name == "" {
+		return false
+	}
+	return c.acr.ExistsCallbackQueue(name, c.Domain)
 }
 
 var bytesTrueString = []byte("true")
