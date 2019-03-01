@@ -20,9 +20,9 @@ func CallbackQueue(c *Call, args interface{}) error {
 		number = c.ParseString(getStringValueFromMap("number", props, "${caller_id_number}"))
 		err, id = c.acr.AddCallbackMember(
 			c.Domain,
-			getStringValueFromMap("queue", props, ""),
+			c.ParseString(getStringValueFromMap("queue", props, "")),
 			number,
-			getStringValueFromMap("widget", props, ""),
+			c.ParseString(getStringValueFromMap("widget", props, "")),
 		)
 
 		setVar = getStringValueFromMap("setVar", props, "")
