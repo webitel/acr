@@ -16,6 +16,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -91,6 +92,7 @@ type Call struct {
 	debugMap             map[string]interface{}
 	acr                  IBridge
 	context              ContextId
+	sync.RWMutex
 }
 
 func (r regExp) Get(position string, idx int) string {
@@ -101,10 +103,6 @@ func (r regExp) Get(position string, idx int) string {
 	}
 
 	return ""
-}
-
-type domainVariablesT struct {
-	Variables map[string]string `bson:"variables"`
 }
 
 func init() {
@@ -203,11 +201,24 @@ func (c *Call) SetBreak() {
 	if c.GetBreak() {
 		return
 	}
-	logger.Debug("Call %s set break route", c.Uuid)
-	c.breakCall = true
+	c.setBreak(true)
+}
+
+func (c *Call) UnSetBreak() {
+	c.setBreak(false)
+}
+
+func (c *Call) setBreak(val bool) {
+	c.Lock()
+	defer c.Unlock()
+	c.breakCall = val
+	logger.Debug("Call %s set break %v route", c.Uuid, val)
 }
 
 func (c *Call) GetBreak() bool {
+	c.RLock()
+	defer c.RUnlock()
+
 	return c.breakCall
 }
 
@@ -490,7 +501,9 @@ func routeIterator(call *Call) {
 			}
 
 			if v.IsBreak() {
-				call.SetBreak()
+				if !call.Conn.GetDisconnected() {
+					call.SetBreak()
+				}
 				break
 			}
 			continue
@@ -524,7 +537,7 @@ func (c *Call) FireDebugApplication(a router.App) {
 }
 
 func (c *Call) OnDisconnectTrigger() {
-	c.breakCall = false
+	c.setBreak(false)
 	c.Iterator = c.OnDisconnectIterator
 	routeIteratorOnDisconnect(c)
 }
