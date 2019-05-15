@@ -10,6 +10,7 @@ import (
 	"github.com/webitel/acr/src/store"
 	"github.com/webitel/acr/src/utils"
 	"github.com/webitel/wlog"
+	"runtime/debug"
 	"sync/atomic"
 )
 
@@ -108,6 +109,13 @@ func (router *CallRouterImpl) initGlobalsVars(callConn provider.Connection) {
 }
 
 func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection) {
+	defer func() {
+		if r := recover(); r != nil {
+			wlog.Critical(fmt.Sprintf("critical error %v", r))
+			debug.PrintStack()
+		}
+	}()
+
 	wlog.Debug(fmt.Sprintf("call %s from context %s", callConn.Id(), callConn.Context()))
 
 	call := NewCall(router, callConn)
@@ -168,7 +176,7 @@ func (router *CallRouterImpl) handlePublicContext(call *Call) {
 		return
 	}
 
-	if result.Data == nil {
+	if result.Data == nil && router.defaultPublicRouteNumber != nil {
 		result = <-router.app.Store.PublicRoute().Get(*router.defaultPublicRouteNumber)
 	} else if call.GetGlobalVariable(model.GLOBAL_VARIABLE_DEFAULT_PUBLIC_NAME) != "" {
 		result = <-router.app.Store.PublicRoute().Get(call.GetGlobalVariable(model.GLOBAL_VARIABLE_DEFAULT_PUBLIC_NAME))
