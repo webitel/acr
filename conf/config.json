@@ -24,12 +24,13 @@
     "dbName": "webitel",
     "user": "webitel",
     "password": "webitel",
-    "sslMode": "disable"
+    "sslMode": "disable",
+    "trace": "false"
   },
 
   "defaultPublicRout": "",
   "application": {
-    "loglevel": "trace"
+    "loglevel": "debug"
   },
   "protectedVariables": [
     "api_on_",
