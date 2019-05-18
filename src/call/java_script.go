@@ -90,6 +90,6 @@ func JavaScript(c *Call, args interface{}) error {
 		c.LogError("javaScript", src, err.Error())
 		return nil
 	}
-	c.LogError("javaScript", src, result.String())
+	c.LogDebug("javaScript", src, result.String())
 	return SetVar(c, setVar+"="+result.String())
 }
