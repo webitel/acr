@@ -11,12 +11,13 @@ import (
 )
 
 const (
-	HEADER_CONTEXT_NAME              = "Channel-Context"
+	HEADER_CONTEXT_NAME              = "variable_sip_h_X-Webitel-Context"
 	HEADER_ID_NAME                   = "Unique-ID"
-	HEADER_DIRECTION_NAME            = "variable_webitel_direction"
+	HEADER_DIRECTION_NAME            = "variable_sip_h_X-Webitel-Direction"
 	HEADER_EVENT_NAME                = "Event-Name"
 	HEADER_EVENT_ID_NAME             = "Event-UUID"
 	HEADER_CORE_ID_NAME              = "Core-UUID"
+	HEADER_CORE_NAME                 = "FreeSWITCH-Switchname"
 	HEADER_APPLICATION_ID_NAME       = "Application-UUID"
 	HEADER_APPLICATION_NAME          = "Application"
 	HEADER_APPLICATION_DATA_NAME     = "Application-Data"
@@ -35,6 +36,7 @@ var errExecuteAfterHangup = errors.New("not allow after hangup")
 type ConnectionImpl struct {
 	uuid             string
 	nodeId           string
+	nodeName         string
 	context          string
 	destination      string
 	stopped          bool
@@ -52,6 +54,7 @@ func newConnection(baseConnection *eventsocket.Connection, dump *eventsocket.Eve
 	connection := &ConnectionImpl{
 		uuid:             dump.Get(HEADER_ID_NAME),
 		nodeId:           dump.Get(HEADER_CORE_ID_NAME),
+		nodeName:         dump.Get(HEADER_CORE_NAME),
 		context:          dump.Get(HEADER_CONTEXT_NAME),
 		direction:        dump.Get(HEADER_DIRECTION_NAME),
 		connection:       baseConnection,
@@ -75,6 +78,12 @@ func (c *ConnectionImpl) Context() string {
 
 func (c *ConnectionImpl) Direction() string {
 	return c.direction
+}
+
+func (c *ConnectionImpl) PrintLastEvent() {
+	if c.lastEvent != nil {
+		c.lastEvent.PrettyPrint()
+	}
 }
 
 func (c *ConnectionImpl) SetDirection(direction string) error {
@@ -119,6 +128,10 @@ func (c *ConnectionImpl) Destination() string {
 
 func (c *ConnectionImpl) NodeId() string {
 	return c.nodeId
+}
+
+func (c *ConnectionImpl) Node() string {
+	return c.nodeName
 }
 
 func (c *ConnectionImpl) setEvent(event *eventsocket.Event) {

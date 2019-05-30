@@ -14,8 +14,13 @@ const (
 )
 
 const (
+	CALL_BRIDGE_USER_TEMPLATE = "sofia/sip/%s@%s"
+)
+
+const (
 	CALL_VARIABLE_TIMEZONE_NAME          = "timezone"
-	CALL_VARIABLE_DOMAIN_NAME            = "domain_name"
+	CALL_VARIABLE_DOMAIN_NAME            = "sip_h_X-Webitel-Domain"
+	CALL_VARIABLE_DIRECTION_NAME         = "sip_h_X-Webitel-Direction"
 	CALL_VARIABLE_FORCE_TRANSFER_CONTEXT = "force_transfer_context"
 
 	CALL_VARIABLE_SHEMA_ID   = "webitel_acr_schema_id"

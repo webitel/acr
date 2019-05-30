@@ -92,14 +92,14 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 	strategy = getStringValueFromMap("strategy", props, "")
 
 	if strategy == "failover" {
-		separator = "+F"
+		separator = "|"
 	} else if strategy != "" && strategy != "multiple" {
-		separator = "+A"
+		separator = ":_:"
 	} else {
-		separator = "+E"
+		separator = ","
 	}
 
-	dialString += "{domain_name=" + c.Domain()
+	dialString += "{sip_route_uri=sip:$${outbound_sip_proxy}" // + model.CALL_VARIABLE_DOMAIN_NAME + "=" + c.Domain() sip_route_uri=sip:$${outbound_sip_proxy}"
 
 	if tmpArr, ok = getArrayStringFromMap("global", props); ok && len(tmpArr) > 0 {
 		dialString += "," + strings.Join(c.router.ValidateArrayVariables(tmpArr), ",")
@@ -113,7 +113,7 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		dialString += ",absolute_codec_string='" + strings.Join(tmpArr, ",") + "'"
 	}
 
-	dialString += "}group/"
+	dialString += "}"
 
 	if _, ok = props["pickup"]; ok {
 		p = c.ParseString(getStringValueFromMap("pickup", props, ""))
@@ -121,14 +121,14 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 
 	var _endpointsStr []string
 	if p != "" {
-		_endpointsStr = append(_endpointsStr, UrlEncoded("pickup/"+p+"@"+c.Domain()))
+		_endpointsStr = append(_endpointsStr, "pickup/"+p+"@"+c.Domain())
 	}
 
 	for _, endpoint := range endpoints {
-		_endpointsStr = append(_endpointsStr, UrlEncoded(c.ParseString(addBridgeEndpoint(c, endpoint))))
+		_endpointsStr = append(_endpointsStr, c.ParseString(addBridgeEndpoint(c, endpoint)))
 	}
 
-	dialString += strings.Join(_endpointsStr, "~") + "@" + c.Domain() + separator
+	dialString += strings.Join(_endpointsStr, separator)
 
 	err = c.Execute("bridge", dialString)
 	if err != nil {
@@ -174,28 +174,15 @@ func addBridgeEndpoint(c *Call, endpoint map[string]interface{}) string {
 		dialString += "sofia/" + getStringValueFromMap("profile", endpoint, "external") + "/" +
 			getStringValueFromMap("dialString", endpoint, "_undef_") + "@" + getStringValueFromMap("host", endpoint, "")
 
-	case "sipDevice":
-		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
-			dialString += "[" + strings.Join(c.router.ValidateArrayVariables(tmpArr), ",") + "]"
-		}
-		dialString += "sofia/" + getStringValueFromMap("profile", endpoint, "internal") + "/" +
-			getStringValueFromMap("name", endpoint, "_undef_") + "%" +
-			getStringValueFromMap("domainName", endpoint, "") + "^" + getStringValueFromMap("dialString", endpoint, "")
-
-	case "device":
-		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
-			dialString += "[" + strings.Join(c.router.ValidateArrayVariables(tmpArr), ",") + "]"
-		}
-
-		dialString += fmt.Sprintf("user/%s@%s", getStringValueFromMap("name", endpoint, "_undef"), c.Domain)
-
 	case "user":
+		dialString += "[" + model.CALL_VARIABLE_DIRECTION_NAME + "=" + model.CALL_DIRECTION_INTERNAL + ","
 		if tmpArr, ok = getArrayStringFromMap("parameters", endpoint); ok && len(tmpArr) > 0 {
-			dialString += "[" + strings.Join(c.router.ValidateArrayVariables(tmpArr), ",") + "]"
+			dialString += strings.Join(c.router.ValidateArrayVariables(tmpArr), ",")
 		}
+		dialString += "]"
 
-		dialString += fmt.Sprintf("user/%s@%s", getStringValueFromMap("name", endpoint, "_undef"),
-			getStringValueFromMap("domainName", endpoint, "${domain_name}"))
+		dialString += fmt.Sprintf(model.CALL_BRIDGE_USER_TEMPLATE, getStringValueFromMap("name", endpoint, "_undef"),
+			getStringValueFromMap("domainName", endpoint, "${"+model.CALL_VARIABLE_DOMAIN_NAME+"}"))
 	}
 	return dialString
 }

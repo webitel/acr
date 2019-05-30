@@ -9,6 +9,7 @@ type CallServer interface {
 type Connection interface {
 	Id() string
 	NodeId() string
+	Node() string
 	Context() string
 	Destination() string
 	Direction() string
@@ -25,4 +26,5 @@ type Connection interface {
 	HangupCause() string
 	WaitForDisconnect()
 	Hangup(cause string) error
+	PrintLastEvent()
 }

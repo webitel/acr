@@ -52,6 +52,7 @@ type SqlStore interface {
 	InboundQueue() InboundQueueStore
 	Call() CallStore
 	CallbackQueue() CallbackQueueStore
+	Endpoint() EndpointStore
 }
 
 //region mongodb TODO remove this store
@@ -131,4 +132,7 @@ type CallbackQueueStore interface {
 	Exists(domain, name string) StoreChannel
 	CreateMember(domain, queue, number, widgetName string) StoreChannel
 	CreateMemberComment(memberId int64, domain, createdBy, text string) StoreChannel
+}
+
+type EndpointStore interface {
 }

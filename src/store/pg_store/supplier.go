@@ -36,6 +36,7 @@ type SqlSupplierOldStores struct {
 	inboundQueue   store.InboundQueueStore
 	call           store.CallStore
 	callbackQueue  store.CallbackQueueStore
+	endpoint       store.EndpointStore
 }
 
 type SqlSupplier struct {
@@ -66,6 +67,7 @@ func NewSqlSupplier(settings model.SqlSettings) *SqlSupplier {
 	supplier.oldStores.inboundQueue = NewSqlInboundQueueStore(supplier)
 	supplier.oldStores.call = NewSqlCallStore(supplier)
 	supplier.oldStores.callbackQueue = NewSqlCallbackQueueStore(supplier)
+	supplier.oldStores.endpoint = NewSqlEndpointStore(supplier)
 
 	return supplier
 }
@@ -190,4 +192,8 @@ func (ss *SqlSupplier) Call() store.CallStore {
 
 func (ss *SqlSupplier) CallbackQueue() store.CallbackQueueStore {
 	return ss.oldStores.callbackQueue
+}
+
+func (ss *SqlSupplier) Endpoint() store.EndpointStore {
+	return ss.oldStores.endpoint
 }

@@ -82,3 +82,7 @@ func (s *LayeredStore) Call() CallStore {
 func (s *LayeredStore) CallbackQueue() CallbackQueueStore {
 	return s.DatabaseLayer.CallbackQueue()
 }
+
+func (s *LayeredStore) Endpoint() EndpointStore {
+	return s.DatabaseLayer.Endpoint()
+}

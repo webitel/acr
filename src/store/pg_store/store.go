@@ -19,4 +19,5 @@ type SqlStore interface {
 	InboundQueue() store.InboundQueueStore
 	Call() store.CallStore
 	CallbackQueue() store.CallbackQueueStore
+	Endpoint() store.EndpointStore
 }

@@ -88,22 +88,22 @@ func (router *CallRouterImpl) Stop() {
 func (router *CallRouterImpl) addCallConnection(callConnection provider.Connection) {
 	atomic.AddInt32(&router.callCount, 1)
 
-	wlog.Debug(fmt.Sprintf("add call %s [%s], all cals %d", callConnection.Id(), callConnection.NodeId(), router.callCount))
+	wlog.Debug(fmt.Sprintf("add call %s [%s], all cals %d", callConnection.Id(), callConnection.Node(), router.callCount))
 }
 
 func (router *CallRouterImpl) removeCallConnection(callConnection provider.Connection) {
 	atomic.AddInt32(&router.callCount, -1)
-	wlog.Debug(fmt.Sprintf("remove call %s [%s], all cals %d", callConnection.Id(), callConnection.NodeId(), router.callCount))
+	wlog.Debug(fmt.Sprintf("remove call %s [%s], all cals %d", callConnection.Id(), callConnection.Node(), router.callCount))
 }
 
 func (router *CallRouterImpl) initGlobalsVars(callConn provider.Connection) {
 	if !router.globalVarsStore.ExistsNode(callConn.NodeId()) {
 		variables, err := callConn.GetGlobalVariables()
 		if err != nil {
-			wlog.Error(fmt.Sprintf("init global variable node %s error: %s", callConn.NodeId(), err.Error()))
+			wlog.Error(fmt.Sprintf("init global variable node %s error: %s", callConn.Node(), err.Error()))
 			return
 		}
-		wlog.Info(fmt.Sprintf("init global variable node %s successful", callConn.NodeId()))
+		wlog.Info(fmt.Sprintf("init global variable node %s successful", callConn.Node()))
 		router.globalVarsStore.SetNodeVariables(callConn.NodeId(), variables)
 	}
 }
@@ -120,17 +120,20 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 
 	call := NewCall(router, callConn)
 
-	switch callConn.Context() {
-	case model.CONTEXT_PUBLIC:
+	fmt.Println(callConn.Direction())
+
+	switch callConn.Direction() {
+	case model.CALL_DIRECTION_INBOUND:
 		router.handlePublicContext(call)
-	case model.CONTEXT_DEFAULT:
+	//case model.CONTEXT_DIALER:
+	//	router.handleDialerContext(call)
+	//case model.CONTEXT_PRIVATE:
+	//	router.handlePrivateContext(call)
+	//	break
+	default:
 		router.handleDefaultContext(call)
-	case model.CONTEXT_DIALER:
-		router.handleDialerContext(call)
-	case model.CONTEXT_PRIVATE:
-		router.handlePrivateContext(call)
-		break
 	}
+	//call.PrintLastEvent()
 
 	if call.callFlow == nil {
 		wlog.Error(fmt.Sprintf("call %s not found callflow from context: %s", callConn.Id(), callConn.Context()))
@@ -204,17 +207,6 @@ func (router *CallRouterImpl) handleDefaultContext(call *Call) {
 	UnSet(call, "sip_h_call-info")
 	domain := call.GetVariable(model.CALL_VARIABLE_DOMAIN_NAME)
 
-	call.callFlow, err = router.app.GetExtensionRoute(domain, call.Destination())
-	if err != nil && err != sql.ErrNoRows {
-		wlog.Error(fmt.Sprintf("call %s GetExtensionRoute error %s", call.Id(), err.Error()))
-		return
-	}
-
-	if call.callFlow != nil {
-		router.handleDefaultInternalContext(call)
-		return
-	}
-
 	call.callFlow, err = router.app.GetDefaultRoute(domain, call.Destination())
 	if err != nil && err != sql.ErrNoRows {
 		wlog.Error(fmt.Sprintf("call %s GetDefaultRoute error %s", call.Id(), err.Error()))
@@ -222,21 +214,6 @@ func (router *CallRouterImpl) handleDefaultContext(call *Call) {
 	}
 
 	call.SetDirection(model.CALL_DIRECTION_OUTBOUND)
-	if call.callFlow != nil {
-		router.handleDefaultOutboundContext(call)
-		return
-	}
-
-}
-
-func (route *CallRouterImpl) handleDefaultInternalContext(call *Call) {
-	call.SetDirection(model.CALL_DIRECTION_INTERNAL)
-
-	call.Export("sip_redirect_context=default")
-}
-
-func (route *CallRouterImpl) handleDefaultOutboundContext(call *Call) {
-
 }
 
 func (route *CallRouterImpl) handlePrivateContext(call *Call) {
