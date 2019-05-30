@@ -46,7 +46,10 @@ func (call *Call) Domain() string {
 }
 
 func (call *Call) Timezone() string {
-	return call.callFlow.Timezone
+	if call.callFlow.Timezone == nil {
+		return ""
+	}
+	return *call.callFlow.Timezone
 }
 
 func (call *Call) ValidateApp(name string) bool {
@@ -54,8 +57,8 @@ func (call *Call) ValidateApp(name string) bool {
 }
 
 func (call *Call) GetDate() (now time.Time) {
-	if call.callFlow.Timezone != "" {
-		if loc, err := time.LoadLocation(call.callFlow.Timezone); err == nil {
+	if call.Timezone() != "" {
+		if loc, err := time.LoadLocation(call.Timezone()); err == nil {
 			now = time.Now().In(loc)
 			return
 		}
@@ -109,8 +112,8 @@ func (call *Call) Route() {
 	defer call.Reporting()
 	defer call.router.app.RemoveRPCCommands(call.Id())
 
-	if call.callFlow.Timezone != "" {
-		if err := call.Set(model.CALL_VARIABLE_TIMEZONE_NAME, call.callFlow.Timezone); err != nil {
+	if call.Timezone() != "" {
+		if err := call.Set(model.CALL_VARIABLE_TIMEZONE_NAME, call.Timezone()); err != nil {
 			wlog.Error(fmt.Sprintf("call %s set timezone error: %s", call.Id(), err.Error()))
 			return
 		}
