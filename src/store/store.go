@@ -135,4 +135,5 @@ type CallbackQueueStore interface {
 }
 
 type EndpointStore interface {
+	GetDistinctDevices(request []*model.EndpointsRequest) StoreChannel
 }

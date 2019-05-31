@@ -124,11 +124,13 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		_endpointsStr = append(_endpointsStr, "pickup/"+p+"@"+c.Domain())
 	}
 
-	for _, endpoint := range endpoints {
-		_endpointsStr = append(_endpointsStr, c.ParseString(addBridgeEndpoint(c, endpoint)))
+	if tmpArr, err = getRemoteEndpoints(c, endpoints); err != nil {
+		return err
+	} else {
+		_endpointsStr = append(_endpointsStr, tmpArr...)
 	}
 
-	dialString += strings.Join(_endpointsStr, separator)
+	dialString += c.ParseString(strings.Join(_endpointsStr, separator))
 
 	err = c.Execute("bridge", dialString)
 	if err != nil {
@@ -149,6 +151,87 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		c.GetVariable("variable_webitel_detect_redirect") != "false" {
 		wlog.Warn(fmt.Sprintf("call %s detect sip redirect to %s, break this route", c.Id(), c.GetVariable("variable_sip_redirect_dialstring")))
 		c.SetBreak()
+	}
+
+	return nil
+}
+
+func getRemoteEndpoints(call *Call, endpoints model.ArrayApplications) ([]string, error) {
+	var typeName string
+	request := make([]*model.EndpointsRequest, 0, 1)
+	result := make([]string, 0, 1)
+
+	for key, v := range endpoints {
+		typeName = getStringValueFromMap("type", v, "")
+		if typeName == "user" || typeName == "group" {
+			request = append(request, &model.EndpointsRequest{
+				Key:  key,
+				Type: typeName,
+				Name: getStringValueFromMap("name", v, ""),
+			})
+		}
+	}
+
+	response, err := call.router.app.GetDistinctDevices(request)
+	if err != nil {
+		return result, err
+	}
+
+	for key, v := range endpoints {
+		typeName = getStringValueFromMap("type", v, "")
+
+		switch typeName {
+		case "user", "group":
+			e := findEndpointByKey(&response, key)
+			if e == nil {
+				call.LogError("bridge", v, "not found response endpoint")
+				continue
+			}
+
+			buildUserDialString(call, &result, e)
+		default:
+			fmt.Println(key, v)
+		}
+
+	}
+
+	return result, nil
+}
+
+func findEndpointByKey(arr *[]*model.EndpointsResponse, key int) *model.EndpointsResponse {
+	for _, v := range *arr {
+		if v.Pos == key {
+			return v
+		}
+	}
+	return nil
+}
+
+func buildUserDialString(call *Call, result *[]string, responseItems *model.EndpointsResponse) error {
+	items, err := responseItems.ToEndpoints()
+	if err != nil {
+		return err
+	}
+
+	for _, i := range items {
+		if i.Id == nil {
+			*result = append(*result, "error/UNALLOCATED_NUMBER") //TODO
+			continue
+		}
+		variables := make([]string, 0, 1)
+
+		variables = append(variables, fmt.Sprintf("wbt_user_id=%v", *i.Id))
+		variables = append(variables, fmt.Sprintf("effective_callee_id_name=%v", i.Name))
+		variables = append(variables, "sip_h_X-Webitel-Direction=internal")
+		variables = append(variables, "sip_route_uri=sip:$${outbound_sip_proxy}")
+
+		if len(i.Devices) == 0 {
+			*result = append(*result, fmt.Sprintf("{%v}%s", strings.Join(variables, ","), "error/UNALLOCATED_NUMBER"))
+		} else {
+			for _, v := range i.Devices {
+				*result = append(*result, fmt.Sprintf("{%v}sofia/sip/%s@%s", strings.Join(variables, ","), string(v), call.Domain()))
+			}
+		}
 	}
 
 	return nil
