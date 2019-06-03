@@ -220,16 +220,21 @@ func buildUserDialString(call *Call, result *[]string, responseItems *model.Endp
 		}
 		variables := make([]string, 0, 1)
 
+		//switch_channel.c:1257 sofia/sip/Linphone@10.10.10.25:15060 EXPORTING[bridge_export_vars] [origination_callee_id_name]=[igor] to sofia/sip/300@webitel.lo
+
 		variables = append(variables, fmt.Sprintf("wbt_user_id=%v", *i.Id))
 		variables = append(variables, fmt.Sprintf("effective_callee_id_name=%v", i.Name))
+		variables = append(variables, fmt.Sprintf("origination_callee_id_number=%v", "444444"))
 		variables = append(variables, "sip_h_X-Webitel-Direction=internal")
-		variables = append(variables, "sip_route_uri=sip:$${outbound_sip_proxy}")
+		//variables = append(variables, "sip_enable_soa=true")
+		//variables = append(variables, "bridge_export_vars=origination_callee_id_number")
+		//variables = append(variables, "sip_route_uri=sip:$${outbound_sip_proxy}")
 
 		if len(i.Devices) == 0 {
-			*result = append(*result, fmt.Sprintf("{%v}%s", strings.Join(variables, ","), "error/UNALLOCATED_NUMBER"))
+			*result = append(*result, fmt.Sprintf("[%v]%s", strings.Join(variables, ","), "error/UNALLOCATED_NUMBER"))
 		} else {
 			for _, v := range i.Devices {
-				*result = append(*result, fmt.Sprintf("{%v}sofia/sip/%s@%s", strings.Join(variables, ","), string(v), call.Domain()))
+				*result = append(*result, fmt.Sprintf("[%v]sofia/sip/%s@%s", strings.Join(variables, ","), string(v), call.Domain()))
 			}
 		}
 	}
