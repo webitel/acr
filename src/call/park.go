@@ -41,7 +41,7 @@ func Park(c *Call, args interface{}) error {
 			}
 		}
 
-		str := name + "@${domain_name} " + auto + lot
+		str := c.ParseString(name) + "@${domain_name} " + auto + c.ParseString(lot)
 		err := c.Execute("valet_park", str)
 		if err != nil {
 			c.LogError("park", str, err.Error())
