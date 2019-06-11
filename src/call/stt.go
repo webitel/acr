@@ -41,7 +41,7 @@ func STT(c *Call, args interface{}) error {
 		"&reply=" + c.router.app.GetRPCCommandsQueueName() +
 		"&type=.wav " + maxSec + " " + getStringValueFromMap("silenceThresh", props, "200") + " " + getStringValueFromMap("silenceHits", props, "3")
 
-	err = c.Execute("record", data)
+	err = c.BgExecute("record", data)
 	if err != nil {
 		c.LogError("stt", data, err.Error())
 		return err

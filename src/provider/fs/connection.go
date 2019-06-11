@@ -176,6 +176,21 @@ func (c *ConnectionImpl) HangupCause() string {
 	return c.hangupCause
 }
 
+func (c *ConnectionImpl) BgExecute(app, args string) error {
+	if c.Stopped() {
+		return errExecuteAfterHangup
+	}
+
+	_, err := c.connection.SendMsg(eventsocket.MSG{
+		"call-command":     "execute",
+		"execute-app-name": app,
+		"execute-app-arg":  args,
+		"event-lock":       "false",
+	}, "", "")
+
+	return err
+}
+
 func (c *ConnectionImpl) Execute(app, args string) error {
 	if c.Stopped() {
 		return errExecuteAfterHangup

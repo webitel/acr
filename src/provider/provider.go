@@ -19,6 +19,7 @@ type Connection interface {
 	GetGlobalVariables() (map[string]string, error)
 	GetVariable(name string) (value string)
 	Api(cmd string) ([]byte, error)
+	BgExecute(app, args string) error
 	Execute(app, args string) error
 	SendEvent(m map[string]string, name string) error
 	DumpVariables() map[string]string
