@@ -167,12 +167,12 @@ func getRemoteEndpoints(call *Call, endpoints model.ArrayApplications) ([]string
 			request = append(request, &model.EndpointsRequest{
 				Key:  key,
 				Type: typeName,
-				Name: getStringValueFromMap("name", v, ""),
+				Name: call.ParseString(getStringValueFromMap("name", v, "")),
 			})
 		}
 	}
 
-	response, err := call.router.app.GetDistinctDevices(request)
+	response, err := call.router.app.GetDistinctDevices(call.DomainId(), request)
 	if err != nil {
 		return result, err
 	}
@@ -207,37 +207,31 @@ func findEndpointByKey(arr *[]*model.EndpointsResponse, key int) *model.Endpoint
 	return nil
 }
 
-func buildUserDialString(call *Call, result *[]string, responseItems *model.EndpointsResponse) error {
-	items, err := responseItems.ToEndpoints()
-	if err != nil {
-		return err
+func buildUserDialString(call *Call, result *[]string, endpoint *model.EndpointsResponse) error {
+
+	if endpoint.Id == nil {
+		*result = append(*result, "error/UNALLOCATED_NUMBER") //TODO
+		return nil
 	}
 
-	for _, i := range items {
-		if i.Id == nil {
-			*result = append(*result, "error/UNALLOCATED_NUMBER") //TODO
-			continue
-		}
-		variables := make([]string, 0, 1)
+	variables := make([]string, 0, 1)
 
-		//switch_channel.c:1257 sofia/sip/Linphone@10.10.10.25:15060 EXPORTING[bridge_export_vars] [origination_callee_id_name]=[igor] to sofia/sip/300@webitel.lo
+	variables = append(variables, fmt.Sprintf("%s=%d", model.CALL_VARIABLE_DOMAIN_ID_NAME, call.DomainId()))
+	variables = append(variables, fmt.Sprintf("%s=%d", model.CALL_VARIABLE_USER_ID_NAME, *endpoint.Id))
+	variables = append(variables, fmt.Sprintf("effective_callee_id_name='%v'", *endpoint.Name))
+	variables = append(variables, "sip_h_X-Webitel-Direction=internal")
 
-		variables = append(variables, fmt.Sprintf("wbt_user_id=%v", *i.Id))
-		variables = append(variables, fmt.Sprintf("effective_callee_id_name=%v", i.Name))
-		variables = append(variables, fmt.Sprintf("origination_callee_id_number=%v", "444444"))
-		variables = append(variables, "sip_h_X-Webitel-Direction=internal")
-		//variables = append(variables, "sip_enable_soa=true")
-		//variables = append(variables, "bridge_export_vars=origination_callee_id_number")
-		//variables = append(variables, "sip_route_uri=sip:$${outbound_sip_proxy}")
-
-		if len(i.Devices) == 0 {
-			*result = append(*result, fmt.Sprintf("[%v]%s", strings.Join(variables, ","), "error/UNALLOCATED_NUMBER"))
-		} else {
-			for _, v := range i.Devices {
-				*result = append(*result, fmt.Sprintf("[%v]sofia/sip/%s@%s", strings.Join(variables, ","), string(v), call.Domain()))
-			}
-		}
+	if endpoint.Dnd != nil && *endpoint.Dnd {
+		*result = append(*result, fmt.Sprintf("[%v]%s", strings.Join(variables, ","), "error/USER_BUSY"))
+		return nil
 	}
+
+	if endpoint.Number == nil {
+		*result = append(*result, fmt.Sprintf("[%v]%s", strings.Join(variables, ","), "error/UNALLOCATED_NUMBER"))
+		return nil
+	}
+
+	*result = append(*result, fmt.Sprintf("[%v]sofia/sip/%s@%s", strings.Join(variables, ","), *endpoint.Number, call.Domain()))
 
 	return nil
 }

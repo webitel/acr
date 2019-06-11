@@ -11,6 +11,7 @@ import (
 	"github.com/webitel/acr/src/utils"
 	"github.com/webitel/wlog"
 	"runtime/debug"
+	"strconv"
 	"sync/atomic"
 )
 
@@ -204,10 +205,16 @@ func (router *CallRouterImpl) handlePublicContext(call *Call) {
 
 func (router *CallRouterImpl) handleDefaultContext(call *Call) {
 	var err error
+	var domainId int
 	UnSet(call, "sip_h_call-info")
-	domain := call.GetVariable(model.CALL_VARIABLE_DOMAIN_NAME)
 
-	call.callFlow, err = router.app.GetDefaultRoute(domain, call.Destination())
+	domainId, err = strconv.Atoi(call.GetVariable(model.CALL_VARIABLE_DOMAIN_ID_NAME))
+	if err != nil {
+		wlog.Error(fmt.Sprintf("call %s parse %s error %s", call.Id(), model.CALL_VARIABLE_DOMAIN_ID_NAME, err.Error()))
+		return
+	}
+
+	call.callFlow, err = router.app.GetDefaultRoute(int64(domainId), call.Destination())
 	if err != nil && err != sql.ErrNoRows {
 		wlog.Error(fmt.Sprintf("call %s GetDefaultRoute error %s", call.Id(), err.Error()))
 		return

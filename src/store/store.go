@@ -96,7 +96,7 @@ type BlackListStore interface {
 //endregion
 
 type DefaultRouteStore interface {
-	Get(domain, destination string) StoreChannel
+	Get(domainId int64, destination string) StoreChannel
 }
 
 type ExtensionRouteStore interface {
@@ -135,5 +135,5 @@ type CallbackQueueStore interface {
 }
 
 type EndpointStore interface {
-	GetDistinctDevices(request []*model.EndpointsRequest) StoreChannel
+	GetDistinctDevices(domainId int64, request []*model.EndpointsRequest) StoreChannel
 }

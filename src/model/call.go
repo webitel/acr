@@ -20,6 +20,8 @@ const (
 const (
 	CALL_VARIABLE_TIMEZONE_NAME          = "timezone"
 	CALL_VARIABLE_DOMAIN_NAME            = "sip_h_X-Webitel-Domain"
+	CALL_VARIABLE_DOMAIN_ID_NAME         = "sip_h_X-Webitel-Domain-Id"
+	CALL_VARIABLE_USER_ID_NAME           = "sip_h_X-Webitel-User-Id"
 	CALL_VARIABLE_DIRECTION_NAME         = "sip_h_X-Webitel-Direction"
 	CALL_VARIABLE_FORCE_TRANSFER_CONTEXT = "force_transfer_context"
 

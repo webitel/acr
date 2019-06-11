@@ -47,6 +47,7 @@ type CallFlow struct {
 	Number       string             `json:"destination_number" db:"destination_number"`
 	Timezone     *string            `json:"fs_timezone" db:"fs_timezone"`
 	Domain       string             `json:"domain" db:"domain"`
+	DomainId     int64              `json:"domain_id" db:"domain_id"`
 	Callflow     ArrayApplications  `json:"callflow" db:"callflow" sql:"type:json" bson:"callflow"`
 	OnDisconnect *ArrayApplications `json:"callflow_on_disconnect" db:"callflow_on_disconnect" bson:"onDisconnect"  sql:"type:json"`
 	Version      int                `json:"version" db:"version"`

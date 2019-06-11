@@ -4,8 +4,8 @@ import (
 	"github.com/webitel/acr/src/model"
 )
 
-func (a *App) GetDefaultRoute(domain, destination string) (*model.CallFlow, error) {
-	result := <-a.Store.DefaultRoute().Get(domain, destination)
+func (a *App) GetDefaultRoute(domainId int64, destination string) (*model.CallFlow, error) {
+	result := <-a.Store.DefaultRoute().Get(domainId, destination)
 
 	if result.Err != nil {
 		return nil, result.Err

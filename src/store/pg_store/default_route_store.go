@@ -14,25 +14,27 @@ func NewSqlDefaultRouteStore(sqlStore SqlStore) store.DefaultRouteStore {
 	return st
 }
 
-func (self SqlDefaultRouteStore) Get(domain, destination string) store.StoreChannel {
+func (self SqlDefaultRouteStore) Get(domainId int64, destination string) store.StoreChannel {
 	return store.Do(func(result *store.StoreResult) {
 		var cf *model.CallFlow
-		err := self.GetReplica().SelectOne(&cf, `SELECT 
+		err := self.GetReplica().SelectOne(&cf, `SELECT
        callflow_default.id                                        as id,
        callflow_default.destination_number                        as destination_number,
        callflow_default.name                                      as name,
        callflow_default.debug                                     as debug,
-       callflow_default.domain                                    as domain,
+       d.dn                                                       as domain,
+       d.dc                                                       as domain_id,
        callflow_default.fs_timezone                               as fs_timezone,
        callflow_default.callflow                                  as callflow,
        callflow_default.callflow_on_disconnect                    as callflow_on_disconnect,
        callflow_default.version                                   as version,
        cv.variables::JSON                                         as variables
 FROM "callflow_default"
+       INNER JOIN wbt_domain d on d.dc = callflow_default.dc
        LEFT JOIN callflow_variables cv on cv.domain = callflow_default.domain
-WHERE callflow_default.domain = :Domain AND callflow_default.disabled IS NOT TRUE AND  :Destination ~ callflow_default.destination_number 
+WHERE callflow_default.dc = :DomainId AND callflow_default.disabled IS NOT TRUE AND  :Destination ~ callflow_default.destination_number
 ORDER BY callflow_default."order" ASC
-LIMIT 1`, map[string]interface{}{"Destination": destination, "Domain": domain})
+LIMIT 1`, map[string]interface{}{"Destination": destination, "DomainId": domainId})
 
 		if err != nil {
 			result.Err = err

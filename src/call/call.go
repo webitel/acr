@@ -45,6 +45,10 @@ func (call *Call) Domain() string {
 	return call.callFlow.Domain
 }
 
+func (call *Call) DomainId() int64 {
+	return call.callFlow.DomainId
+}
+
 func (call *Call) Timezone() string {
 	if call.callFlow.Timezone == nil {
 		return ""
