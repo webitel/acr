@@ -163,7 +163,7 @@ func getRemoteEndpoints(call *Call, endpoints model.ArrayApplications) ([]string
 
 	for key, v := range endpoints {
 		typeName = getStringValueFromMap("type", v, "")
-		if typeName == "user" || typeName == "group" {
+		if typeName == "user" || typeName == "group" || typeName == "extension" {
 			request = append(request, &model.EndpointsRequest{
 				Key:  key,
 				Type: typeName,
@@ -181,7 +181,7 @@ func getRemoteEndpoints(call *Call, endpoints model.ArrayApplications) ([]string
 		typeName = getStringValueFromMap("type", v, "")
 
 		switch typeName {
-		case "user", "group":
+		case "user", "group", "extension":
 			e := findEndpointByKey(&response, key)
 			if e == nil {
 				call.LogError("bridge", v, "not found response endpoint")
