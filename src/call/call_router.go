@@ -197,6 +197,11 @@ func (router *CallRouterImpl) handlePublicContext(call *Call) {
 		return
 	}
 
+	if err = call.Set(model.CALL_VARIABLE_DOMAIN_ID_NAME, strconv.Itoa(int(call.callFlow.DomainId))); err != nil {
+		wlog.Error(fmt.Sprintf("call %s set domain_name error: %s", call.Id(), err.Error()))
+		return
+	}
+
 	if err = call.Set(model.CALL_VARIABLE_FORCE_TRANSFER_CONTEXT, model.CONTEXT_DEFAULT); err != nil {
 		wlog.Error(fmt.Sprintf("call %s set %s error: %s", call.Id(), model.CALL_VARIABLE_FORCE_TRANSFER_CONTEXT, err.Error()))
 		return
