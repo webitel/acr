@@ -158,6 +158,8 @@ func (router *CallRouterImpl) handleDialerContext(call *Call) {
 		return
 	}
 
+	setProfileVariable(call, model.CALL_VARIABLE_DESTINATION_NUMBER, call.GetVariable(model.CALL_VARIABLE_DESTINATION_NUMBER))
+
 }
 
 func (router *CallRouterImpl) handlePublicContext(call *Call) {

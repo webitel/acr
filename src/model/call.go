@@ -25,6 +25,8 @@ const (
 
 	CALL_VARIABLE_DEFAULT_LANGUAGE_NAME = "default_language"
 	CALL_VARIABLE_SOUND_PREF_NAME       = "sound_prefix"
+
+	CALL_VARIABLE_DESTINATION_NUMBER = "destination_number"
 )
 
 const (
