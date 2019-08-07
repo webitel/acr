@@ -69,7 +69,7 @@ func (self *NoSqlSupplier) setupConnection() *mgo.Database {
 
 		session, err := mgo.Dial(self.uri)
 		if err != nil {
-			wlog.Critical(fmt.Sprintf("failed to open Mongo connection to err:%v", err.Error()))
+			wlog.Critical(fmt.Sprintf("failed to open %s Mongo connection to err:%v", self.uri, err.Error()))
 			time.Sleep(time.Second)
 			continue
 		}
