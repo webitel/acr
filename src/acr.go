@@ -17,17 +17,16 @@ import (
 )
 
 func main() {
-
-	if config.Conf.Get("dev") == "true" {
-		setDebug()
-	}
-
 	interruptChan := make(chan os.Signal, 1)
 
 	acr := app.New()
 	defer acr.Shutdown()
 
 	router := call.InitCallRouter(acr)
+
+	if config.Conf.Get("dev") == "true" {
+		setDebug()
+	}
 
 	signal.Notify(interruptChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-interruptChan

@@ -122,6 +122,11 @@ type InboundQueueStore interface {
 	Exists(domain, name string) StoreChannel
 	CountAvailableAgent(domain, name string) StoreChannel
 	CountAvailableMembers(domain, name string) StoreChannel
+
+	InboundInfo(domainId int64, name string) (*model.InboundQueueInfo, error)
+
+	DistributeMember(domainId int64, queueName string, member *model.InboundMember) StoreChannel
+	CancelIfDistributing(attemptId int64) StoreChannel
 }
 
 type CallStore interface {

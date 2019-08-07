@@ -31,7 +31,7 @@ func GetSqlSettings() model.SqlSettings {
 		MaxIdleConns:                &maxIdleConns,
 		MaxOpenConns:                &maxOpenConns,
 		ConnMaxLifetimeMilliseconds: &connMaxLifetimeMilliseconds,
-		Trace: trace,
+		Trace:                       trace,
 	}
 
 	return setteings

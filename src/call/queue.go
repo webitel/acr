@@ -17,6 +17,73 @@ import (
 var validQueueName = regexp.MustCompile(`^[a-zA-Z0-9+_-]+$`)
 
 func Queue(c *Call, args interface{}) error {
+	var ok bool
+	Answer(c, "200")
+	if _, ok = args.(map[string]interface{}); ok {
+
+		info, err := c.router.app.Store.InboundQueue().InboundInfo(1, "fd64d2396eeefab4ddc3")
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+		fmt.Println(info)
+		//TODO add check max > active; calendar!
+		// cluster name from info
+
+		SetVar(c, []string{
+			"cc_node_id=call-center-1",
+			"grpc_originate_success=true", //TODO
+			"valet_hold_music=silence",
+			fmt.Sprintf("valet_parking_timeout=%d", info.Timeout),
+			fmt.Sprintf("cc_queue_member_priority=%d", 10),
+			fmt.Sprintf("cc_queue_id=%d", info.Id),
+			fmt.Sprintf("cc_queue_updated_at=%d", info.UpdatedAt),
+			fmt.Sprintf("cc_queue_name=%s", info.Name),
+			fmt.Sprintf("cc_call_id=%s", model.NewId()),
+		})
+		//c.Execute("park_state", "")
+
+		//res, err := c.router.app.DistributeMemberToInboundQueue(1, "fd64d2396eeefab4ddc3", &model.InboundMember{
+		//	Priority:   0,
+		//	CallId:     c.Id(),
+		//	Name:       c.GetVariable("caller_id_name"),
+		//	Number:     c.GetVariable("caller_id_number"),
+		//	ProviderId: c.Node(),
+		//})
+		//
+		//if err != nil {
+		//	wlog.Error(err.Error())
+		//	return err
+		//}
+		//
+		//if !res.Enabled {
+		//	fmt.Println("QUEUE NOT WORKING")
+		//	return nil
+		//}
+		//
+		//if res.AttemptId == nil {
+		//	fmt.Println("NOT ALLOWED")
+		//	return nil
+		//}
+		//
+		//fmt.Println("JOIN QUEUE", err, *res.AttemptId)
+		//defer fmt.Println("LEAVING QUEUE")
+
+		c.Execute("valet_park", fmt.Sprintf("queue_%d ${uuid}", info.Id))
+
+		//err = c.router.app.CancelIfDistributingMemberInboundQueue(*res.AttemptId)
+		//if err != nil {
+		//	panic(err.Error())
+		//}
+		c.SetBreak()
+		//Hangup(c, "USER_BUSY")
+		//c.Execute("park", "")
+	}
+	return nil
+}
+
+func Queue2(c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var name string
