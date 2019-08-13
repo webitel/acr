@@ -16,12 +16,14 @@ func SetAudioLevel(c *Call, args interface{}) error {
 		return nil
 	}
 
-	data := fmt.Sprintf("%s %s",
+	data := fmt.Sprintf("uuid_audio %s start %s %s %s",
+		c.Id(),
 		getStringValueFromMap("direction", props, AUDIO_LEVEL_DIRECTION_READ),
-		getStringValueFromMap("level", props, "-1"),
+		getStringValueFromMap("action", props, "level"),
+		getStringValueFromMap("level", props, "3"),
 	)
 
-	err := c.Execute("set_audio_level", data)
+	_, err := c.Api(data)
 	if err != nil {
 		c.LogError("SetAudioLevel", data, err.Error())
 		return err
