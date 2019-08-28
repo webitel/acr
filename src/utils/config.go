@@ -9,7 +9,7 @@ import (
 //TODO
 func GetSqlSettings() model.SqlSettings {
 
-	dbDataSource := fmt.Sprintf("postgres://%s:%s@%s:%v/%s?fallback_application_name=acr&sslmode=%s&connect_timeout=10",
+	dbDataSource := fmt.Sprintf("postgres://%s:%s@%s:%v/%s?fallback_application_name=acr&sslmode=%s&connect_timeout=10&search_path=call_center",
 		config.Conf.Get("pg:user"),
 		config.Conf.Get("pg:password"),
 		config.Conf.Get("pg:host"),

@@ -21,7 +21,7 @@ func Queue(c *Call, args interface{}) error {
 	Answer(c, "200")
 	if _, ok = args.(map[string]interface{}); ok {
 
-		info, err := c.router.app.Store.InboundQueue().InboundInfo(1, "fd64d2396eeefab4ddc3")
+		info, err := c.router.app.Store.InboundQueue().InboundInfo(1, "Queue 1")
 
 		if err != nil {
 			panic(err.Error())

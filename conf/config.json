@@ -19,7 +19,7 @@
     "mediaFileCollection": "mediaFile"
   },
   "pg": {
-    "host": "10.10.10.200",
+    "host": "10.10.10.25",
     "port": "5432",
     "dbName": "webitel",
     "user": "webitel",
