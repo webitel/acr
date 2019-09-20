@@ -53,6 +53,9 @@ type SqlStore interface {
 	Call() CallStore
 	CallbackQueue() CallbackQueueStore
 	Endpoint() EndpointStore
+
+	RoutingInboundCall() RoutingInboundCallStore
+	RoutingOutboundCall() RoutingOutboundCallStore
 }
 
 //region mongodb TODO remove this store
@@ -140,5 +143,13 @@ type CallbackQueueStore interface {
 }
 
 type EndpointStore interface {
-	GetDistinctDevices(domainId int64, request []*model.EndpointsRequest) StoreChannel
+	GetDistinctDevices(domainId int, request []*model.EndpointsRequest) StoreChannel
+}
+
+type RoutingInboundCallStore interface {
+	FromGateway(domainId, gatewayId int) (*model.Routing, error)
+}
+
+type RoutingOutboundCallStore interface {
+	SearchByDestination(domainId int, destination string) (*model.Routing, error)
 }

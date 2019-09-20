@@ -13,7 +13,7 @@ import (
 type Call struct {
 	provider.Connection
 	router                *CallRouterImpl
-	callFlow              *model.CallFlow
+	callRouting           *model.Routing
 	breakCall             bool
 	debugLog              bool
 	regExp                CallRegExp
@@ -42,18 +42,15 @@ func NewCall(router *CallRouterImpl, connection provider.Connection) *Call {
 }
 
 func (call *Call) Domain() string {
-	return call.callFlow.Domain
+	return call.callRouting.DomainName
 }
 
-func (call *Call) DomainId() int64 {
-	return call.callFlow.DomainId
-}
+//func (call *Call) DomainId() int64 {
+//	return call.callRouting.DomainId
+//}
 
 func (call *Call) Timezone() string {
-	if call.callFlow.Timezone == nil {
-		return ""
-	}
-	return *call.callFlow.Timezone
+	return call.callRouting.TimezoneName
 }
 
 func (call *Call) ValidateApp(name string) bool {
@@ -84,10 +81,7 @@ func (c *Call) UnSetBreak() {
 }
 
 func (c *Call) IsDebugLog() bool {
-	if c.callFlow.Debug == nil {
-		return false
-	}
-	return *c.callFlow.Debug
+	return c.callRouting.Debug
 }
 
 func (c *Call) OnlineDebug() bool {
@@ -95,7 +89,9 @@ func (c *Call) OnlineDebug() bool {
 }
 
 func (c *Call) RouteId() int {
-	return c.callFlow.Id
+	panic("FIXME")
+	//return c.callFlow.Id
+	return 0
 }
 
 func (c *Call) setBreak(val bool) {
@@ -129,18 +125,19 @@ func (call *Call) Route() {
 		call.Set(model.CALL_VARIABLE_SOUND_PREF_NAME, model.CALL_LANGUAGE_DEFAULT_DIRECTORY)
 	}
 
-	call.regExp = setupNumber(call.callFlow.Number, call.Destination())
+	call.regExp = setupNumber(call.callRouting.SourceData, call.Destination())
 
 	if call.GetVariable("presence_data") == "" {
 		SetVar(call, "presence_data="+call.Domain())
 	}
 
-	if call.callFlow.Id > 0 {
-		SetVar(call, []string{
-			fmt.Sprintf("%s=%d", model.CALL_VARIABLE_SHEMA_ID, call.callFlow.Id),
-			fmt.Sprintf("%s=%s", model.CALL_VARIABLE_SHEMA_NAME, call.callFlow.Name),
-		})
-	}
+	//FIXME
+	//if call.callRouting.Id > 0 {
+	//	SetVar(call, []string{
+	//		fmt.Sprintf("%s=%d", model.CALL_VARIABLE_SHEMA_ID, call.callFlow.Id),
+	//		fmt.Sprintf("%s=%s", model.CALL_VARIABLE_SHEMA_NAME, call.callFlow.Name),
+	//	})
+	//}
 
 	if call.GetVariable(model.CALL_VARIABLE_DEBUG_NAME) == "true" {
 		call.onlineDebug = true
@@ -154,13 +151,14 @@ func (call *Call) Route() {
 
 	call.initDomainVariables()
 
-	call.currentIterator = router.NewIterator("call", call.callFlow.Callflow, call)
+	call.currentIterator = router.NewIterator("call", call.callRouting.Scheme, call)
 	call.iterateCallApplication(call.currentIterator)
 	call.WaitForDisconnect()
 
-	if call.callFlow.OnDisconnect != nil && len(*call.callFlow.OnDisconnect) > 0 {
-		call.setBreak(false)
-		call.currentIterator = router.NewIterator("disconnected", *call.callFlow.OnDisconnect, call)
-		call.iterateDisconnectedCallApplication()
-	}
+	//FIXME add application trigger on disconnect
+	//if call.callFlow.OnDisconnect != nil && len(*call.callFlow.OnDisconnect) > 0 {
+	//	call.setBreak(false)
+	//	call.currentIterator = router.NewIterator("disconnected", *call.callFlow.OnDisconnect, call)
+	//	call.iterateDisconnectedCallApplication()
+	//}
 }

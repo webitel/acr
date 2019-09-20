@@ -1,17 +1,14 @@
 package call
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/webitel/acr/src/app"
 	"github.com/webitel/acr/src/config"
 	"github.com/webitel/acr/src/model"
 	"github.com/webitel/acr/src/provider"
-	"github.com/webitel/acr/src/store"
 	"github.com/webitel/acr/src/utils"
 	"github.com/webitel/wlog"
 	"runtime/debug"
-	"strconv"
 	"sync/atomic"
 )
 
@@ -117,27 +114,25 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 		}
 	}()
 
-	wlog.Debug(fmt.Sprintf("call %s from context %s", callConn.Id(), callConn.Context()))
+	wlog.Debug(fmt.Sprintf("call %s %s - %s", callConn.Id(), callConn.Direction(), callConn.Destination()))
 
 	call := NewCall(router, callConn)
 
-	fmt.Println(callConn.Direction())
-
 	switch callConn.Direction() {
 	case model.CALL_DIRECTION_INBOUND:
-		router.handlePublicContext(call)
-	//case model.CONTEXT_DIALER:
-	//	router.handleDialerContext(call)
-	//case model.CONTEXT_PRIVATE:
-	//	router.handlePrivateContext(call)
-	//	break
-	default:
-		router.handleDefaultContext(call)
+		router.handleInboundCall(call)
+	case model.CALL_DIRECTION_OUTBOUND:
+		router.handleOutboundCall(call)
+		//case model.CONTEXT_DIALER:
+		//	router.handleDialerContext(call)
+		//case model.CONTEXT_PRIVATE:
+		//	router.handlePrivateContext(call)
+		//	break
 	}
 	//call.PrintLastEvent()
 
-	if call.callFlow == nil {
-		wlog.Error(fmt.Sprintf("call %s not found callflow from context: %s", callConn.Id(), callConn.Context()))
+	if call.callRouting == nil {
+		//wlog.Error(fmt.Sprintf("call %s not found callflow from context: %s", callConn.Id(), callConn.Context()))
 		callConn.Hangup(model.HANGUP_NO_ROUTE_DESTINATION)
 		return
 	}
@@ -155,7 +150,7 @@ func (router *CallRouterImpl) handleDialerContext(call *Call) {
 		return
 	}
 
-	call.callFlow, err = router.app.GetOutboundIVRRoute(domain, dialerId)
+	//call.callRouting, err = router.app.GetOutboundIVRRoute(domain, dialerId)
 
 	if err != nil {
 		wlog.Error(fmt.Sprintf("call %s error: %s", call.Id(), err.Error()))
@@ -164,41 +159,18 @@ func (router *CallRouterImpl) handleDialerContext(call *Call) {
 
 }
 
-func (router *CallRouterImpl) handlePublicContext(call *Call) {
+func (router *CallRouterImpl) handleInboundCall(call *Call) {
 	var err error
+
+	wlog.Debug(fmt.Sprintf("call %s inbound from domain_id=%d && gateway_id=%d", call.Id(), call.DomainId(), call.InboundGatewayId()))
+
+	if call.callRouting, err = router.app.GetRoutingFromGateway(call.DomainId(), call.InboundGatewayId()); err != nil {
+		wlog.Error(fmt.Sprintf("call %s fetch routing error %s", call.Id(), err.Error()))
+		return
+	}
 
 	if err = call.SetDirection(model.CALL_DIRECTION_INBOUND); err != nil {
 		wlog.Error(fmt.Sprintf("call %s set direction error %s", call.Id(), err.Error()))
-		return
-	}
-
-	result := <-router.app.Store.PublicRoute().Get(call.Destination())
-
-	if result.Err != nil && result.Err != store.ERR_NO_ROWS {
-		wlog.Error(fmt.Sprintf("call %s error %s", call.Id(), result.Err.Error()))
-		call.Hangup(model.HANGUP_NORMAL_TEMPORARY_FAILURE)
-		return
-	}
-
-	if result.Data == nil && router.defaultPublicRouteNumber != nil {
-		result = <-router.app.Store.PublicRoute().Get(*router.defaultPublicRouteNumber)
-	} else if call.GetGlobalVariable(model.GLOBAL_VARIABLE_DEFAULT_PUBLIC_NAME) != "" {
-		result = <-router.app.Store.PublicRoute().Get(call.GetGlobalVariable(model.GLOBAL_VARIABLE_DEFAULT_PUBLIC_NAME))
-	}
-
-	if result.Data == nil {
-		return
-	}
-
-	call.callFlow = result.Data.(*model.CallFlow)
-
-	if err = call.Set(model.CALL_VARIABLE_DOMAIN_NAME, call.callFlow.Domain); err != nil {
-		wlog.Error(fmt.Sprintf("call %s set domain_name error: %s", call.Id(), err.Error()))
-		return
-	}
-
-	if err = call.Set(model.CALL_VARIABLE_DOMAIN_ID_NAME, strconv.Itoa(int(call.callFlow.DomainId))); err != nil {
-		wlog.Error(fmt.Sprintf("call %s set domain_name error: %s", call.Id(), err.Error()))
 		return
 	}
 
@@ -208,20 +180,15 @@ func (router *CallRouterImpl) handlePublicContext(call *Call) {
 	}
 }
 
-func (router *CallRouterImpl) handleDefaultContext(call *Call) {
+func (router *CallRouterImpl) handleOutboundCall(call *Call) {
 	var err error
-	var domainId int
-	UnSet(call, "sip_h_call-info")
 
-	domainId, err = strconv.Atoi(call.GetVariable(model.CALL_VARIABLE_DOMAIN_ID_NAME))
-	if err != nil {
-		wlog.Error(fmt.Sprintf("call %s parse %s error %s", call.Id(), model.CALL_VARIABLE_DOMAIN_ID_NAME, err.Error()))
+	if call.callRouting, err = router.app.SearchOutboundRouting(call.DomainId(), call.Destination()); err != nil {
+		wlog.Error(fmt.Sprintf("call %s fetch routing error %s", call.Id(), err.Error()))
 		return
 	}
-
-	call.callFlow, err = router.app.GetDefaultRoute(int64(domainId), call.Destination())
-	if err != nil && err != sql.ErrNoRows {
-		wlog.Error(fmt.Sprintf("call %s GetDefaultRoute error %s", call.Id(), err.Error()))
+	if err = UnSet(call, "sip_h_call-info"); err != nil {
+		wlog.Error(fmt.Sprintf("call %s un set sip_h_call-info error: %s", call.Id(), err.Error()))
 		return
 	}
 
@@ -229,14 +196,15 @@ func (router *CallRouterImpl) handleDefaultContext(call *Call) {
 }
 
 func (route *CallRouterImpl) handlePrivateContext(call *Call) {
-	var err error
-	domain := call.GetVariable(model.CALL_VARIABLE_DOMAIN_NAME)
+	panic("FIXME")
+	//var err error
+	//domain := call.GetVariable(model.CALL_VARIABLE_DOMAIN_NAME)
 
-	call.callFlow, err = route.app.GetPrivateRoute(domain, call.Destination())
-	if err != nil && err != sql.ErrNoRows {
-		wlog.Error(fmt.Sprintf("call %s GetPrivateRoute error %s", call.Id(), err.Error()))
-		return
-	}
+	//call.callFlow, err = route.app.GetPrivateRoute(domain, call.Destination())
+	//if err != nil && err != sql.ErrNoRows {
+	//	wlog.Error(fmt.Sprintf("call %s GetPrivateRoute error %s", call.Id(), err.Error()))
+	//	return
+	//}
 }
 
 func (router *CallRouterImpl) AddToDomainCache(call *Call, key, value string, expireSec int64) {

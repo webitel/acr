@@ -7,10 +7,15 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/webitel/acr/src/provider/fs/eventsocket"
 	"github.com/webitel/wlog"
+	"strconv"
 	"sync"
 )
 
 const (
+	HEADER_DOMAIN_ID  = "variable_sip_h_X-Webitel-Domain-Id"
+	HEADER_USER_ID    = "variable_sip_h_X-Webitel-User-Id"
+	HEADER_GATEWAY_ID = "variable_sip_h_X-Webitel-Gateway-Id"
+
 	HEADER_CONTEXT_NAME              = "variable_sip_h_X-Webitel-Context"
 	HEADER_ID_NAME                   = "Unique-ID"
 	HEADER_DIRECTION_NAME            = "variable_sip_h_X-Webitel-Direction"
@@ -41,6 +46,8 @@ type ConnectionImpl struct {
 	destination      string
 	stopped          bool
 	direction        string
+	gatewayId        int
+	domainId         int
 	disconnected     chan struct{}
 	lastEvent        *eventsocket.Event
 	connection       *eventsocket.Connection
@@ -57,6 +64,8 @@ func newConnection(baseConnection *eventsocket.Connection, dump *eventsocket.Eve
 		nodeName:         dump.Get(HEADER_CORE_NAME),
 		context:          dump.Get(HEADER_CONTEXT_NAME),
 		direction:        dump.Get(HEADER_DIRECTION_NAME),
+		gatewayId:        getIntFromStr(dump.Get(HEADER_GATEWAY_ID)),
+		domainId:         getIntFromStr(dump.Get(HEADER_DOMAIN_ID)),
 		connection:       baseConnection,
 		lastEvent:        dump,
 		callbackMessages: make(map[string]chan *eventsocket.Event),
@@ -68,12 +77,25 @@ func newConnection(baseConnection *eventsocket.Connection, dump *eventsocket.Eve
 	return connection
 }
 
+func getIntFromStr(str string) int {
+	i, _ := strconv.Atoi(str)
+	return i
+}
+
 func (c *ConnectionImpl) Id() string {
 	return c.uuid
 }
 
+func (c *ConnectionImpl) DomainId() int {
+	return c.domainId
+}
+
 func (c *ConnectionImpl) Context() string {
 	return c.context
+}
+
+func (c *ConnectionImpl) InboundGatewayId() int {
+	return c.gatewayId
 }
 
 func (c *ConnectionImpl) Direction() string {

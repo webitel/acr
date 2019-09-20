@@ -143,7 +143,7 @@ func Queue2(c *Call, args interface{}) error {
 				profile = transferAfterBridge[0]
 			} else {
 				num = transferAfterBridge[0]
-				profile = c.Context()
+				//profile = c.Context() FIXME
 			}
 
 			if num != "" {

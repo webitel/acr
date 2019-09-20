@@ -9,9 +9,9 @@ import (
 func (call *Call) initDomainVariables() {
 	var err error
 
-	if call.callFlow.Variables != nil && len(*call.callFlow.Variables) > 0 {
+	if call.callRouting.Variables != nil && len(*call.callRouting.Variables) > 0 {
 		var dVarArr []interface{}
-		for k, v := range *call.callFlow.Variables {
+		for k, v := range *call.callRouting.Variables {
 			dVarArr = append(dVarArr, k+"="+v)
 		}
 		err = SetVar(call, dVarArr)

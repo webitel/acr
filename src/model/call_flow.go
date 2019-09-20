@@ -40,6 +40,23 @@ func (j *vars) Scan(src interface{}) error {
 	return errors.New("Error")
 }
 
+type Routing struct {
+	SourceId     int               `json:"source_id" db:"source_id"`
+	SourceName   string            `json:"source_name" db:"source_name"`
+	SourceData   string            `json:"source_data" db:"source_data"`
+	DomainId     int64             `json:"domain_id" db:"domain_id"`
+	DomainName   string            `json:"domain_name" db:"domain_name"`
+	Number       string            `json:"number" db:"number"`
+	TimezoneId   int64             `json:"timezone_id" db:"timezone_id"`
+	TimezoneName string            `json:"timezone_name" db:"timezone_name"`
+	SchemeId     int64             `json:"scheme_id" db:"scheme_id"`
+	SchemeName   string            `json:"scheme_name" db:"scheme_name"`
+	Scheme       ArrayApplications `json:"scheme" db:"scheme"`
+
+	Debug     bool  `json:"debug" db:"debug"`
+	Variables *vars `json:"variables" db:"variables"`
+}
+
 type CallFlow struct {
 	Id           int                `json:"id" db:"id"`
 	Debug        *bool              `json:"debug" db:"debug"`

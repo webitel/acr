@@ -15,7 +15,7 @@ func NewSqlEndpointStore(sqlStore SqlStore) store.EndpointStore {
 	return st
 }
 
-func (ss SqlEndpointStore) GetDistinctDevices(domainId int64, request []*model.EndpointsRequest) store.StoreChannel {
+func (ss SqlEndpointStore) GetDistinctDevices(domainId int, request []*model.EndpointsRequest) store.StoreChannel {
 	return store.Do(func(result *store.StoreResult) {
 		b, _ := json.Marshal(request)
 		var endpoints []*model.EndpointsResponse

@@ -28,15 +28,17 @@ const (
 )
 
 type SqlSupplierOldStores struct {
-	defaultRoute   store.DefaultRouteStore
-	extensionRoute store.ExtensionRouteStore
-	publicRoute    store.PublicRouteStore
-	privateRoute   store.PrivateRouteStore
-	routeVariables store.RouteVariablesStore
-	inboundQueue   store.InboundQueueStore
-	call           store.CallStore
-	callbackQueue  store.CallbackQueueStore
-	endpoint       store.EndpointStore
+	defaultRoute        store.DefaultRouteStore
+	extensionRoute      store.ExtensionRouteStore
+	publicRoute         store.PublicRouteStore
+	privateRoute        store.PrivateRouteStore
+	routeVariables      store.RouteVariablesStore
+	inboundQueue        store.InboundQueueStore
+	call                store.CallStore
+	callbackQueue       store.CallbackQueueStore
+	endpoint            store.EndpointStore
+	routingInboundCall  store.RoutingInboundCallStore
+	routingOutboundCall store.RoutingOutboundCallStore
 }
 
 type SqlSupplier struct {
@@ -68,6 +70,8 @@ func NewSqlSupplier(settings model.SqlSettings) *SqlSupplier {
 	supplier.oldStores.call = NewSqlCallStore(supplier)
 	supplier.oldStores.callbackQueue = NewSqlCallbackQueueStore(supplier)
 	supplier.oldStores.endpoint = NewSqlEndpointStore(supplier)
+	supplier.oldStores.routingInboundCall = NewSqlRoutingInboundCallStore(supplier)
+	supplier.oldStores.routingOutboundCall = NewSqlRoutingOutboundCallStore(supplier)
 
 	return supplier
 }
@@ -196,4 +200,12 @@ func (ss *SqlSupplier) CallbackQueue() store.CallbackQueueStore {
 
 func (ss *SqlSupplier) Endpoint() store.EndpointStore {
 	return ss.oldStores.endpoint
+}
+
+func (ss *SqlSupplier) RoutingInboundCall() store.RoutingInboundCallStore {
+	return ss.oldStores.routingInboundCall
+}
+
+func (ss *SqlSupplier) RoutingOutboundCall() store.RoutingOutboundCallStore {
+	return ss.oldStores.routingOutboundCall
 }

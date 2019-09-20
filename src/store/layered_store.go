@@ -86,3 +86,10 @@ func (s *LayeredStore) CallbackQueue() CallbackQueueStore {
 func (s *LayeredStore) Endpoint() EndpointStore {
 	return s.DatabaseLayer.Endpoint()
 }
+
+func (s *LayeredStore) RoutingInboundCall() RoutingInboundCallStore {
+	return s.DatabaseLayer.RoutingInboundCall()
+}
+func (s *LayeredStore) RoutingOutboundCall() RoutingOutboundCallStore {
+	return s.DatabaseLayer.RoutingOutboundCall()
+}

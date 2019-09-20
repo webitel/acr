@@ -66,7 +66,7 @@ func Schedule(c *Call, args interface{}) error {
 }
 
 func shedCallbackCall(c *Call, seconds string, props map[string]interface{}) error {
-	if c.Context() != model.CONTEXT_PUBLIC {
+	if c.Direction() != model.CALL_DIRECTION_INBOUND {
 		c.LogError("schedule", props, "allow only public context")
 		return nil
 	}
