@@ -23,6 +23,7 @@ type Iterator struct {
 	Call        Call
 	Tags        map[string]*Tag
 	Functions   map[string]*Iterator
+	triggers    map[string]*Iterator
 	currentNode *Node
 	gotoCounter int16
 }
@@ -143,6 +144,14 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf model.ArrayApplications) {
 					}
 				}
 			}
+		case "trigger":
+			if tmpMap, ok = args.(map[string]interface{}); ok {
+				for k, v := range tmpMap {
+					if _, ok = v.([]interface{}); ok {
+						i.addTrigger(k, v.([]interface{}))
+					}
+				}
+			}
 		case "switch":
 			if tmpMap, ok = args.(map[string]interface{}); ok {
 				switchApp := NewSwitchApplication(id, configFlags, root)
@@ -186,6 +195,7 @@ func NewIterator(name string, c model.ArrayApplications, call Call) *Iterator {
 	i.Call = call
 	i.currentNode = NewNode(nil)
 	i.Functions = make(map[string]*Iterator)
+	i.triggers = make(map[string]*Iterator)
 	i.Tags = make(map[string]*Tag)
 	i.parseCallFlowArray(i.currentNode, c)
 	return i
@@ -220,7 +230,7 @@ func parseApp(m model.Application, c Call) (appName string, args interface{}, ap
 				tag = strconv.Itoa(fieldValue.(int))
 			}
 		default:
-			if !(c.ValidateApp(fieldName) || fieldName == "if" || fieldName == "switch" || fieldName == "function") {
+			if !(c.ValidateApp(fieldName) || fieldName == "if" || fieldName == "switch" || fieldName == "function" || fieldName == "trigger") {
 				continue
 			}
 

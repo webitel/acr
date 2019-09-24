@@ -155,10 +155,14 @@ func (call *Call) Route() {
 	call.iterateCallApplication(call.currentIterator)
 	call.WaitForDisconnect()
 
-	//FIXME add application trigger on disconnect
-	//if call.callFlow.OnDisconnect != nil && len(*call.callFlow.OnDisconnect) > 0 {
-	//	call.setBreak(false)
-	//	call.currentIterator = router.NewIterator("disconnected", *call.callFlow.OnDisconnect, call)
-	//	call.iterateDisconnectedCallApplication()
-	//}
+	if i, ok := call.currentIterator.TriggerIterator(router.TRIGGER_DISCONNECTED); ok {
+		call.setBreak(false)
+		call.setCurrentIterator(i)
+		call.iterateDisconnectedCallApplication()
+	}
+}
+
+func (call *Call) setCurrentIterator(i *router.Iterator) {
+	wlog.Debug(fmt.Sprintf("call %s change current iterator [%s] to [%s]", call.Id(), call.currentIterator.Name(), i.Name()))
+	call.currentIterator = i
 }

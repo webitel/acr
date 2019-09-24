@@ -21,7 +21,7 @@ func (s SqlRoutingOutboundCallStore) SearchByDestination(domainId int, destinati
     r.name as source_name,
 	r.pattern as source_data,
     d.dc as domain_id,
-    d.dn as domain_name,
+    d.name as domain_name,
     d.timezone_id,
     ct.name as timezone_name,
     r.scheme_id,
@@ -30,7 +30,7 @@ func (s SqlRoutingOutboundCallStore) SearchByDestination(domainId int, destinati
     ars.debug,
     null as variables
 from acr_routing_outbound_call r
-    inner join wbt_domain d on d.dc = r.domain_id
+    inner join directory.wbt_domain d on d.dc = r.domain_id
     inner join calendar_timezones ct on d.timezone_id = ct.id
     inner join acr_routing_scheme ars on ars.id = r.scheme_id
 where r.domain_id = :DomainId and (not r.disabled) and :Destination::varchar(50) ~ r.pattern
