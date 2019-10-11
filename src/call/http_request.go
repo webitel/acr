@@ -141,7 +141,10 @@ func HttpRequest(c *Call, args interface{}) error {
 		return nil
 	}
 
-	str = res.Header.Get("content-type")
+	if str = getStringValueFromMap("parser", props, ""); str == "" {
+		str = res.Header.Get("content-type")
+	}
+
 	if strings.Index(str, "application/json") > -1 {
 		if _, ok = props["exportVariables"]; ok {
 			if _, ok = props["exportVariables"].(map[string]interface{}); ok {
