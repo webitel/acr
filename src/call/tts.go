@@ -30,6 +30,8 @@ func TTS(c *Call, args interface{}) error {
 		return ttsMicrosoft(c, props, text)
 	case "polly":
 		return ttsPolly(c, props, text)
+	case "google":
+		return ttsGoogle(c, props, text)
 	default:
 		return ttsDefault(c, props, text)
 	}
@@ -88,6 +90,34 @@ func ttsMicrosoft(c *Call, props map[string]interface{}, text string) error {
 	}
 
 	return ttsToPlayback(c, props, query, "microsoft")
+}
+
+func ttsGoogle(c *Call, props map[string]interface{}, text string) error {
+	query := "text=" + text
+	var ok bool
+	var tmp string
+
+	if _, ok = props["voice"]; ok {
+		if _, ok = props["voice"].(map[string]interface{}); ok {
+			voice := props["voice"].(map[string]interface{})
+
+			if tmp = getStringValueFromMap("gender", voice, ""); tmp != "" {
+				query += "&gender=" + tmp
+			}
+			if tmp = getStringValueFromMap("language", voice, ""); tmp != "" {
+				query += "&language=" + tmp
+			}
+			if tmp = getStringValueFromMap("name", voice, ""); tmp != "" {
+				query += "&name=" + tmp
+			}
+		}
+	}
+
+	if tmp = getStringValueFromMap("textType", props, ""); tmp != "" {
+		query += "&textType=" + tmp
+	}
+
+	return ttsToPlayback(c, props, query, "google")
 }
 
 func ttsPolly(c *Call, props map[string]interface{}, text string) error {
