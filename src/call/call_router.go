@@ -114,14 +114,14 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 		}
 	}()
 
-	wlog.Debug(fmt.Sprintf("call %s %s - %s", callConn.Id(), callConn.Direction(), callConn.Destination()))
+	wlog.Debug(fmt.Sprintf("call %s [domain_id=%d direction=%s] - %s", callConn.Id(), callConn.DomainId(), callConn.Direction(), callConn.Destination()))
 
 	call := NewCall(router, callConn)
 
-	switch callConn.Direction() {
+	switch call.Direction() {
 	case model.CALL_DIRECTION_INBOUND:
 		router.handleInboundCall(call)
-	case model.CALL_DIRECTION_OUTBOUND:
+	case model.CALL_DIRECTION_OUTBOUND, model.CALL_DIRECTION_INTERNAL:
 		router.handleOutboundCall(call)
 		//case model.CONTEXT_DIALER:
 		//	router.handleDialerContext(call)
@@ -130,10 +130,21 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 		//	break
 	}
 	//call.PrintLastEvent()
+	if call.callRouting == nil && call.GetVariable("sip_h_X-Webitel-ParentId") != "" {
+		call.Execute("answer", "")
+		call.Api("uuid_park " + call.Id())
+		call.Api("uuid_bridge " + call.GetVariable("sip_h_X-Webitel-ParentId") + " " + call.Id())
+
+		//fmt.Println(fmt.Sprintf("uuid_bridge %s %s", call.Id(), call.GetVariable("sip_h_X-Webitel-ParentId")))
+		//call.Api(fmt.Sprintf("uuid_bridge %s %s", call.Id(), call.GetVariable("sip_h_X-Webitel-ParentId")))
+
+		call.SetBreak()
+		return
+	}
 
 	if call.callRouting == nil {
 		//wlog.Error(fmt.Sprintf("call %s not found callflow from context: %s", callConn.Id(), callConn.Context()))
-		callConn.Hangup(model.HANGUP_NO_ROUTE_DESTINATION)
+		call.Hangup(model.HANGUP_NO_ROUTE_DESTINATION)
 		return
 	}
 

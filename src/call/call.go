@@ -131,13 +131,12 @@ func (call *Call) Route() {
 		SetVar(call, "presence_data="+call.Domain())
 	}
 
-	//FIXME
-	//if call.callRouting.Id > 0 {
-	//	SetVar(call, []string{
-	//		fmt.Sprintf("%s=%d", model.CALL_VARIABLE_SHEMA_ID, call.callFlow.Id),
-	//		fmt.Sprintf("%s=%s", model.CALL_VARIABLE_SHEMA_NAME, call.callFlow.Name),
-	//	})
-	//}
+	if call.callRouting.SchemeId > 0 {
+		SetVar(call, []string{
+			fmt.Sprintf("%s=%d", model.CALL_VARIABLE_SHEMA_ID, call.callRouting.SchemeId),
+			fmt.Sprintf("%s=%s", model.CALL_VARIABLE_SHEMA_NAME, call.callRouting.SchemeName),
+		})
+	}
 
 	if call.GetVariable(model.CALL_VARIABLE_DEBUG_NAME) == "true" {
 		call.onlineDebug = true
