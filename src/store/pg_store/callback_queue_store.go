@@ -28,6 +28,32 @@ func (self SqlCallbackQueueStore) Exists(domain, name string) store.StoreChannel
 	})
 }
 
+func (s SqlCallbackQueueStore) ExistsMember(domain, queueName string, r *model.ExistsCallbackMemberRequest) store.StoreChannel {
+	return store.Do(func(result *store.StoreResult) {
+		v, err := s.GetReplica().SelectNullInt(`select 1
+from callback_queue q
+where q.name = :QueueName
+  and q.domain = :DomainName
+  and exists(
+        select 1
+        from callback_members m
+        where m.queue_id = q.id
+          and (m.number = coalesce(:Number, m.number) and m.done = coalesce(:Done, m.done))
+  )`, map[string]interface{}{
+			"QueueName":  queueName,
+			"DomainName": domain,
+			"Number":     r.Number,
+			"Done":       r.Done,
+		})
+
+		if err != nil {
+			result.Err = err
+		} else {
+			result.Data = v.Int64 > 0
+		}
+	})
+}
+
 func (self SqlCallbackQueueStore) CreateMember(domain, queue, number, widgetName string) store.StoreChannel {
 	return store.Do(func(result *store.StoreResult) {
 		var id int64

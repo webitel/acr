@@ -7,3 +7,8 @@ package model
 type CallbackMember struct {
 	Id int
 }
+
+type ExistsCallbackMemberRequest struct {
+	Number *string `json:"number"`
+	Done   *bool   `json:"done"`
+}

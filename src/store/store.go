@@ -129,6 +129,7 @@ type CallStore interface {
 
 type CallbackQueueStore interface {
 	Exists(domain, name string) StoreChannel
+	ExistsMember(domain, queueName string, r *model.ExistsCallbackMemberRequest) StoreChannel
 	CreateMember(domain, queue, number, widgetName string) StoreChannel
 	CreateMemberComment(memberId int64, domain, createdBy, text string) StoreChannel
 }

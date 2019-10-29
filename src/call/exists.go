@@ -48,8 +48,38 @@ func exists(c *Call, resource string, props map[string]interface{}) bool {
 		return existsQueue(c, getStringValueFromMap("name", props, ""))
 	case "callback":
 		return existsCallbackQueue(c, getStringValueFromMap("name", props, ""))
+	case "callbackMember":
+		return existsCallbackMember(c, getStringValueFromMap("name", props, ""), props["member"])
 	}
 	return false
+}
+
+func existsCallbackMember(c *Call, queueName string, member interface{}) bool {
+	queueName = c.ParseString(queueName)
+	if queueName == "" {
+		return false
+	}
+
+	if member == nil {
+		return false
+	}
+
+	var r *model.ExistsCallbackMemberRequest
+	body, err := json.Marshal(member)
+	if err != nil {
+		c.LogError("exists", member, err.Error())
+		return false
+	}
+	if err = json.Unmarshal([]byte(c.ParseString(string(body))), &r); err != nil {
+		return false
+	}
+
+	if res := <-c.router.app.Store.CallbackQueue().ExistsMember(c.Domain(), queueName, r); res.Err != nil {
+		c.LogError("exists", queueName, res.Err.Error())
+		return false
+	} else {
+		return res.Data.(bool)
+	}
 }
 
 func existsMedia(c *Call, name, typeFile string) bool {
