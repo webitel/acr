@@ -83,6 +83,7 @@ func (router *CallRouterImpl) initApplications() {
 		"voicemail":     Application{false, VoiceMail},
 		"setAudioLevel": Application{false, SetAudioLevel},
 		"setProfileVar": Application{false, SetProfileVariable},
+		"httpApi":       Application{false, HttpApi},
 		//"mutex":     Application{false, Mutex},
 	}
 

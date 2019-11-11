@@ -7,9 +7,11 @@ package call
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
 	"gopkg.in/xmlpath.v2"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -21,6 +23,62 @@ import (
 func HttpRequest(c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
+	var res *http.Response
+	var str string
+
+	if props, ok = args.(map[string]interface{}); !ok {
+		c.LogError("httpRequest", args, "bad request")
+		return nil
+	}
+
+	req, err := buildRequest(c, props)
+	if err != nil {
+		c.LogError("httpRequest", args, err.Error())
+		return nil
+	}
+
+	client := &http.Client{
+		Timeout: time.Duration(getIntValueFromMap("timeout", props, 1000)) * time.Millisecond,
+	}
+	res, err = client.Do(req)
+	if err != nil {
+		c.LogError("httpRequest", props, err.Error())
+		return nil
+	}
+	defer res.Body.Close()
+
+	if str := getStringValueFromMap("responseCode", props, ""); str != "" {
+		SetVar(c, str+"="+strconv.Itoa(res.StatusCode))
+	}
+
+	if str = getStringValueFromMap("exportCookie", props, ""); str != "" {
+		if _, ok = res.Header["Set-Cookie"]; ok {
+			err = SetVar(c, str+"="+strings.Join(res.Header["Set-Cookie"], ";"))
+			if err != nil {
+				c.LogError("httpRequest", "exportCookie", err.Error())
+			}
+		}
+	}
+
+	if res.ContentLength == 0 {
+		c.LogDebug("httpRequest", args, strconv.Itoa(res.StatusCode))
+		return nil
+	}
+
+	if str = getStringValueFromMap("parser", props, ""); str == "" {
+		str = res.Header.Get("content-type")
+	}
+
+	var exp map[string]interface{}
+	if exp, ok = props["exportVariables"].(map[string]interface{}); ok {
+		return parseHttpResponse(c, str, res.Body, exp)
+	}
+
+	return nil
+}
+
+func buildRequest(c *Call, props map[string]interface{}) (*http.Request, error) {
+	var ok bool
 	var uri string
 	var err error
 	var urlParam *url.URL
@@ -28,17 +86,10 @@ func HttpRequest(c *Call, args interface{}) error {
 	var v interface{}
 	var body []byte
 	var req *http.Request
-	var res *http.Response
 	headers := make(map[string]string)
 
-	if props, ok = args.(map[string]interface{}); !ok {
-		c.LogError("httpRequest", args, "bad request")
-		return nil
-	}
-
 	if uri = getStringValueFromMap("url", props, ""); uri == "" {
-		c.LogError("httpRequest", props, "url is required")
-		return nil
+		return nil, errors.New("url is required")
 	}
 
 	if _, ok = props["path"]; ok {
@@ -52,8 +103,7 @@ func HttpRequest(c *Call, args interface{}) error {
 
 	urlParam, err = url.Parse(strings.Trim(uri, " "))
 	if err != nil {
-		c.LogError("httpRequest", uri, err.Error())
-		return nil
+		return nil, err
 	}
 
 	if _, ok = props["headers"]; ok {
@@ -92,8 +142,7 @@ func HttpRequest(c *Call, args interface{}) error {
 			//JSON default
 			body, err = json.Marshal(props["data"])
 			if err != nil {
-				c.LogError("httpRequest", props["data"], err.Error())
-				return nil
+				return nil, err
 			} else {
 				body = []byte(c.ParseString(string(body)))
 			}
@@ -105,107 +154,71 @@ func HttpRequest(c *Call, args interface{}) error {
 
 	req, err = http.NewRequest(method, urlParam.String(), bytes.NewBuffer(body))
 	if err != nil {
-		c.LogError("httpRequest", props, err.Error())
-		return nil
+		return nil, err
 	}
 
 	for k, str = range headers {
 		req.Header.Set(k, str)
 	}
+	return req, nil
+}
 
-	client := &http.Client{
-		Timeout: time.Duration(getIntValueFromMap("timeout", props, 1000)) * time.Millisecond,
-	}
-	res, err = client.Do(req)
-	if err != nil {
-		c.LogError("httpRequest", props, err.Error())
-		return nil
-	}
-	defer res.Body.Close()
+func parseHttpResponse(c *Call, contentType string, response io.ReadCloser, exportVariables map[string]interface{}) error {
+	var err error
+	var body []byte
 
-	if str = getStringValueFromMap("responseCode", props, ""); str != "" {
-		SetVar(c, str+"="+strconv.Itoa(res.StatusCode))
-	}
-
-	if str = getStringValueFromMap("exportCookie", props, ""); str != "" {
-		if _, ok = res.Header["Set-Cookie"]; ok {
-			err = SetVar(c, str+"="+strings.Join(res.Header["Set-Cookie"], ";"))
+	if strings.Index(contentType, "application/json") > -1 {
+		if len(exportVariables) > 0 {
+			body, err = ioutil.ReadAll(response)
 			if err != nil {
-				c.LogError("httpRequest", "exportCookie", err.Error())
+				return err
 			}
-		}
-	}
-
-	if res.ContentLength == 0 {
-		c.LogDebug("httpRequest", urlParam.String(), strconv.Itoa(res.StatusCode))
-		return nil
-	}
-
-	if str = getStringValueFromMap("parser", props, ""); str == "" {
-		str = res.Header.Get("content-type")
-	}
-
-	if strings.Index(str, "application/json") > -1 {
-		if _, ok = props["exportVariables"]; ok {
-			if _, ok = props["exportVariables"].(map[string]interface{}); ok {
-				body, err = ioutil.ReadAll(res.Body)
+			for k, _ := range exportVariables {
+				err = SetVar(c, "all:"+k+"="+gjson.GetBytes(body, getStringValueFromMap(k, exportVariables, "")).String()+"")
 				if err != nil {
-					c.LogError("httpRequest", props, err.Error())
-					return nil
-				}
-				for k, v = range props["exportVariables"].(map[string]interface{}) {
-					if str, ok = v.(string); ok {
-						//TODO escape ?
-						err = SetVar(c, "all:"+k+"="+gjson.GetBytes(body, str).String()+"")
-						if err != nil {
-							c.LogError("httpRequest", props, err.Error())
-						}
-					}
+					c.LogError("httpRequest", exportVariables, err.Error())
 				}
 			}
 		}
-	} else if strings.Index(str, "text/xml") > -1 {
+	} else if strings.Index(contentType, "text/xml") > -1 {
 		var xml *xmlpath.Node
 		var path *xmlpath.Path
 
-		if _, ok = props["exportVariables"]; !ok {
-			c.LogDebug("httpRequest", nil, "success")
+		if len(exportVariables) < 1 {
 			return nil
 		}
 
-		xml, err = xmlpath.Parse(res.Body)
+		xml, err = xmlpath.Parse(response)
 		if err != nil {
-			c.LogError("httpRequest", props, err.Error())
+			c.LogError("httpRequest", exportVariables, err.Error())
 			return nil
 		}
 
-		for k, v = range props["exportVariables"].(map[string]interface{}) {
-			if str, ok = v.(string); ok {
-				path, err = xmlpath.Compile(str)
+		for k, _ := range exportVariables {
+			path, err = xmlpath.Compile(getStringValueFromMap(k, exportVariables, ""))
+			if err != nil {
+				c.LogError("httpRequest", k, err.Error())
+				continue
+			}
+
+			if str, ok := path.String(xml); ok {
+				err = SetVar(c, "all:"+k+"="+str)
 				if err != nil {
 					c.LogError("httpRequest", str, err.Error())
-					continue
 				}
-
-				if str, ok = path.String(xml); ok {
-					err = SetVar(c, "all:"+k+"="+str)
-					if err != nil {
-						c.LogError("httpRequest", str, err.Error())
-					}
-				} else {
-					c.LogDebug("httpRequest", props, " not found path "+str)
-				}
+			} else {
+				c.LogDebug("httpRequest", exportVariables, " not found path "+str)
 			}
 		}
 
 	} else {
-		body, err = ioutil.ReadAll(res.Body)
+		body, err = ioutil.ReadAll(response)
 		if err != nil {
-			c.LogError("httpRequest", props, err.Error())
+			c.LogError("httpRequest", exportVariables, err.Error())
 			return nil
 		}
 		fmt.Println(string(body))
-		c.LogWarn("httpRequest", string(body), "no support parse content-type "+str)
+		c.LogWarn("httpRequest", string(body), "no support parse content-type "+contentType)
 	}
 
 	return nil
