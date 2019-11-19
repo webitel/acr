@@ -35,7 +35,10 @@ func CallbackQueue(c *Call, args interface{}) error {
 			c.LogDebug("callback", map[string]interface{}{"Id": result.Data}, "successful")
 			comment = getStringValueFromMap("comment", props, "")
 			if comment != "" {
-				c.router.app.Store.CallbackQueue().CreateMemberComment(result.Data.(int64), c.Domain(), "ACR", c.ParseString(comment))
+				result = <-c.router.app.Store.CallbackQueue().CreateMemberComment(result.Data.(int64), c.Domain(), "ACR", c.ParseString(comment))
+				if result.Err != nil {
+					c.LogError("callback", args, result.Err.Error())
+				}
 			}
 			if setVar != "" {
 				return SetVar(c, fmt.Sprintf("%s=%d", setVar, id))
