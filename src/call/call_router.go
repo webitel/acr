@@ -118,11 +118,14 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 
 	call := NewCall(router, callConn)
 
+	call.Execute("set", "fire_talk_events=true")
+	call.Execute("set", "fire_not_talk_events=true")
+
 	switch call.Direction() {
 	case model.CALL_DIRECTION_INBOUND:
-		router.handleInboundCall(call)
+		//router.handleInboundCall(call)
 	case model.CALL_DIRECTION_OUTBOUND, model.CALL_DIRECTION_INTERNAL:
-		router.handleOutboundCall(call)
+		//router.handleOutboundCall(call)
 		//case model.CONTEXT_DIALER:
 		//	router.handleDialerContext(call)
 		//case model.CONTEXT_PRIVATE:
@@ -143,6 +146,10 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 	}
 
 	if call.callRouting == nil {
+		call.Execute("answer", "")
+		call.Execute("sleep", "1000")
+		//call.Execute("set", "wbt_field=22")
+		//call.Execute("echo", "100")
 		//wlog.Error(fmt.Sprintf("call %s not found callflow from context: %s", callConn.Id(), callConn.Context()))
 		call.Hangup(model.HANGUP_NO_ROUTE_DESTINATION)
 		return

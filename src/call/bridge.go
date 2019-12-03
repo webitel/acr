@@ -76,7 +76,7 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 
 	dst := c.Destination()
 
-	return c.Execute("bridge", fmt.Sprintf("{sip_route_uri=sip:192.168.177.9,sip_h_X-Webitel-Direction=internal,sip_h_X-Webitel-Display-Direction=inbound,sip_h_X-Webitel-User-Id=14000,sip_h_X-Webitel-Domain-Id=50}sofia/sip/%s@webitel.lo", dst))
+	return c.Execute("bridge", fmt.Sprintf("{sip_route_uri=sip:192.168.177.10,sip_h_X-Webitel-Direction=internal,sip_h_X-Webitel-Display-Direction=inbound,sip_h_X-Webitel-User-Id=14000,sip_h_X-Webitel-Domain-Id=50}sofia/sip/%s@webitel.lo", dst))
 
 	if _, ok = props["endpoints"]; !ok {
 		c.LogError("bridge", props, "endpoints is require")
