@@ -38,7 +38,7 @@ where q.name = :QueueName
         select 1
         from callback_members m
         where m.queue_id = q.id
-          and (m.number = coalesce(:Number, m.number) and m.done = coalesce(:Done, m.done))
+          and (m.number = coalesce(:Number, m.number) and coalesce(done, false) = coalesce(:Done, m.done))
   )`, map[string]interface{}{
 			"QueueName":  queueName,
 			"DomainName": domain,
