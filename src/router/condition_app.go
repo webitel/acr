@@ -5,8 +5,8 @@
 package router
 
 import (
+	"errors"
 	"fmt"
-	"github.com/kataras/iris/core/errors"
 	"github.com/robertkrimen/otto"
 	"github.com/webitel/wlog"
 	"regexp"

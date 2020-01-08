@@ -108,7 +108,7 @@ from endpoints e
 
      union all
 
-     select case when g.register then g.r_state != 3 else false end as dnd, g.proxy destination,
+     select case when g.register and g.enable then g.r_state != 3 else g.enable is false end as dnd, g.proxy destination,
            case when g.register is true then
                 array['sip_h_X-Webitel-Direction=outbound',
                     E'sip_auth_username=' || g.username,

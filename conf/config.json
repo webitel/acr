@@ -4,13 +4,13 @@
     "ports": 10030
   },
   "pg": {
-    "host": "localhost",
+    "host": "192.168.177.199",
     "port": "5432",
     "dbName": "webitel",
     "user": "opensips",
     "password": "webitel",
     "sslMode": "disable",
-    "trace": "false"
+    "trace": "true"
   },
 
   "defaultPublicRout": "",
