@@ -4,7 +4,7 @@
 
 package call
 
-func Sleep(c *Call, args interface{}) error {
+func Sleep(scope Scope, c *Call, args interface{}) error {
 
 	c.LogDebug("sleep", args, "start")
 	err := c.Execute("sleep", parseInterfaceToString(args))

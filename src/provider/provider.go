@@ -11,8 +11,9 @@ type Connection interface {
 	NodeId() string
 	Node() string
 	DomainId() int
+	UserId() int
 	InboundGatewayId() int
-	//Context() string
+	Context() string
 	Destination() string
 	Direction() string
 	Stopped() bool

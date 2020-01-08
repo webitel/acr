@@ -10,7 +10,7 @@ import (
 	"github.com/webitel/acr/src/rpc"
 )
 
-func FindUser(c *Call, args interface{}) error {
+func FindUser(scope Scope, c *Call, args interface{}) error {
 	var props, exportsVars map[string]interface{}
 	var ok bool
 	var err error
@@ -61,7 +61,7 @@ func FindUser(c *Call, args interface{}) error {
 				}
 			}
 
-			return SetVar(c, variables)
+			return SetVar(scope, c, variables)
 		}
 	}
 

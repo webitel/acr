@@ -6,7 +6,6 @@ import (
 	"github.com/webitel/acr/src/provider/fs"
 	"github.com/webitel/acr/src/rpc"
 	"github.com/webitel/acr/src/store"
-	"github.com/webitel/acr/src/store/mongo_store"
 	"github.com/webitel/acr/src/store/pg_store"
 	"github.com/webitel/acr/src/utils"
 	"github.com/webitel/wlog"
@@ -38,9 +37,7 @@ func New(options ...string) *App {
 	wlog.RedirectStdLog(app.Log)
 	wlog.InitGlobalLogger(app.Log)
 
-	app.Store = store.NewLayeredStore(
-		pg_store.NewSqlSupplier(app.config.SqlSettings),
-		mongo_store.NewNoSqlSupplier(app.config.NoSqlSettings))
+	app.Store = store.NewLayeredStore(pg_store.NewSqlSupplier(app.config.SqlSettings))
 
 	app.CallSrv = fs.NewCallServer(app.config.CallServerSettings)
 

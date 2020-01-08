@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func Bridge(c *Call, args interface{}) error {
+func Bridge(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 
@@ -25,7 +25,7 @@ func Bridge(c *Call, args interface{}) error {
 	}
 
 	if ok {
-		return bridgeUuid(c,
+		return bridgeUuid(scope, c,
 			getStringValueFromMap("uuid", props, ""),
 			getStringValueFromMap("other_uuid", props, ""),
 			getStringValueFromMap("exportVar", props, "uuid_bridge_res"),
@@ -35,7 +35,7 @@ func Bridge(c *Call, args interface{}) error {
 	}
 }
 
-func bridgeUuid(c *Call, legA, legB string, resVar string) error {
+func bridgeUuid(scope Scope, c *Call, legA, legB string, resVar string) error {
 
 	if c.Stopped() {
 		c.LogError("bridge", legA+" "+legB, "disconnected")
@@ -64,7 +64,7 @@ func bridgeUuid(c *Call, legA, legB string, resVar string) error {
 	if c.Stopped() {
 		return nil
 	}
-	return SetVar(c, resVar+"="+resStr)
+	return SetVar(scope, c, resVar+"="+resStr)
 }
 
 func bridgeChannel(c *Call, props map[string]interface{}) error {
@@ -74,9 +74,9 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 	var endpoints model.ArrayApplications
 	var err error
 
-	dst := c.Destination()
-
-	return c.Execute("bridge", fmt.Sprintf("{sip_route_uri=sip:192.168.177.10,sip_h_X-Webitel-Direction=internal,sip_h_X-Webitel-Display-Direction=inbound,sip_h_X-Webitel-User-Id=14000,sip_h_X-Webitel-Domain-Id=50}sofia/sip/%s@webitel.lo", dst))
+	//dst := c.Destination()
+	//return c.Execute("bridge",
+	//	fmt.Sprintf("{sip_route_uri=sip:192.168.177.10,sip_h_X-Webitel-Direction=internal,sip_h_X-Webitel-Display-Direction=inbound,sip_h_X-Webitel-User-Id=14000,sip_h_X-Webitel-Domain-Id=50}sofia/sip/%s@webitel.lo", dst))
 
 	if _, ok = props["endpoints"]; !ok {
 		c.LogError("bridge", props, "endpoints is require")
@@ -103,7 +103,7 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		separator = ","
 	}
 
-	dialString += "{sip_route_uri=sip:$${outbound_sip_proxy}" // + model.CALL_VARIABLE_DOMAIN_NAME + "=" + c.Domain() sip_route_uri=sip:$${outbound_sip_proxy}"
+	dialString += "<sip_route_uri=sip:$${outbound_sip_proxy}" // + model.CALL_VARIABLE_DOMAIN_NAME + "=" + c.Domain() sip_route_uri=sip:$${outbound_sip_proxy}"
 
 	if tmpArr, ok = getArrayStringFromMap("global", props); ok && len(tmpArr) > 0 {
 		dialString += "," + strings.Join(c.router.ValidateArrayVariables(tmpArr), ",")
@@ -117,7 +117,7 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		dialString += ",absolute_codec_string='" + strings.Join(tmpArr, ",") + "'"
 	}
 
-	dialString += "}"
+	dialString += ">"
 
 	if _, ok = props["pickup"]; ok {
 		p = c.ParseString(getStringValueFromMap("pickup", props, ""))
@@ -161,54 +161,69 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 }
 
 func getRemoteEndpoints(call *Call, endpoints model.ArrayApplications) ([]string, error) {
-	var typeName string
-	request := make([]*model.EndpointsRequest, 0, 1)
-	result := make([]string, 0, 1)
-
-	for key, v := range endpoints {
-		typeName = getStringValueFromMap("type", v, "")
-		if typeName == "user" || typeName == "group" || typeName == "extension" {
-			request = append(request, &model.EndpointsRequest{
-				Key:  key,
-				Type: typeName,
-				Name: call.ParseString(getStringValueFromMap("name", v, "")),
-			})
-		}
-	}
-
-	response, err := call.router.app.GetDistinctDevices(call.DomainId(), request)
+	length := len(endpoints)
+	endp, err := call.router.app.Store.Endpoint().Get(int64(call.DomainId()), endpoints)
 	if err != nil {
-		return result, err
+		return []string{}, err
 	}
 
-	for key, v := range endpoints {
-		typeName = getStringValueFromMap("type", v, "")
+	result := make([]string, 0, length)
 
-		switch typeName {
-		case "user", "group", "extension":
-			e := findEndpointByKey(&response, key)
-			if e == nil {
-				call.LogError("bridge", v, "not found response endpoint")
-				continue
-			}
-
-			buildUserDialString(call, &result, e)
-		default:
-			fmt.Println(key, v)
+	for key, e := range endp {
+		if key > length {
+			break
 		}
 
+		switch e.TypeName {
+		case "sipGateway":
+			result = append(result, gatewayEndpointString(endpoints[key], e))
+		case "user":
+			result = append(result, userEndpointString(call.Domain(), endpoints[key], e))
+		default:
+			wlog.Warn(fmt.Sprintf("call %s skip bridge endpoint %v - unknown type ", call.Id(), e))
+		}
 	}
 
 	return result, nil
 }
 
-func findEndpointByKey(arr *[]*model.EndpointsResponse, key int) *model.EndpointsResponse {
-	for _, v := range *arr {
-		if v.Pos == key {
-			return v
+func userEndpointString(domainName string, req model.Application, e *model.Endpoint) string {
+
+	if e == nil || e.Destination == nil {
+		return "error/UNALLOCATED_NUMBER"
+	}
+
+	if e.Dnd != nil && *e.Dnd {
+		return "error/USER_BUSY"
+	}
+
+	variables, _ := getArrayStringFromMap("parameters", req)
+	if e.Variables != nil {
+		for _, v := range *e.Variables {
+			variables = append(variables, v)
 		}
 	}
-	return nil
+	return fmt.Sprintf("{%s}sofia/sip/%s@%s", strings.Join(variables, ","), *e.Destination, domainName)
+}
+
+func gatewayEndpointString(req model.Application, e *model.Endpoint) string {
+
+	if e == nil || e.Destination == nil {
+		return "error/UNALLOCATED_NUMBER"
+	}
+
+	if e.Dnd != nil && *e.Dnd {
+		return "error/GATEWAY_DOWN"
+	}
+
+	variables, _ := getArrayStringFromMap("parameters", req)
+	if e.Variables != nil {
+		for _, v := range *e.Variables {
+			variables = append(variables, v)
+		}
+	}
+	return fmt.Sprintf("{%s}sofia/sip/%s@%s", strings.Join(variables, ","),
+		getStringValueFromMap("dialString", req, ""), *e.Destination)
 }
 
 func buildUserDialString(call *Call, result *[]string, endpoint *model.EndpointsResponse) error {

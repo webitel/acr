@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func STT(c *Call, args interface{}) error {
+func STT(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var maxSec, varName string
@@ -50,6 +50,6 @@ func STT(c *Call, args interface{}) error {
 	d := c.router.app.AddRPCCommands(c.Id())
 	result := gjson.GetBytes(d.Args, "stt.results.0.alternatives.0.transcript").String()
 	c.LogDebug("stt", result, "success")
-	SetVar(c, varName+"="+result)
+	c.SetVariable(varName + "=" + result)
 	return nil
 }

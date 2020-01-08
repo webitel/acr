@@ -12,7 +12,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func SendEmail(c *Call, args interface{}) error {
+func SendEmail(scope Scope, c *Call, args interface{}) error {
 	var conf *model.EmailConfig
 	var props map[string]interface{}
 	var ok bool

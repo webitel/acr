@@ -4,7 +4,7 @@
 
 package call
 
-func Limit(c *Call, args interface{}) error {
+func Limit(scope Scope, c *Call, args interface{}) error {
 	var name, varName string
 
 	switch args.(type) {
@@ -29,7 +29,7 @@ func Limit(c *Call, args interface{}) error {
 	c.LogDebug("limit", "hash "+c.Domain()+" "+name, "success")
 
 	if varName != "" {
-		return SetVar(c, varName+"="+c.GetVariable("variable_limit_usage_"+c.Domain()+"_"+name))
+		return c.SetVariable(varName + "=" + c.GetVariable("variable_limit_usage_"+c.Domain()+"_"+name))
 	}
 	return nil
 }

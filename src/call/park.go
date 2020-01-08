@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func Park(c *Call, args interface{}) error {
+func Park(scope Scope, c *Call, args interface{}) error {
 	var data map[string]interface{}
 	var ok bool
 	var name, lot, auto string

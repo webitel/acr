@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func Echo(c *Call, args interface{}) error {
+func Echo(scope Scope, c *Call, args interface{}) error {
 	var err error
 	var app = "echo"
 	var data string

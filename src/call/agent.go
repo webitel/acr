@@ -11,7 +11,7 @@ import (
 
 var replaceDomain = regexp.MustCompile(`@.*`)
 
-func Agent(c *Call, args interface{}) error {
+func Agent(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var name, state, status string

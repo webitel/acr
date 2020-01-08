@@ -12,7 +12,7 @@ import (
 
 var replaceNumber = regexp.MustCompile(`\D`)
 
-func BlackList(c *Call, args interface{}) error {
+func BlackList(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var name, varName, number string

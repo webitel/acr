@@ -3,29 +3,14 @@
     "host": "0.0.0.0",
     "ports": 10030
   },
-  "mongodb": {
-    "uri": "mongodb://10.10.10.200:27017/webitel",
-    "publicCollection": "public",
-    "defaultCollection": "default",
-    "globalCollection": "global",
-    "extensionsCollection": "extension",
-    "variablesCollection": "domainVariables",
-    "calendarCollection": "calendar",
-    "blackListCollection": "blackList",
-    "locationNumberCollection": "location",
-    "emailCollection": "emailConfig",
-    "dialerCollection": "dialer",
-    "membersCollection": "members",
-    "mediaFileCollection": "mediaFile"
-  },
   "pg": {
-    "host": "10.10.10.25",
+    "host": "localhost",
     "port": "5432",
     "dbName": "webitel",
-    "user": "webitel",
+    "user": "opensips",
     "password": "webitel",
     "sslMode": "disable",
-    "trace": "true"
+    "trace": "false"
   },
 
   "defaultPublicRout": "",
@@ -46,7 +31,7 @@
   ],
   "broker": {
     "enable": true,
-    "connectionString": "amqp://webitel:webitel@10.10.10.200:5672?heartbeat=0",
+    "connectionString": "amqp://webitel:webitel@192.168.177.199:5672?heartbeat=0",
     "events": [
       {
         "name": "ACR.Events",

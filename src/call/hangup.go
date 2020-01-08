@@ -4,7 +4,7 @@
 
 package call
 
-func Hangup(c *Call, args interface{}) error {
+func Hangup(scope Scope, c *Call, args interface{}) error {
 	switch args.(type) {
 	case string:
 		return hangupChannel(c, args.(string))

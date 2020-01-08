@@ -21,6 +21,11 @@ func (call *Call) iterateCallApplication(iterator *router.Iterator) {
 	}()
 
 	for {
+		if iterator.IsCancel() {
+			call.LogDebug("iterator", iterator.Name(), "cancel")
+			break
+		}
+
 		if call.Stopped() {
 			call.LogDebug("iterator", iterator.Name(), "stopped")
 			break
@@ -47,7 +52,8 @@ func (call *Call) iterateCallApplication(iterator *router.Iterator) {
 			}
 
 			call.FireDebugApplication(appConfig)
-			if err := app.Execute(call, appConfig.GetArgs()); err != nil {
+			if err := app.Execute(iterator, call, appConfig.GetArgs()); err != nil {
+				call.LogError("error", iterator.Name(), err.Error())
 				call.LogDebug("iterator", iterator.Name(), "stopped")
 				break
 			}
@@ -84,7 +90,7 @@ func (call *Call) iterateDisconnectedCallApplication() {
 				continue
 			}
 
-			if err := app.Execute(call, appConfig.GetArgs()); err != nil {
+			if err := app.Execute(call.RootScope(), call, appConfig.GetArgs()); err != nil {
 				//TODO
 			}
 

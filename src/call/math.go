@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func Math(c *Call, args interface{}) error {
+func Math(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var fnName, setVar, value string
@@ -67,7 +67,7 @@ func Math(c *Call, args interface{}) error {
 
 		value = parseInterfaceToString(_args)
 		c.LogDebug("math", fnName+" = "+value, "success")
-		return SetVar(c, setVar+"="+value)
+		return c.SetVariable(setVar + "=" + value)
 
 	} else {
 		c.LogError("math", args, "bad request")

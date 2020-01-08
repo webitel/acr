@@ -4,7 +4,7 @@
 
 package call
 
-func InBandDTMF(c *Call, args interface{}) error {
+func InBandDTMF(scope Scope, c *Call, args interface{}) error {
 	var stopDTMF bool
 	var app string
 	if _, stopDTMF = args.(string); stopDTMF {

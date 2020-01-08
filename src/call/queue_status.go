@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func QueueStatus(c *Call, args interface{}) error {
+func QueueStatus(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var queueName, tmp string
 	var ok bool
@@ -21,7 +21,7 @@ func QueueStatus(c *Call, args interface{}) error {
 			if result.Err != nil {
 				c.LogError("queueStatus", props, result.Err.Error())
 			} else {
-				err := SetVar(c, fmt.Sprintf("%s=%d", tmp, result.Data.(int)))
+				err := c.SetVariable(fmt.Sprintf("%s=%d", tmp, result.Data.(int)))
 				if err != nil {
 					return err
 				}
@@ -33,7 +33,7 @@ func QueueStatus(c *Call, args interface{}) error {
 			if result.Err != nil {
 				c.LogError("queueStatus", props, result.Err.Error())
 			} else {
-				err := SetVar(c, fmt.Sprintf("%s=%d", tmp, result.Data.(int)))
+				err := c.SetVariable(fmt.Sprintf("%s=%d", tmp, result.Data.(int)))
 				if err != nil {
 					return err
 				}

@@ -8,7 +8,7 @@ import (
 	"github.com/webitel/acr/src/model"
 )
 
-func RingBack(c *Call, args interface{}) error {
+func RingBack(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok, all bool
 	var err error
@@ -74,7 +74,7 @@ func setRingBack(c *Call, elem model.Application, varName string, all bool) erro
 		getStringValueFromMap("lang", elem, ""),
 		getStringValueFromMap("method", elem, ""),
 	)
-	err = SetVar(c, data)
+	err = c.SetVariable(data)
 	if err != nil {
 		return err
 	}

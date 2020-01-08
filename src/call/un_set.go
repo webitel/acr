@@ -4,7 +4,7 @@
 
 package call
 
-func UnSet(c *Call, args interface{}) error {
+func UnSet(scope Scope, c *Call, args interface{}) error {
 
 	if data, ok := args.(string); ok {
 		err := c.Execute("unset", data)

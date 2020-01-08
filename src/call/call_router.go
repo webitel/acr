@@ -114,7 +114,10 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 		}
 	}()
 
-	wlog.Debug(fmt.Sprintf("call %s [domain_id=%d direction=%s] - %s", callConn.Id(), callConn.DomainId(), callConn.Direction(), callConn.Destination()))
+	fmt.Println(callConn.Context())
+
+	wlog.Debug(fmt.Sprintf("call %s [domain_id=%d direction=%s user_id=%d] - %s", callConn.Id(), callConn.DomainId(),
+		callConn.Direction(), callConn.UserId(), callConn.Destination()))
 
 	call := NewCall(router, callConn)
 
@@ -123,16 +126,16 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 
 	switch call.Direction() {
 	case model.CALL_DIRECTION_INBOUND:
-		//router.handleInboundCall(call)
+		router.handleInboundCall(call)
 	case model.CALL_DIRECTION_OUTBOUND, model.CALL_DIRECTION_INTERNAL:
-		//router.handleOutboundCall(call)
+		router.handleOutboundCall(call)
 		//case model.CONTEXT_DIALER:
 		//	router.handleDialerContext(call)
 		//case model.CONTEXT_PRIVATE:
 		//	router.handlePrivateContext(call)
 		//	break
 	}
-	//call.PrintLastEvent()
+
 	if call.callRouting == nil && call.GetVariable("sip_h_X-Webitel-ParentId") != "" {
 		call.Execute("answer", "")
 		call.Api("uuid_park " + call.Id())
@@ -146,11 +149,6 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 	}
 
 	if call.callRouting == nil {
-		call.Execute("answer", "")
-		call.Execute("sleep", "1000")
-		//call.Execute("set", "wbt_field=22")
-		//call.Execute("echo", "100")
-		//wlog.Error(fmt.Sprintf("call %s not found callflow from context: %s", callConn.Id(), callConn.Context()))
 		call.Hangup(model.HANGUP_NO_ROUTE_DESTINATION)
 		return
 	}
@@ -205,7 +203,7 @@ func (router *CallRouterImpl) handleOutboundCall(call *Call) {
 		wlog.Error(fmt.Sprintf("call %s fetch routing error %s", call.Id(), err.Error()))
 		return
 	}
-	if err = UnSet(call, "sip_h_call-info"); err != nil {
+	if err = UnSet(call.RootScope(), call, "sip_h_call-info"); err != nil {
 		wlog.Error(fmt.Sprintf("call %s un set sip_h_call-info error: %s", call.Id(), err.Error()))
 		return
 	}

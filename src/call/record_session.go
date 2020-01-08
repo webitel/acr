@@ -4,7 +4,7 @@
 
 package call
 
-func RecordSession(c *Call, args interface{}) error {
+func RecordSession(scope Scope, c *Call, args interface{}) error {
 
 	var action, typeFile, name, email, minSec, stereo, bridged, followTransfer, emailTextTemplate, emailSubjectTemplate string
 	var err error
@@ -59,7 +59,7 @@ func RecordSession(c *Call, args interface{}) error {
 
 	fileName := "${uuid}_" + name + "." + typeFile
 
-	SetVar(c, "all:"+WEBITEL_RECORD_FILE_NAME+"="+fileName)
+	c.SetVariable("all:" + WEBITEL_RECORD_FILE_NAME + "=" + fileName)
 	c.Execute("export", "record_post_process_exec_app=lua:RecordUpload.lua ${uuid} ${domain_name} "+typeFile+" "+email+
 		" "+name+" "+UrlEncoded(emailSubjectTemplate)+" "+UrlEncoded(emailTextTemplate))
 

@@ -97,23 +97,21 @@ where a.id = :AttemptId and hangup_at = 0 and state > -1 and state != 5`, map[st
 func (self SqlInboundQueueStore) InboundInfo(domainId int64, name string) (*model.InboundQueueInfo, error) {
 	var queueInfo *model.InboundQueueInfo
 
-	err := self.GetReplica().SelectOne(&queueInfo, `select id, name, timeout, updated_at, max_calls, active_calls.cnt as active_calls, enabled, calendar.ready as calendar_ready
-from cc_queue q,
- lateral (
-   select exists(
-     select *
-     from calendar_accept_of_day d
-       inner join calendar c2 on d.calendar_id = c2.id
-     where d.calendar_id = q.calendar_id AND
-           (to_char(current_timestamp AT TIME ZONE c2.timezone, 'SSSS') :: int / 60)
-           between d.start_time_of_day AND d.end_time_of_day
-     ) as ready
- ) calendar
+	err := self.GetReplica().SelectOne(&queueInfo, `select q.id,
+       q.name,
+       q.timeout,
+       q.updated_at, max_calls,
+       active_calls.cnt as active_calls,
+       q.enabled,
+       true as calendar_ready, --FIXME
+       ars.scheme as schema
+from cc_queue q
  left join lateral (
     select count(*) cnt
     from cc_member_attempt a
     where a.hangup_at = 0 and a.queue_id = q.id
  ) active_calls on true
+ left join acr_routing_scheme ars on q.schema_id = ars.id
 where q.type = 0 and q.domain_id = :DomainId and q.name = :QueueName
 limit 1`, map[string]interface{}{"DomainId": domainId, "QueueName": name})
 

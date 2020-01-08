@@ -4,7 +4,7 @@
 
 package call
 
-func SetArray(c *Call, args interface{}) error {
+func SetArray(scope Scope, c *Call, args interface{}) error {
 	var tagName = "webitel_tags"
 	var err error
 	switch args.(type) {

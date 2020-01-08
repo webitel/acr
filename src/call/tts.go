@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func TTS(c *Call, args interface{}) error {
+func TTS(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var text string
@@ -27,15 +27,15 @@ func TTS(c *Call, args interface{}) error {
 
 	switch getStringValueFromMap("provider", props, "") {
 	case "microsoft":
-		return ttsMicrosoft(c, props, text)
+		return ttsMicrosoft(scope, c, props, text)
 	case "polly":
-		return ttsPolly(c, props, text)
+		return ttsPolly(scope, c, props, text)
 	default:
-		return ttsDefault(c, props, text)
+		return ttsDefault(scope, c, props, text)
 	}
 }
 
-func ttsDefault(c *Call, props map[string]interface{}, text string) error {
+func ttsDefault(scope Scope, c *Call, props map[string]interface{}, text string) error {
 	query := "text=" + text
 	var key, keyObj string
 	var val, valObj interface{}
@@ -59,10 +59,10 @@ func ttsDefault(c *Call, props map[string]interface{}, text string) error {
 		}
 	}
 
-	return ttsToPlayback(c, props, query, "default")
+	return ttsToPlayback(scope, c, props, query, "default")
 }
 
-func ttsMicrosoft(c *Call, props map[string]interface{}, text string) error {
+func ttsMicrosoft(scope Scope, c *Call, props map[string]interface{}, text string) error {
 	query := "text=" + text
 	var ok bool
 	var tmp string
@@ -87,10 +87,10 @@ func ttsMicrosoft(c *Call, props map[string]interface{}, text string) error {
 		query += "&region=" + tmp
 	}
 
-	return ttsToPlayback(c, props, query, "microsoft")
+	return ttsToPlayback(scope, c, props, query, "microsoft")
 }
 
-func ttsPolly(c *Call, props map[string]interface{}, text string) error {
+func ttsPolly(scope Scope, c *Call, props map[string]interface{}, text string) error {
 	query := "text=" + text
 	var tmp string
 
@@ -102,7 +102,7 @@ func ttsPolly(c *Call, props map[string]interface{}, text string) error {
 		query += "&textType=" + tmp
 	}
 
-	return ttsToPlayback(c, props, query, "polly")
+	return ttsToPlayback(scope, c, props, query, "polly")
 }
 
 func ttsGetCodecSettings(writeRateVar string) (rate string, format string) {
@@ -129,7 +129,7 @@ func ttsAddCredential(key, token string) string {
 	return ""
 }
 
-func ttsToPlayback(c *Call, props map[string]interface{}, query, provider string) error {
+func ttsToPlayback(scope Scope, c *Call, props map[string]interface{}, query, provider string) error {
 	var tmp string
 	var ok bool
 	rate, format := ttsGetCodecSettings(c.GetVariable("write_rate"))
@@ -160,5 +160,5 @@ func ttsToPlayback(c *Call, props map[string]interface{}, query, provider string
 		playback["terminator"] = props["terminator"]
 	}
 
-	return Playback(c, playback)
+	return Playback(scope, c, playback)
 }

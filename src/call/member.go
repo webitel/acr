@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func Member(c *Call, args interface{}) error {
+func Member(scope Scope, c *Call, args interface{}) error {
 	var tmp string
 	var props map[string]interface{}
 	var ok bool

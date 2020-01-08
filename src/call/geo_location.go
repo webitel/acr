@@ -13,7 +13,7 @@ import (
 var regValidateJsLocationPattern = regexp.MustCompile(`/?(.*?)/[gimy]*$`)
 var regDeleteNumberCharLocationPattern = regexp.MustCompile(`\D`)
 
-func GeoLocation(c *Call, args interface{}) error {
+func GeoLocation(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var number, tmp, result string
@@ -77,7 +77,7 @@ func GeoLocation(c *Call, args interface{}) error {
 		}
 
 		c.LogDebug("geoLocation", geoLocation, "success")
-		return SetVar(c, numbers)
+		return SetVar(scope, c, numbers)
 	} else {
 		c.LogWarn("geoLocation", props, "not found")
 	}

@@ -4,7 +4,7 @@
 
 package call
 
-func Conference(c *Call, args interface{}) error {
+func Conference(scope Scope, c *Call, args interface{}) error {
 
 	var name, profile, data, pin, flag string
 	var flags []interface{}

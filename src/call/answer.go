@@ -15,7 +15,7 @@ var (
 	validRing      = regexp.MustCompile(`\b180\b|\bRinging\b`)
 )
 
-func Answer(c *Call, args interface{}) error {
+func Answer(scope Scope, c *Call, args interface{}) error {
 	var str string
 	var app string
 	switch args.(type) {

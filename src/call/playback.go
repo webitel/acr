@@ -13,7 +13,7 @@ import (
 
 var httpToShot = regexp.MustCompile(`https?`)
 
-func Playback(c *Call, args interface{}) error {
+func Playback(scope Scope, c *Call, args interface{}) error {
 	var filePath, terminator string
 	var ok bool
 	var props, getDigits map[string]interface{}
@@ -113,7 +113,7 @@ func playbackSinge(call *Call, filePath, broadcast, terminator string) (err erro
 		return err
 	} else {
 		if terminator != "" {
-			err = SetVar(call, "playback_terminators="+terminator)
+			err = call.SetVariable("playback_terminators=" + terminator)
 			if err != nil {
 				return err
 			}

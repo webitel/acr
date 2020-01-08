@@ -81,7 +81,7 @@ func newCallData(l int) *callData {
 	}
 }
 
-func ExportVars(c *Call, args interface{}) error {
+func ExportVars(scope Scope, c *Call, args interface{}) error {
 
 	if data, ok := args.([]interface{}); ok {
 		variables := newCallData(len(data))
@@ -100,13 +100,13 @@ func ExportVars(c *Call, args interface{}) error {
 				c.LogError("exportVar", variables, err.Error())
 				return nil
 			}
-			err = SetVar(c, "all:webitel_data="+string(body))
+			err = SetVar(scope, c, "all:webitel_data="+string(body))
 			if err != nil {
 				c.LogError("exportVar", string(body), err.Error())
 				return err
 			}
 
-			err = SetVar(c, "cc_export_vars=webitel_data,"+strings.Join(variables.keys, ","))
+			err = SetVar(scope, c, "cc_export_vars=webitel_data,"+strings.Join(variables.keys, ","))
 			if err != nil {
 				c.LogError("exportVar", variables.keys, err.Error())
 				return err

@@ -4,7 +4,7 @@
 
 package call
 
-func VoiceMail(c *Call, args interface{}) error {
+func VoiceMail(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 
@@ -32,7 +32,7 @@ func VoiceMail(c *Call, args interface{}) error {
 				setVars = append(setVars, "voicemail_authorized=${sip_authorized}")
 			}
 
-			err = SetVar(c, setVars)
+			err = c.SetVariable(setVars)
 			if err != nil {
 				return err
 			}
@@ -65,7 +65,7 @@ func VoiceMail(c *Call, args interface{}) error {
 			}
 
 			if len(setVars) > 0 {
-				err = SetVar(c, setVars)
+				err = c.SetVariable(setVars)
 				if err != nil {
 					c.LogError("voicemail", props, err.Error())
 					return err

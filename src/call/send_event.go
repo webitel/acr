@@ -4,7 +4,7 @@
 
 package call
 
-func SendEvent(c *Call, args interface{}) error {
+func SendEvent(scope Scope, c *Call, args interface{}) error {
 
 	var props map[string]interface{}
 	var ok bool

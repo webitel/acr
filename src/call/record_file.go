@@ -6,7 +6,7 @@ package call
 
 const WEBITEL_RECORD_FILE_NAME = "webitel_record_file_name"
 
-func RecordFile(c *Call, args interface{}) error {
+func RecordFile(scope Scope, c *Call, args interface{}) error {
 
 	var parameters map[string]interface{}
 	var ok bool

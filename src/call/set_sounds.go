@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func SetSounds(c *Call, args interface{}) error {
+func SetSounds(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var lang, voice string
@@ -34,7 +34,7 @@ func SetSounds(c *Call, args interface{}) error {
 			return nil
 		}
 
-		err = SetVar(c, []string{
+		err = c.SetVariable([]string{
 			`sound_prefix=/$${sounds_dir}/` + strings.Join(s, `/`) + `/` + voice,
 			"default_language=" + s[0],
 		})

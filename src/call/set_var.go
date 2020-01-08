@@ -16,7 +16,7 @@ const (
 	export   = "export"
 )
 
-func SetVar(c *Call, args interface{}) error {
+func SetVar(scope Scope, c *Call, args interface{}) error {
 	var str = ""
 	var app = ""
 	switch args.(type) {

@@ -108,6 +108,14 @@ func (c *Call) GetBreak() bool {
 	return c.breakCall
 }
 
+func (c *Call) RootScope() Scope {
+	return c.currentIterator
+}
+
+func (c *Call) SetVariable(args interface{}) error {
+	return SetVar(c.RootScope(), c, args)
+}
+
 func (call *Call) Route() {
 	defer call.Reporting()
 	defer call.router.app.RemoveRPCCommands(call.Id())
@@ -128,11 +136,11 @@ func (call *Call) Route() {
 	call.regExp = setupNumber(call.callRouting.SourceData, call.Destination())
 
 	if call.GetVariable("presence_data") == "" {
-		SetVar(call, "presence_data="+call.Domain())
+		SetVar(call.RootScope(), call, "presence_data="+call.Domain())
 	}
 
 	if call.callRouting.SchemeId > 0 {
-		SetVar(call, []string{
+		SetVar(call.RootScope(), call, []string{
 			fmt.Sprintf("%s=%d", model.CALL_VARIABLE_SHEMA_ID, call.callRouting.SchemeId),
 			fmt.Sprintf("%s=%s", model.CALL_VARIABLE_SHEMA_NAME, call.callRouting.SchemeName),
 		})

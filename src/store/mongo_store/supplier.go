@@ -36,7 +36,7 @@ func NewNoSqlSupplier(settings model.NoSqlSettings) NoSqlStore {
 		uri: settings.Uri,
 	}
 
-	supplier.initConnection()
+	//supplier.initConnection()
 
 	supplier.oldStores.geoLocation = NewNoSqlGeoLocationStore(supplier)
 	supplier.oldStores.calendar = NewNoSqlCalendarStore(supplier)

@@ -4,7 +4,7 @@
 
 package call
 
-func IVR(c *Call, args interface{}) error {
+func IVR(scope Scope, c *Call, args interface{}) error {
 
 	if data, ok := args.(string); ok {
 		err := c.Execute("ivr", data+"@"+c.Domain())

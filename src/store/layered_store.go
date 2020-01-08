@@ -14,11 +14,10 @@ type LayeredStore struct {
 	NoSqlStore     NoSqlStore
 }
 
-func NewLayeredStore(db LayeredStoreDatabaseLayer, noSql NoSqlStore) Store {
+func NewLayeredStore(db LayeredStoreDatabaseLayer) Store {
 	store := &LayeredStore{
 		TmpContext:    context.TODO(),
 		DatabaseLayer: db,
-		NoSqlStore:    noSql,
 	}
 
 	return store

@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-func UserData(c *Call, args interface{}) error {
+func UserData(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var name, getVar, setVar string
@@ -46,5 +46,5 @@ func UserData(c *Call, args interface{}) error {
 		getVar = ""
 	}
 
-	return SetVar(c, setVar+"="+getVar)
+	return c.SetVariable(setVar + "=" + getVar)
 }

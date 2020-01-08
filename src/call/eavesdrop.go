@@ -9,7 +9,7 @@ import (
 )
 
 //todo need test spy=false
-func Eavesdrop(c *Call, args interface{}) error {
+func Eavesdrop(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var app, data, user string
@@ -22,14 +22,14 @@ func Eavesdrop(c *Call, args interface{}) error {
 		}
 
 		if c.GetVariable("Caller-Channel-Answered-Time") == "0" {
-			err = Answer(c, "")
+			err = Answer(scope, c, "")
 			if err != nil {
 				c.LogError("eavesdrop", props, "answer error: "+err.Error())
 				return err
 			}
 		}
 
-		err = SetVar(c, "webitel_direction=eavesdrop")
+		err = c.SetVariable("webitel_direction=eavesdrop")
 		if err != nil {
 			c.LogError("eavesdrop", props, "set direction error: "+err.Error())
 			return err

@@ -4,7 +4,7 @@
 
 package call
 
-func ReceiveFax(c *Call, args interface{}) error {
+func ReceiveFax(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var err error
@@ -12,7 +12,7 @@ func ReceiveFax(c *Call, args interface{}) error {
 	var email string
 
 	if c.GetVariable("Caller-Channel-Answered-Time") == "0" {
-		err = Answer(c, "")
+		err = Answer(scope, c, "")
 		if err != nil {
 			return err
 		}

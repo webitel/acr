@@ -4,7 +4,7 @@
 
 package call
 
-func Break(c *Call, args interface{}) error {
+func Break(scope Scope, c *Call, args interface{}) error {
 	c.SetBreak()
 	c.LogDebug("break", "", "successful")
 	return nil

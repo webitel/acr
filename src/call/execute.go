@@ -8,12 +8,13 @@ import (
 	"github.com/webitel/acr/src/router"
 )
 
-func ExecuteFunction(c *Call, args interface{}) error {
+func ExecuteFunction(scope Scope, c *Call, args interface{}) error {
 	var name string
 	var ok bool
 	var iterator *router.Iterator
 
 	if name, ok = args.(string); ok && name != "" {
+		//FIXME add scope
 		if iterator, ok = c.Iterator().Functions[name]; ok {
 			c.LogDebug("execute", name, "start")
 			oldIter := c.Iterator()

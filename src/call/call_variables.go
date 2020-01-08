@@ -14,7 +14,7 @@ func (call *Call) initDomainVariables() {
 		for k, v := range *call.callRouting.Variables {
 			dVarArr = append(dVarArr, k+"="+v)
 		}
-		err = SetVar(call, dVarArr)
+		err = SetVar(call.RootScope(), call, dVarArr)
 		if err != nil {
 			call.LogError("SetDomainVariables", "", err.Error())
 		}

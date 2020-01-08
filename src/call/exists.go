@@ -11,7 +11,7 @@ func (c *Call) ExistsResource(resource string, props map[string]interface{}) boo
 	return exists(c, resource, props)
 }
 
-func Exists(c *Call, args interface{}) error {
+func Exists(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var varName, resource string
@@ -30,10 +30,10 @@ func Exists(c *Call, args interface{}) error {
 
 	if exists(c, resource, props) {
 		c.LogDebug("exists", resource, "true")
-		return SetVar(c, varName+"=true")
+		return SetVar(scope, c, varName+"=true")
 	}
 	c.LogDebug("exists", resource, "false")
-	return SetVar(c, varName+"=false")
+	return SetVar(scope, c, varName+"=false")
 }
 
 func exists(c *Call, resource string, props map[string]interface{}) bool {

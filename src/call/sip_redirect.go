@@ -5,7 +5,7 @@
 package call
 
 //todo need test
-func SipRedirect(c *Call, args interface{}) error {
+func SipRedirect(scope Scope, c *Call, args interface{}) error {
 	var data, tmp string
 	var v interface{}
 	var ok bool

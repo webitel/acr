@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func AMD(c *Call, args interface{}) error {
+func AMD(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var tmp string

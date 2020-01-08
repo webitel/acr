@@ -143,7 +143,7 @@ type CallbackQueueStore interface {
 }
 
 type EndpointStore interface {
-	GetDistinctDevices(domainId int, request []*model.EndpointsRequest) StoreChannel
+	Get(domainId int64, endpoints model.ArrayApplications) ([]*model.Endpoint, error)
 }
 
 type RoutingInboundCallStore interface {

@@ -9,6 +9,7 @@ import (
 	"github.com/webitel/acr/src/model"
 	"github.com/webitel/wlog"
 	"strconv"
+	"sync"
 )
 
 const MAX_GOTO = 100 //32767
@@ -26,6 +27,8 @@ type Iterator struct {
 	triggers    map[string]*Iterator
 	currentNode *Node
 	gotoCounter int16
+	cancel      bool
+	sync.RWMutex
 }
 
 func (i *Iterator) Name() string {
@@ -86,6 +89,18 @@ func (i *Iterator) Goto(tag string) bool {
 		return true
 	}
 	return false
+}
+
+func (i *Iterator) SetCancel() {
+	i.Lock()
+	defer i.Unlock()
+	i.cancel = true
+}
+
+func (i *Iterator) IsCancel() bool {
+	i.RLock()
+	defer i.RUnlock()
+	return i.cancel
 }
 
 func (i *Iterator) parseCallFlowArray(root *Node, cf model.ArrayApplications) {

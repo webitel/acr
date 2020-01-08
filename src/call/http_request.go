@@ -18,7 +18,7 @@ import (
 	"time"
 )
 
-func HttpRequest(c *Call, args interface{}) error {
+func HttpRequest(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var uri string
@@ -124,12 +124,12 @@ func HttpRequest(c *Call, args interface{}) error {
 	defer res.Body.Close()
 
 	if str = getStringValueFromMap("responseCode", props, ""); str != "" {
-		SetVar(c, str+"="+strconv.Itoa(res.StatusCode))
+		SetVar(scope, c, str+"="+strconv.Itoa(res.StatusCode))
 	}
 
 	if str = getStringValueFromMap("exportCookie", props, ""); str != "" {
 		if _, ok = res.Header["Set-Cookie"]; ok {
-			err = SetVar(c, str+"="+strings.Join(res.Header["Set-Cookie"], ";"))
+			err = SetVar(scope, c, str+"="+strings.Join(res.Header["Set-Cookie"], ";"))
 			if err != nil {
 				c.LogError("httpRequest", "exportCookie", err.Error())
 			}
@@ -153,7 +153,7 @@ func HttpRequest(c *Call, args interface{}) error {
 				for k, v = range props["exportVariables"].(map[string]interface{}) {
 					if str, ok = v.(string); ok {
 						//TODO escape ?
-						err = SetVar(c, "all:"+k+"="+gjson.GetBytes(body, str).String()+"")
+						err = SetVar(scope, c, "all:"+k+"="+gjson.GetBytes(body, str).String()+"")
 						if err != nil {
 							c.LogError("httpRequest", props, err.Error())
 						}
@@ -185,7 +185,7 @@ func HttpRequest(c *Call, args interface{}) error {
 				}
 
 				if str, ok = path.String(xml); ok {
-					err = SetVar(c, "all:"+k+"="+str)
+					err = SetVar(scope, c, "all:"+k+"="+str)
 					if err != nil {
 						c.LogError("httpRequest", str, err.Error())
 					}

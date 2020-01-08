@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-func CallbackQueue(c *Call, args interface{}) error {
+func CallbackQueue(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var number, setVar, comment string
@@ -28,7 +28,7 @@ func CallbackQueue(c *Call, args interface{}) error {
 		if result.Err != nil {
 			c.LogError("callback", props, result.Err.Error())
 			if setVar != "" {
-				return SetVar(c, setVar+"='"+err.Error()+"'")
+				return SetVar(scope, c, setVar+"='"+err.Error()+"'")
 			}
 			return nil
 		} else {
@@ -38,7 +38,7 @@ func CallbackQueue(c *Call, args interface{}) error {
 				c.router.app.Store.CallbackQueue().CreateMemberComment(result.Data.(int64), c.Domain(), "ACR", c.ParseString(comment))
 			}
 			if setVar != "" {
-				return SetVar(c, fmt.Sprintf("%s=%d", setVar, id))
+				return SetVar(scope, c, fmt.Sprintf("%s=%d", setVar, id))
 			}
 		}
 	} else {

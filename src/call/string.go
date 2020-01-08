@@ -13,7 +13,7 @@ import (
 	"github.com/robertkrimen/otto"
 )
 
-func String(c *Call, args interface{}) error {
+func String(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var vm *otto.Otto
@@ -102,7 +102,7 @@ func String(c *Call, args interface{}) error {
 			value = v.String()
 		}
 		c.LogDebug("string", value, "success")
-		return SetVar(c, varName+"="+value)
+		return c.SetVariable(varName + "=" + value)
 
 	} else {
 		c.LogError("string", props, "bad request")

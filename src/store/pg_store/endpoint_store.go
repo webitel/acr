@@ -79,3 +79,61 @@ left join (
 
 	})
 }
+
+func (s SqlEndpointStore) Get(domainId int64, endpoints model.ArrayApplications) ([]*model.Endpoint, error) {
+	request, err := json.Marshal(endpoints)
+	var res []*model.Endpoint
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.GetReplica().Select(&res, `with endpoints as (
+    select t.*
+    from jsonb_array_elements(:Request::jsonb) with ordinality as t (endpoint, idx)
+)
+select e.idx, coalesce(e.endpoint->>'type', '') as type_name, res.*
+from endpoints e
+ left join lateral (
+     select u.dnd, u.username as destination, array[
+            'sip_h_X-Webitel-Direction=internal',
+            'sip_h_X-Webitel-User-Id=' || u.id,
+            'sip_h_X-Webitel-Domain-Id=' || u.dc,
+            E'effective_callee_id_name="' || u.name || '"'
+        ]::text[] variables
+     from directory.wbt_user u
+     where (e.endpoint->>'type')::varchar = 'user' and u.dc = :DomainId and
+           ( u.extension = (e.endpoint->>'extension')::varchar or
+             u.id = (e.endpoint->'id')::bigint)
+
+     union all
+
+     select case when g.register then g.r_state != 3 else false end as dnd, g.proxy destination,
+           case when g.register is true then
+                array['sip_h_X-Webitel-Direction=outbound',
+                    E'sip_auth_username=' || g.username,
+                    E'sip_auth_password=' || g.password,
+                    E'sip_from_uri=' || g.account
+                ]
+            else
+                array[
+                    'sip_h_X-Webitel-Direction=outbound'
+                ]
+            end vars
+     from directory.sip_gateway g
+     where  (e.endpoint->>'type')::varchar = 'sipGateway' and  g.dc = :DomainId and
+             ( g.name = (e.endpoint->>'name')::varchar or
+             g.id = (e.endpoint->'id')::bigint)
+
+     limit 1
+ ) res on true
+order by e.idx`, map[string]interface{}{
+		"DomainId": domainId,
+		"Request":  request,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

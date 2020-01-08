@@ -4,7 +4,7 @@
 
 package call
 
-func Script(c *Call, args interface{}) error {
+func Script(scope Scope, c *Call, args interface{}) error {
 	var name, typeScript, params, app string
 	var props map[string]interface{}
 	var ok bool

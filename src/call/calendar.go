@@ -19,7 +19,7 @@ const (
 
 var weakdays = []int{7, 1, 2, 3, 4, 5, 6}
 
-func Calendar(c *Call, args interface{}) error {
+func Calendar(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var name, varName string
@@ -77,9 +77,9 @@ func Calendar(c *Call, args interface{}) error {
 	timestamp = current.UnixNano() / 1000000
 
 	if calendar.StartDate > 0 && timestamp < calendar.StartDate {
-		return callbackCalendar(c, varName, calendarStatusAhead, extended)
+		return callbackCalendar(scope, c, varName, calendarStatusAhead, extended)
 	} else if calendar.EndDate > 0 && timestamp > calendar.EndDate {
-		return callbackCalendar(c, varName, calendarStatusExpire, extended)
+		return callbackCalendar(scope, c, varName, calendarStatusExpire, extended)
 	}
 
 	ok = false
@@ -98,7 +98,7 @@ func Calendar(c *Call, args interface{}) error {
 			}
 
 			if tmpDate.Day() == currentDay && int(tmpDate.Month()) == currentMonth && (a.Repeat == 1 || (a.Repeat == 0 && tmpDate.Year() == currentYear)) {
-				return callbackCalendar(c, varName, calendarStatusHoliday, extended)
+				return callbackCalendar(scope, c, varName, calendarStatusHoliday, extended)
 			}
 		}
 	}
@@ -112,23 +112,23 @@ func Calendar(c *Call, args interface{}) error {
 		}
 
 		if !ok {
-			return callbackCalendar(c, varName, calendarStatusOutTime, extended)
+			return callbackCalendar(scope, c, varName, calendarStatusOutTime, extended)
 		}
 	}
 
-	return callbackCalendar(c, varName, calendarStatusInTime, extended)
+	return callbackCalendar(scope, c, varName, calendarStatusInTime, extended)
 }
 
-func callbackCalendar(c *Call, varName string, res string, extendsResponse bool) error {
+func callbackCalendar(scope Scope, c *Call, varName string, res string, extendsResponse bool) error {
 	if extendsResponse {
-		return SetVar(c, varName+"="+res)
+		return SetVar(scope, c, varName+"="+res)
 	}
 
 	switch res {
 	case calendarStatusInTime:
-		return SetVar(c, varName+"="+calendarStatusInTime)
+		return SetVar(scope, c, varName+"="+calendarStatusInTime)
 	default:
-		return SetVar(c, varName+"="+calendarStatusOutTime)
+		return SetVar(scope, c, varName+"="+calendarStatusOutTime)
 	}
 }
 

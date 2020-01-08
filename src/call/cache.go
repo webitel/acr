@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func Cache(c *Call, args interface{}) error {
+func Cache(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var key, value string
@@ -37,7 +37,7 @@ func Cache(c *Call, args interface{}) error {
 		value, ok = c.router.GetFromDomainCache(c, key)
 		if ok {
 			c.LogDebug("cache", key, value)
-			return SetVar(c, fmt.Sprintf("%s=%s", exportVarName, value))
+			return SetVar(scope, c, fmt.Sprintf("%s=%s", exportVarName, value))
 		} else {
 			c.LogDebug("cache", key, "not found")
 		}

@@ -6,7 +6,7 @@ import (
 
 //set_user
 
-func SetUser(c *Call, args interface{}) error {
+func SetUser(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var name, prefix string

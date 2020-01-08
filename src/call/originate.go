@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func Originate(c *Call, args interface{}) error {
+func Originate(scope Scope, c *Call, args interface{}) error {
 	var props, endpoint, exportVar map[string]interface{}
 	var ok bool
 	var actions model.ArrayApplications

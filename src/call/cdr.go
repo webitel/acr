@@ -10,7 +10,7 @@ import (
 	"github.com/webitel/acr/src/rpc"
 )
 
-func CDR(c *Call, args interface{}) error {
+func CDR(scope Scope, c *Call, args interface{}) error {
 	var props, exportsVars, elastic map[string]interface{}
 	var ok bool
 	var err error
@@ -59,7 +59,7 @@ func CDR(c *Call, args interface{}) error {
 		if d.Args != nil {
 			for k, v = range exportsVars {
 				if _, ok = v.(string); ok {
-					err = SetVar(c, "all:"+k+"="+gjson.GetBytes(d.Args, "data."+v.(string)).String()+"")
+					err = SetVar(scope, c, "all:"+k+"="+gjson.GetBytes(d.Args, "data."+v.(string)).String()+"")
 					if err != nil {
 						c.LogError("cdr", map[string]interface{}{}, err.Error())
 					}

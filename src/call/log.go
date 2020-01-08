@@ -15,7 +15,7 @@ import (
 //		logger.Error("Call %s fire rpc error: %s", c.Uuid, err.Error())
 //}
 
-func Log(c *Call, args interface{}) error {
+func Log(scope Scope, c *Call, args interface{}) error {
 
 	if data, ok := args.(string); ok {
 

@@ -13,7 +13,7 @@ import (
 
 var positionTerms = regexp.MustCompile(`[^\r\n]+`)
 
-func QueuePosition(c *Call, args interface{}) error {
+func QueuePosition(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var varName, line string
 	var ok bool
@@ -52,7 +52,7 @@ func QueuePosition(c *Call, args interface{}) error {
 				}
 			}
 
-			return SetVar(c, varName+"="+strconv.Itoa(position))
+			return c.SetVariable(varName + "=" + strconv.Itoa(position))
 		}
 	} else {
 		c.LogError("queue_position", args, "bad request")

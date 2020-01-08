@@ -5,7 +5,7 @@
 package call
 
 //todo need test
-func Pickup(c *Call, args interface{}) error {
+func Pickup(scope Scope, c *Call, args interface{}) error {
 
 	if data, ok := args.(string); ok && data != "" {
 		err := c.Execute("pickup", data+"@"+c.Domain())

@@ -1,6 +1,10 @@
 package call
 
-type ApplicationHandler func(c *Call, args interface{}) error
+type Scope interface {
+	Goto(tag string) bool
+}
+
+type ApplicationHandler func(scope Scope, c *Call, args interface{}) error
 type Applications map[string]Application
 type Application struct {
 	allowNoConnect bool
@@ -17,8 +21,8 @@ func (a Applications) Exists(name string) bool {
 	return ok
 }
 
-func (app Application) Execute(call *Call, args interface{}) error {
-	return app.handler(call, args)
+func (app Application) Execute(scope Scope, call *Call, args interface{}) error {
+	return app.handler(scope, call, args)
 }
 
 func (router *CallRouterImpl) initApplications() {

@@ -10,7 +10,7 @@ import (
 
 var errTimeout = errors.New("timeout")
 
-func JavaScript(c *Call, args interface{}) error {
+func JavaScript(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var src string
@@ -91,5 +91,5 @@ func JavaScript(c *Call, args interface{}) error {
 		return nil
 	}
 	c.LogDebug("javaScript", src, result.String())
-	return SetVar(c, setVar+"="+result.String())
+	return SetVar(scope, c, setVar+"="+result.String())
 }

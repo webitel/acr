@@ -9,7 +9,7 @@ import (
 )
 
 //TODO ADD old goto support - delete new version;
-func GoTo(c *Call, args interface{}) error {
+func GoTo(scope Scope, c *Call, args interface{}) error {
 	var tag string
 	var ok bool
 
@@ -19,7 +19,7 @@ func GoTo(c *Call, args interface{}) error {
 	}
 
 	if strings.HasPrefix(tag, "local:") {
-		if c.Iterator().Goto(c.ParseString(tag[6:])) {
+		if scope.Goto(c.ParseString(tag[6:])) {
 			c.LogDebug("goto", tag, "start")
 		} else {
 			c.LogWarn("goto", tag, "not found")

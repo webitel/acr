@@ -4,7 +4,7 @@
 
 package call
 
-func FlushDTMF(c *Call, args interface{}) error {
+func FlushDTMF(scope Scope, c *Call, args interface{}) error {
 	err := c.Execute("flush_dtmf", "")
 	if err != nil {
 		c.LogError("flushDTMF", nil, err.Error())

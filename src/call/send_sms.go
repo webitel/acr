@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func SendSMS(c *Call, args interface{}) error {
+func SendSMS(scope Scope, c *Call, args interface{}) error {
 	var props map[string]interface{}
 	var ok bool
 	var login, xml, tmp string
@@ -82,7 +82,7 @@ func SendSMS(c *Call, args interface{}) error {
 	req, err = http.NewRequest("POST", "http://sms.barex.com.ua/websend/", bytes.NewBuffer([]byte(xml)))
 	if err != nil {
 		c.LogError("sendSMS", xml, err.Error())
-		return SetVar(c, "sendSms=false")
+		return c.SetVariable("sendSms=false")
 	}
 
 	req.Header.Set("Content-Type", "application/xml")
@@ -93,15 +93,15 @@ func SendSMS(c *Call, args interface{}) error {
 	res, err = client.Do(req)
 	if err != nil {
 		c.LogError("sendSMS", xml, err.Error())
-		return SetVar(c, "sendSms=false")
+		return c.SetVariable("sendSms=false")
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode == 200 {
 		c.LogDebug("sendSMS", xml, "success")
-		return SetVar(c, "sendSms=true")
+		return c.SetVariable("sendSms=true")
 	} else {
 		c.LogError("sendSMS", xml, fmt.Sprintf("response code: %v", res.StatusCode))
-		return SetVar(c, "sendSms=false")
+		return c.SetVariable("sendSms=false")
 	}
 }

@@ -16,7 +16,7 @@ const (
 	HEADER_USER_ID    = "variable_sip_h_X-Webitel-User-Id"
 	HEADER_GATEWAY_ID = "variable_sip_h_X-Webitel-Gateway-Id"
 
-	HEADER_CONTEXT_NAME              = "variable_sip_h_X-Webitel-Context"
+	HEADER_CONTEXT_NAME              = "Channel-Context"
 	HEADER_ID_NAME                   = "Unique-ID"
 	HEADER_DIRECTION_NAME            = "variable_sip_h_X-Webitel-Direction"
 	HEADER_EVENT_NAME                = "Event-Name"
@@ -48,6 +48,7 @@ type ConnectionImpl struct {
 	direction        string
 	gatewayId        int
 	domainId         int
+	userId           int
 	disconnected     chan struct{}
 	lastEvent        *eventsocket.Event
 	connection       *eventsocket.Connection
@@ -66,6 +67,7 @@ func newConnection(baseConnection *eventsocket.Connection, dump *eventsocket.Eve
 		direction:        dump.Get(HEADER_DIRECTION_NAME),
 		gatewayId:        getIntFromStr(dump.Get(HEADER_GATEWAY_ID)),
 		domainId:         getIntFromStr(dump.Get(HEADER_DOMAIN_ID)),
+		userId:           getIntFromStr(dump.Get(HEADER_USER_ID)),
 		connection:       baseConnection,
 		lastEvent:        dump,
 		callbackMessages: make(map[string]chan *eventsocket.Event),
@@ -88,6 +90,10 @@ func (c *ConnectionImpl) Id() string {
 
 func (c *ConnectionImpl) DomainId() int {
 	return c.domainId
+}
+
+func (c *ConnectionImpl) UserId() int {
+	return c.userId
 }
 
 func (c *ConnectionImpl) Context() string {
@@ -215,6 +221,8 @@ func (c *ConnectionImpl) Execute(app, args string) error {
 	if c.Stopped() {
 		return errExecuteAfterHangup
 	}
+
+	wlog.Debug(fmt.Sprintf("call %s try execute %s %s", c.uuid, app, args))
 
 	guid, err := uuid.NewV4()
 	if err != nil {

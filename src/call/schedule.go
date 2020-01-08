@@ -13,7 +13,7 @@ import (
 
 const varCallbackCallExecute = "webitel_callback_call"
 
-func Schedule(c *Call, args interface{}) error {
+func Schedule(scope Scope, c *Call, args interface{}) error {
 	var app, data, seconds, action, tmp string
 	var ok bool
 	var props map[string]interface{}
@@ -30,7 +30,7 @@ func Schedule(c *Call, args interface{}) error {
 
 		switch action {
 		case "callback":
-			return shedCallbackCall(c, seconds, props)
+			return shedCallbackCall(scope, c, seconds, props)
 
 		case "hangup":
 			app = "sched_hangup"
@@ -65,7 +65,7 @@ func Schedule(c *Call, args interface{}) error {
 	return nil
 }
 
-func shedCallbackCall(c *Call, seconds string, props map[string]interface{}) error {
+func shedCallbackCall(scope Scope, c *Call, seconds string, props map[string]interface{}) error {
 	if c.Direction() != model.CALL_DIRECTION_INBOUND {
 		c.LogError("schedule", props, "allow only public context")
 		return nil
@@ -102,5 +102,5 @@ func shedCallbackCall(c *Call, seconds string, props map[string]interface{}) err
 	}
 	c.LogDebug("schedule", s, "success")
 
-	return Hangup(c, getStringValueFromMap("cause", props, "REDIRECTION_TO_NEW_DESTINATION"))
+	return Hangup(scope, c, getStringValueFromMap("cause", props, "REDIRECTION_TO_NEW_DESTINATION"))
 }
