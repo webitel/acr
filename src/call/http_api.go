@@ -2,6 +2,7 @@ package call
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/webitel/acr/src/model"
 	"github.com/webitel/acr/src/router"
 	"io/ioutil"
@@ -53,6 +54,13 @@ func HttpApi(c *Call, args interface{}) error {
 		c.LogError("http-api", args, err.Error())
 
 		return nil
+	}
+
+	if getBoolValueFromMap("storeResponse", props, false) {
+		err = c.router.app.SaveToLogFile(fmt.Sprintf("%s.json", c.Id()), data)
+		if err != nil {
+			return err
+		}
 	}
 
 	iter := router.NewIterator("http-api", schema, c)

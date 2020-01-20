@@ -25,16 +25,16 @@ func GetSqlSettings() model.SqlSettings {
 	maxOpenConns := 5
 	connMaxLifetimeMilliseconds := 3600000
 
-	setteings := model.SqlSettings{
+	settings := model.SqlSettings{
 		DriverName:                  &dbDriverName,
 		DataSource:                  &dbDataSource,
 		MaxIdleConns:                &maxIdleConns,
 		MaxOpenConns:                &maxOpenConns,
 		ConnMaxLifetimeMilliseconds: &connMaxLifetimeMilliseconds,
-		Trace: trace,
+		Trace:                       trace,
 	}
 
-	return setteings
+	return settings
 }
 
 func GetNoSqlSettings() model.NoSqlSettings {
@@ -55,6 +55,7 @@ func GetCallServerSettings() model.CallServerSettings {
 func LoadConfig() (*model.Config, error) {
 	conf := model.Config{
 		LogLevel:           config.Conf.Get("application:loglevel"),
+		LogHttpApiDir:      config.Conf.Get("application:logHttpApiDir"),
 		NoSqlSettings:      GetNoSqlSettings(),
 		SqlSettings:        GetSqlSettings(),
 		CallServerSettings: GetCallServerSettings(),

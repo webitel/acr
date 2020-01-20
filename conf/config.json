@@ -30,7 +30,8 @@
 
   "defaultPublicRout": "",
   "application": {
-    "loglevel": "debug"
+    "loglevel": "debug",
+    "logHttpApiDir":  "/tmp"
   },
   "protectedVariables": [
     "api_on_",

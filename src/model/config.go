@@ -23,6 +23,7 @@ type NoSqlSettings struct {
 
 type Config struct {
 	LogLevel           string
+	LogHttpApiDir      string
 	SqlSettings        SqlSettings
 	NoSqlSettings      NoSqlSettings
 	CallServerSettings CallServerSettings
