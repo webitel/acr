@@ -238,21 +238,9 @@ func (c *ConnectionImpl) updateVariablesFromEvent(event *eventsocket.Event) {
 
 func (c *ConnectionImpl) GetVariable(name string) (value string) {
 
-	//if v, ok := c.variables[name]; ok {
-	//	return v
-	//}
-	//return ""
-
 	if c.lastEvent != nil {
 		value = c.lastEvent.Get(name)
 	}
-
-	//TODO bug
-	//if e, err := c.connection.Send("getvar aaa"); err == nil {
-	//	fmt.Println(e)
-	//} else {
-	//	fmt.Println(err.Error())
-	//}
 
 	return
 }

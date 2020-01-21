@@ -19,12 +19,26 @@ type TimeFnList map[string]func(time.Time) string
 
 var timeFnList TimeFnList
 
+var (
+	regCompileVar       *regexp.Regexp
+	regCompileGlobalVar *regexp.Regexp
+	regCompileKeywords  *regexp.Regexp
+	regCompileFn        *regexp.Regexp
+)
+
 type ConditionApp struct {
 	baseApp
 	expression string
 	_then      *Node
 	_else      *Node
 	_vm        *otto.Otto
+}
+
+func init() {
+	regCompileGlobalVar = regexp.MustCompile(`\$\$\{([\s\S]*?)\}`)
+	regCompileVar = regexp.MustCompile(`\$\{([\s\S]*?)\}`)
+	regCompileKeywords = regexp.MustCompile(`\b(function|case|if|return|new|switch|var|this|typeof|for|while|break|do|continue)\b`)
+	regCompileFn = regexp.MustCompile(`\&(year|yday|mon|mday|week|mweek|wday|hour|minute|minute_of_day|time_of_day|limit|date_time|exists)\(([\s\S]*?)\)`)
 }
 
 func (a *ConditionApp) IteratorApp() bool {
@@ -590,27 +604,15 @@ func getWeekday(in time.Time) int {
 	return weakdays[in.Weekday()]
 }
 
-var regCompileVar *regexp.Regexp
-var regCompileGlobalVar *regexp.Regexp
-var regCompileKeywords *regexp.Regexp
-var regCompileFn *regexp.Regexp
-
-func init() {
-	regCompileGlobalVar = regexp.MustCompile(`\$\$\{([\s\S]*?)\}`)
-	regCompileVar = regexp.MustCompile(`\$\{([\s\S]*?)\}`)
-	regCompileKeywords = regexp.MustCompile(`\b(function|case|if|return|new|switch|var|this|typeof|for|while|break|do|continue)\b`)
-	regCompileFn = regexp.MustCompile(`\&(year|yday|mon|mday|week|mweek|wday|hour|minute|minute_of_day|time_of_day|limit|date_time|exists)\(([\s\S]*?)\)`)
-}
-
 func parseExpression(expression string) string {
 	expression = regCompileGlobalVar.ReplaceAllStringFunc(expression, func(varName string) string {
 		l := regCompileGlobalVar.FindStringSubmatch(varName)
-		return fmt.Sprintf(`sys.getGlbVar(\"%s\")`, l[1])
+		return fmt.Sprintf(`sys.getGlbVar("%s")`, l[1])
 	})
 
 	expression = regCompileVar.ReplaceAllStringFunc(expression, func(varName string) string {
 		l := regCompileVar.FindStringSubmatch(varName)
-		return fmt.Sprintf(`sys.getChnVar(\"%s\")`, l[1])
+		return fmt.Sprintf(`sys.getChnVar("%s")`, l[1])
 	})
 
 	expression = regCompileFn.ReplaceAllStringFunc(expression, func(s string) string {
