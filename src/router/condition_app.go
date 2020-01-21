@@ -589,3 +589,37 @@ var weakdays = []int{1, 2, 3, 4, 5, 6, 7}
 func getWeekday(in time.Time) int {
 	return weakdays[in.Weekday()]
 }
+
+var regCompileVar *regexp.Regexp
+var regCompileGlobalVar *regexp.Regexp
+var regCompileKeywords *regexp.Regexp
+var regCompileFn *regexp.Regexp
+
+func init() {
+	regCompileGlobalVar = regexp.MustCompile(`\$\$\{([\s\S]*?)\}`)
+	regCompileVar = regexp.MustCompile(`\$\{([\s\S]*?)\}`)
+	regCompileKeywords = regexp.MustCompile(`\b(function|case|if|return|new|switch|var|this|typeof|for|while|break|do|continue)\b`)
+	regCompileFn = regexp.MustCompile(`\&(year|yday|mon|mday|week|mweek|wday|hour|minute|minute_of_day|time_of_day|limit|date_time|exists)\(([\s\S]*?)\)`)
+}
+
+func parseExpression(expression string) string {
+	expression = regCompileGlobalVar.ReplaceAllStringFunc(expression, func(varName string) string {
+		l := regCompileGlobalVar.FindStringSubmatch(varName)
+		return fmt.Sprintf(`sys.getGlbVar(\"%s\")`, l[1])
+	})
+
+	expression = regCompileVar.ReplaceAllStringFunc(expression, func(varName string) string {
+		l := regCompileVar.FindStringSubmatch(varName)
+		return fmt.Sprintf(`sys.getChnVar(\"%s\")`, l[1])
+	})
+
+	expression = regCompileFn.ReplaceAllStringFunc(expression, func(s string) string {
+		l := regCompileFn.FindStringSubmatch(s)
+
+		return fmt.Sprintf(`sys.%s("%s")`, l[1], l[2])
+	})
+
+	expression = regCompileKeywords.ReplaceAllLiteralString(expression, "")
+
+	return expression
+}

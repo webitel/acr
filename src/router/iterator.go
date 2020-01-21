@@ -124,6 +124,8 @@ func (i *Iterator) parseCallFlowArray(root *Node, cf model.ArrayApplications) {
 					if _, ok = tmp.(string); ok {
 						condApp.expression = tmp.(string)
 					}
+				} else if tmp, ok = tmpMap["expression"].(string); ok {
+					condApp.expression = parseExpression(tmpMap["expression"].(string))
 				}
 
 				i.trySetTag(tag, condApp, root, condApp.idx)
