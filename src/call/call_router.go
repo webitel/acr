@@ -121,9 +121,6 @@ func (router *CallRouterImpl) handleCallConnection(callConn provider.Connection)
 
 	call := NewCall(router, callConn)
 
-	call.Execute("set", "fire_talk_events=true")
-	call.Execute("set", "fire_not_talk_events=true")
-
 	switch call.Direction() {
 	case model.CALL_DIRECTION_INBOUND:
 		router.handleInboundCall(call)

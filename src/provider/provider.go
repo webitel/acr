@@ -3,6 +3,8 @@ package provider
 type CallServer interface {
 	Start()
 	Stop()
+	Host() string
+	Ip() int
 	Consume() <-chan Connection
 }
 

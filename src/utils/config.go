@@ -51,6 +51,10 @@ func GetCallServerSettings() model.CallServerSettings {
 	}
 }
 
+func GetDiscoverySettings() model.DiscoverySettings {
+	return model.DiscoverySettings{Url: config.Conf.Get("application:clusterHost")}
+}
+
 //TODO
 func LoadConfig() (*model.Config, error) {
 	conf := model.Config{
@@ -58,6 +62,7 @@ func LoadConfig() (*model.Config, error) {
 		NoSqlSettings:      GetNoSqlSettings(),
 		SqlSettings:        GetSqlSettings(),
 		CallServerSettings: GetCallServerSettings(),
+		DiscoverySettings:  GetDiscoverySettings(),
 	}
 
 	return &conf, nil

@@ -8,6 +8,7 @@ import (
 	"github.com/webitel/wlog"
 	"io"
 	"net"
+	"strconv"
 	"sync"
 )
 
@@ -19,6 +20,8 @@ const (
 
 type ServerImpl struct {
 	address         string
+	host            string
+	port            int
 	listener        net.Listener
 	consume         chan provider.Connection
 	startOnce       sync.Once
@@ -36,9 +39,20 @@ func (s *ServerImpl) Start() {
 	wlog.Info(fmt.Sprintf("started call server on %s", s.address))
 
 	s.startOnce.Do(func() {
+		var p string
+
 		listener, err := net.Listen("tcp", s.address)
 		if err != nil {
 			panic(err) //TODO
+		}
+
+		s.host, p, err = net.SplitHostPort(s.address)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		if p != "" {
+			s.port, _ = strconv.Atoi(p)
 		}
 
 		s.listener = listener
@@ -137,4 +151,12 @@ func (s *ServerImpl) handler(c *eventsocket.Connection) {
 
 		connection.setEvent(e)
 	}
+}
+
+func (s *ServerImpl) Host() string {
+	return s.host
+}
+
+func (s *ServerImpl) Ip() int {
+	return s.port
 }

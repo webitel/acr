@@ -21,10 +21,15 @@ type NoSqlSettings struct {
 	Uri string
 }
 
+type DiscoverySettings struct {
+	Url string
+}
+
 type Config struct {
 	LogLevel           string
 	SqlSettings        SqlSettings
 	NoSqlSettings      NoSqlSettings
+	DiscoverySettings  DiscoverySettings
 	CallServerSettings CallServerSettings
 }
 

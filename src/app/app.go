@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/webitel/acr/src/model"
 	"github.com/webitel/acr/src/provider"
 	"github.com/webitel/acr/src/provider/fs"
@@ -13,9 +14,11 @@ import (
 
 type App struct {
 	Log     *wlog.Logger
+	nodeId  string
 	CallSrv provider.CallServer
 	Store   store.Store
 	config  *model.Config
+	cluster *cluster
 	rpc     *rpc.RPC
 }
 
@@ -26,6 +29,7 @@ func New(options ...string) *App {
 	}
 
 	app := &App{
+		nodeId: fmt.Sprintf("%s-%s", model.APP_SERVICE_NAME, model.NewId()),
 		config: conf,
 	}
 
@@ -43,6 +47,11 @@ func New(options ...string) *App {
 
 	app.CallSrv.Start()
 
+	app.cluster = NewCluster(app)
+	if err = app.cluster.Start(); err != nil {
+		panic(err.Error())
+	}
+
 	app.rpc = rpc.New()
 
 	return app
@@ -55,4 +64,12 @@ func (a *App) Shutdown() {
 	if a.CallSrv != nil {
 		a.CallSrv.Stop()
 	}
+
+	if a.cluster != nil {
+		a.cluster.Stop()
+	}
+}
+
+func (a *App) Config() *model.Config {
+	return a.config
 }

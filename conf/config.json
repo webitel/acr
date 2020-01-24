@@ -1,6 +1,6 @@
 {
   "server": {
-    "host": "0.0.0.0",
+    "host": "",
     "ports": 10030
   },
   "pg": {
@@ -12,9 +12,9 @@
     "sslMode": "disable",
     "trace": "true"
   },
-
   "defaultPublicRout": "",
   "application": {
+    "clusterHost": "localhost:8500",
     "loglevel": "debug"
   },
   "protectedVariables": [
