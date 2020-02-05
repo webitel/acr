@@ -34,7 +34,7 @@ from acr_routing_outbound_call r
     inner join calendar_timezones ct on d.timezone_id = ct.id
     inner join acr_routing_scheme ars on ars.id = r.scheme_id
 where r.domain_id = :DomainId and (not r.disabled) and :Destination::varchar(50) ~ r.pattern
-order by r.priority asc
+order by r.pos desc
 limit 1`, map[string]interface{}{"DomainId": domainId, "Destination": destination})
 	if err != nil {
 		return nil, err

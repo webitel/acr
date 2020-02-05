@@ -5,6 +5,7 @@
 package call
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/webitel/acr/src/model"
 	"github.com/webitel/wlog"
@@ -83,7 +84,8 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		return nil
 	}
 
-	if endpoints, ok = getArrayFromMap(props["endpoints"]); !ok {
+	endpoints, err = replaceBridgeReqeuest(c, props["endpoints"])
+	if err != nil {
 		c.LogError("bridge", props, "bad endpoints parameter")
 		return nil
 	}
@@ -158,6 +160,39 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 	}
 
 	return nil
+}
+
+func replaceBridgeReqeuest(c *Call, arr interface{}) (model.ArrayApplications, error) {
+	data, err := json.Marshal(arr)
+	var res model.ArrayApplications
+	if err != nil {
+		return nil, err
+	}
+
+	if err = json.Unmarshal([]byte(c.ParseString(string(data))), &res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func getArrayEndpointsFromMap(arr interface{}) (res model.ArrayApplications, ok bool) {
+
+	var tmp []interface{}
+	var d model.Application
+	if tmp, ok = arr.([]interface{}); ok {
+		res = make(model.ArrayApplications, len(tmp))
+		for i, v := range tmp {
+			if d, ok = v.(map[string]interface{}); ok {
+				res[i] = d
+				//res = append(res, d)
+			}
+		}
+		return res, true
+	}
+
+	ok = false
+	return res, ok
 }
 
 func getRemoteEndpoints(call *Call, endpoints model.ArrayApplications) ([]string, error) {

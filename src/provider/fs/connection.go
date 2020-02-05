@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/webitel/acr/src/provider/fs/eventsocket"
 	"github.com/webitel/wlog"
 	"strconv"
@@ -224,10 +224,9 @@ func (c *ConnectionImpl) Execute(app, args string) error {
 
 	wlog.Debug(fmt.Sprintf("call %s try execute %s %s", c.uuid, app, args))
 
-	guid, err := uuid.NewV4()
-	if err != nil {
-		return err
-	}
+	guid := uuid.NewV4()
+	var err error
+
 	e := make(chan *eventsocket.Event, 1)
 
 	c.Lock()

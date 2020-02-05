@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/webitel/acr/src/app"
 	"github.com/webitel/acr/src/call"
 	"github.com/webitel/acr/src/config"
@@ -21,6 +22,8 @@ func main() {
 
 	acr := app.New()
 	defer acr.Shutdown()
+
+	wlog.Info(fmt.Sprintf("server build version: %s", acr.Version()))
 
 	router := call.InitCallRouter(acr)
 

@@ -1,12 +1,14 @@
 # vim:set ft=dockerfile:
-FROM golang:1.12
+FROM golang:1.13
 
 COPY src /go/src/github.com/webitel/acr/src
 WORKDIR /go/src/github.com/webitel/acr/src/
 
-RUN GOOS=linux go get -d ./...
-RUN GOOS=linux go install
-RUN CGO_ENABLED=0 GOOS=linux go build -a -o acr .
+ENV GO111MODULE=on
+RUN go mod download
+RUN GIT_COMMIT=$(git log -1 --format='%h %ci') && \
+        CGO_ENABLED=0 GOOS=linux go build -ldflags "-X 'github.com/webitel/acr/src/model.BuildNumber=$GIT_COMMIT'" \
+         -a -o acr .
 
 FROM scratch
 LABEL maintainer="Vitaly Kovalyshyn"
