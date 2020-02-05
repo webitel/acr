@@ -14,6 +14,7 @@ func NewSqlRoutingOutboundCallStore(sqlStore SqlStore) store.RoutingOutboundCall
 	return st
 }
 
+//FIXME timezone
 func (s SqlRoutingOutboundCallStore) SearchByDestination(domainId int, destination string) (*model.Routing, error) {
 	var routing *model.Routing
 	err := s.GetReplica().SelectOne(&routing, `select
@@ -22,16 +23,16 @@ func (s SqlRoutingOutboundCallStore) SearchByDestination(domainId int, destinati
 	r.pattern as source_data,
     d.dc as domain_id,
     d.name as domain_name,
-    d.timezone_id,
-    ct.name as timezone_name,
+    coalesce(d.timezone_id, 287) timezone_id,
+    coalesce(ct.name, 'UTC') as timezone_name,
     r.scheme_id,
     ars.name as scheme_name,
     ars.scheme,
     ars.debug,
     null as variables
 from acr_routing_outbound_call r
-    inner join directory.wbt_domain d on d.dc = r.domain_id
-    inner join calendar_timezones ct on d.timezone_id = ct.id
+    left join directory.wbt_domain d on d.dc = r.domain_id
+    left join calendar_timezones ct on d.timezone_id = ct.id
     inner join acr_routing_scheme ars on ars.id = r.scheme_id
 where r.domain_id = :DomainId and (not r.disabled) and :Destination::varchar(50) ~ r.pattern
 order by r.pos desc
