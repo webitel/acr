@@ -80,7 +80,7 @@ left join (
 	})
 }
 
-func (s SqlEndpointStore) Get(domainId int64, endpoints model.ArrayApplications) ([]*model.Endpoint, error) {
+func (s SqlEndpointStore) Get(domainId int64, callerName, callerNumber string, endpoints model.ArrayApplications) ([]*model.Endpoint, error) {
 	request, err := json.Marshal(endpoints)
 	var res []*model.Endpoint
 
@@ -92,14 +92,19 @@ func (s SqlEndpointStore) Get(domainId int64, endpoints model.ArrayApplications)
     select t.*
     from jsonb_array_elements(:Request::jsonb) with ordinality as t (endpoint, idx)
 )
-select e.idx, coalesce(e.endpoint->>'type', '') as type_name, res.*
+select e.idx, coalesce(e.endpoint->>'type', '') as type_name, res.dnd, res.destination, coalesce(res.variables, '{}') as variables 
 from endpoints e
  left join lateral (
      select u.dnd, u.username as destination, array[
             'sip_h_X-Webitel-Direction=internal',
             'sip_h_X-Webitel-User-Id=' || u.id,
             'sip_h_X-Webitel-Domain-Id=' || u.dc,
-            E'effective_callee_id_name="' || u.name || '"'
+
+            E'effective_callee_id_name=' || coalesce(u.name, u.username) || '',
+            E'effective_callee_id_number=' || u.extension || ''
+
+			--E'origination_caller_id_name="' || :CallerName || '"',
+            --E'origination_caller_id_number="' || :CallerNumber || '"'
         ]::text[] variables
      from directory.wbt_user u
      where (e.endpoint->>'type')::varchar = 'user' and u.dc = :DomainId and
@@ -130,6 +135,8 @@ from endpoints e
 order by e.idx`, map[string]interface{}{
 		"DomainId": domainId,
 		"Request":  request,
+		//"CallerName":   callerName,
+		//"CallerNumber": callerNumber,
 	})
 	if err != nil {
 		return nil, err

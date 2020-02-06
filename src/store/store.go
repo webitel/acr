@@ -143,7 +143,7 @@ type CallbackQueueStore interface {
 }
 
 type EndpointStore interface {
-	Get(domainId int64, endpoints model.ArrayApplications) ([]*model.Endpoint, error)
+	Get(domainId int64, callerName, callerNumber string, endpoints model.ArrayApplications) ([]*model.Endpoint, error)
 }
 
 type RoutingInboundCallStore interface {

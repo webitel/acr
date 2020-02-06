@@ -169,6 +169,8 @@ func replaceBridgeReqeuest(c *Call, arr interface{}) (model.ArrayApplications, e
 		return nil, err
 	}
 
+	fmt.Println(c.ParseString(string(data)))
+
 	if err = json.Unmarshal([]byte(c.ParseString(string(data))), &res); err != nil {
 		return nil, err
 	}
@@ -197,7 +199,7 @@ func getArrayEndpointsFromMap(arr interface{}) (res model.ArrayApplications, ok 
 
 func getRemoteEndpoints(call *Call, endpoints model.ArrayApplications) ([]string, error) {
 	length := len(endpoints)
-	endp, err := call.router.app.Store.Endpoint().Get(int64(call.DomainId()), endpoints)
+	endp, err := call.router.app.Store.Endpoint().Get(int64(call.DomainId()), "NAME", "NUMBER", endpoints)
 	if err != nil {
 		return []string{}, err
 	}
@@ -234,7 +236,7 @@ func userEndpointString(domainName string, req model.Application, e *model.Endpo
 
 	variables, _ := getArrayStringFromMap("parameters", req)
 	if e.Variables != nil {
-		for _, v := range *e.Variables {
+		for _, v := range e.Variables {
 			variables = append(variables, v)
 		}
 	}
@@ -253,7 +255,7 @@ func gatewayEndpointString(req model.Application, e *model.Endpoint) string {
 
 	variables, _ := getArrayStringFromMap("parameters", req)
 	if e.Variables != nil {
-		for _, v := range *e.Variables {
+		for _, v := range e.Variables {
 			variables = append(variables, v)
 		}
 	}

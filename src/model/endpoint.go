@@ -17,9 +17,9 @@ type EndpointsResponse struct {
 }
 
 type Endpoint struct {
-	Idx         int             `json:"idx" db:"idx"`
-	TypeName    string          `json:"type_name" db:"type_name"`
-	Dnd         *bool           `json:"dnd" db:"dnd"`
-	Destination *string         `json:"destination" db:"destination"`
-	Variables   *pq.StringArray `json:"variables" db:"variables"`
+	Idx         int            `json:"idx" db:"idx"`
+	TypeName    string         `json:"type_name" db:"type_name"`
+	Dnd         *bool          `json:"dnd" db:"dnd"`
+	Destination *string        `json:"destination" db:"destination"`
+	Variables   pq.StringArray `json:"variables" db:"variables"`
 }

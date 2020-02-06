@@ -22,16 +22,16 @@ func (s SqlRoutingInboundCallStore) FromGateway(domainId, gatewayId int) (*model
                 '' as source_data,
                 d.dc as domain_id,
                 d.name as domain_name,
-                d.timezone_id,
-                ct.name as timezone_name,
+				coalesce(d.timezone_id, 287) timezone_id,
+				coalesce(ct.name, 'UTC') as timezone_name,
                 sg.scheme_id,
                 ars.name as scheme_name,
                 ars.scheme,
                 ars.debug,
                 null as variables
         from directory.sip_gateway sg
-                inner join directory.wbt_domain d on sg.dc = d.dc
-                inner join calendar_timezones ct on d.timezone_id = ct.id
+                left join directory.wbt_domain d on sg.dc = d.dc
+                left join calendar_timezones ct on d.timezone_id = ct.id
                 inner join acr_routing_scheme ars on ars.id = sg.scheme_id
         where sg.id = :GatewayId and sg.dc = :DomainId`, map[string]interface{}{"GatewayId": gatewayId, "DomainId": domainId})
 

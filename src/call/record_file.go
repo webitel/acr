@@ -4,6 +4,8 @@
 
 package call
 
+import "fmt"
+
 const WEBITEL_RECORD_FILE_NAME = "webitel_record_file_name"
 
 func RecordFile(scope Scope, c *Call, args interface{}) error {
@@ -18,16 +20,16 @@ func RecordFile(scope Scope, c *Call, args interface{}) error {
 	}
 
 	var name = getStringValueFromMap("name", parameters, "recordFile")
-	var terminators = getStringValueFromMap("terminators", parameters, "#")
+	//var terminators = getStringValueFromMap("terminators", parameters, "#")
 	var typeFile = getStringValueFromMap("type", parameters, "mp3")
-	var maxSec = getStringValueFromMap("maxSec", parameters, "60")
-	var silenceThresh = getStringValueFromMap("silenceThresh", parameters, "200")
-	var silenceHits = getStringValueFromMap("silenceHits", parameters, "5")
-	var email = "none"
+	//var maxSec = getStringValueFromMap("maxSec", parameters, "60")
+	//var silenceThresh = getStringValueFromMap("silenceThresh", parameters, "200")
+	//var silenceHits = getStringValueFromMap("silenceHits", parameters, "5")
+	//var email = "none"
 	var emailTextTemplate, emailSubjectTemplate string
 
 	if _, ok = parameters["email"]; ok {
-		email = parseEmail(parameters["email"])
+		//email = parseEmail(parameters["email"])
 		emailTextTemplate = c.ParseString(getStringValueFromMap("emailBody", parameters, ""))
 		emailSubjectTemplate = c.ParseString(getStringValueFromMap("emailSubject", parameters, ""))
 	}
@@ -46,24 +48,28 @@ func RecordFile(scope Scope, c *Call, args interface{}) error {
 			return err
 		}
 	}
+	/*
+		vars := []string{
+			"playback_terminators=" + terminators,
+			//"record_post_process_exec_api=luarun:RecordFileUpload.lua ${uuid} ${domain_name} " + typeFile + " " + email + " " + name +
+			//	" " + UrlEncoded(emailSubjectTemplate) + " " + UrlEncoded(emailTextTemplate),
+		}
+		err = multiSetVar(c, vars)
+	*/
+	//if err != nil {
+	//	c.LogError("recordFile", parameters, err.Error())
+	//	return err
+	//}
 
-	vars := []string{
-		"playback_terminators=" + terminators,
-		"record_post_process_exec_api=luarun:RecordFileUpload.lua ${uuid} ${domain_name} " + typeFile + " " + email + " " + name +
-			" " + UrlEncoded(emailSubjectTemplate) + " " + UrlEncoded(emailTextTemplate),
-	}
-	err = multiSetVar(c, vars)
-
+	err = c.Execute("record", getRecordLink(c.DomainId(), c.Id(), name, typeFile))
 	if err != nil {
-		c.LogError("recordFile", parameters, err.Error())
-		return err
-	}
-
-	err = c.Execute("record", "/recordings/${uuid}_"+name+"."+typeFile+" "+maxSec+" "+silenceThresh+" "+silenceHits)
-	if err != nil {
-		c.LogError("recordFile", "/recordings/${uuid}_"+name+"."+typeFile+" "+maxSec+" "+silenceThresh+" "+silenceHits, err.Error())
+		c.LogError("recordFile", getRecordLink(c.DomainId(), c.Id(), name, typeFile), err.Error())
 		return err
 	}
 
 	return nil
+}
+
+func getRecordLink(domainId int, callId, name, typeName string) string {
+	return fmt.Sprintf("{refresh=true}http_cache://$${cdr_url}/sys/recordings?domain=%d&id=%s&name=%s.%s", domainId, callId, name, typeName)
 }
