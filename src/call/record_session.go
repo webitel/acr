@@ -6,7 +6,7 @@ package call
 
 func RecordSession(scope Scope, c *Call, args interface{}) error {
 
-	var action, typeFile, name, email, minSec, stereo, bridged, followTransfer, emailTextTemplate, emailSubjectTemplate string
+	var action, typeFile, name, minSec, stereo, bridged, followTransfer string
 	var err error
 
 	switch args.(type) {
@@ -19,7 +19,6 @@ func RecordSession(scope Scope, c *Call, args interface{}) error {
 
 		typeFile = "mp3"
 		name = "recordSession"
-		email = "none"
 		minSec = "2"
 		stereo = "true"
 		bridged = "true"
@@ -30,14 +29,6 @@ func RecordSession(scope Scope, c *Call, args interface{}) error {
 			action = getStringValueFromMap("action", prop, "start")
 			typeFile = getStringValueFromMap("type", prop, "mp3")
 			name = getStringValueFromMap("name", prop, "recordSession")
-
-			if _, ok = prop["email"]; ok {
-				email = parseEmail(prop["email"])
-				emailTextTemplate = c.ParseString(getStringValueFromMap("emailBody", prop, ""))
-				emailSubjectTemplate = c.ParseString(getStringValueFromMap("emailSubject", prop, ""))
-			} else {
-				email = "none"
-			}
 
 			minSec = getStringValueFromMap("minSec", prop, "2")
 			stereo = getStringValueFromMap("stereo", prop, "true")
@@ -50,18 +41,11 @@ func RecordSession(scope Scope, c *Call, args interface{}) error {
 		}
 	}
 
-	if emailTextTemplate == "" {
-		emailTextTemplate = "none"
-	}
-	if emailSubjectTemplate == "" {
-		emailSubjectTemplate = "none"
-	}
-
 	fileName := "${uuid}_" + name + "." + typeFile
 
 	c.SetVariable("all:" + WEBITEL_RECORD_FILE_NAME + "=" + fileName)
-	c.Execute("export", "record_post_process_exec_app=lua:RecordUpload.lua ${uuid} ${domain_name} "+typeFile+" "+email+
-		" "+name+" "+UrlEncoded(emailSubjectTemplate)+" "+UrlEncoded(emailTextTemplate))
+	//c.Execute("export", "record_post_process_exec_app=lua:RecordUpload.lua ${uuid} ${domain_name} "+typeFile+" "+email+
+	//	" "+name+" "+UrlEncoded(emailSubjectTemplate)+" "+UrlEncoded(emailTextTemplate))
 
 	if action == "start" {
 		err = multiSetVar(c, []string{
@@ -75,7 +59,7 @@ func RecordSession(scope Scope, c *Call, args interface{}) error {
 			return err
 		}
 
-		err = c.Execute("record_session", "/recordings/"+fileName)
+		err = c.Execute("record_session", getRecordLink(c.DomainId(), c.Id(), fileName, typeFile))
 		if err != nil {
 			c.LogError("recordSession", "/recordings/"+fileName, err.Error())
 			return err

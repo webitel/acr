@@ -170,8 +170,9 @@ func getPlaybackFileString(call *Call, typeFile, fileName string, refresh, noPre
 	default:
 		cdrUri := call.GetGlobalVariable("cdr_url")
 		if cdrUri != "" {
-			filePath = httpToShot.ReplaceAllLiteralString(cdrUri, "shout") + "/sys/media/mp3/" +
-				UrlEncoded(fileName) + "?domain=" + UrlEncoded(call.Domain())
+			filePath = fmt.Sprintf("http_cache://%s/sys/media/%s/stream?domain_id=%d&.%s", cdrUri, fileName, call.DomainId(), typeFile)
+			//filePath = httpToShot.ReplaceAllLiteralString(cdrUri, "shout") + "/sys/media/mp3/" +
+			//	UrlEncoded(fileName) + "?domain=" + UrlEncoded(call.Domain())
 		}
 	}
 
