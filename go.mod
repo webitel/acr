@@ -14,7 +14,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
 	github.com/tidwall/gjson v1.4.0
-	github.com/webitel/call_center v0.0.0-20200128115525-8de3454665f3
+	github.com/webitel/engine v0.0.0-20200222122912-e74b7965aa3e
 	github.com/webitel/gonfig v0.0.0-20190828110451-a402e053acd9
 	github.com/webitel/wlog v0.0.0-20190823170623-8cc283b29e3e
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect

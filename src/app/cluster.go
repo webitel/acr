@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/webitel/acr/src/model"
-	"github.com/webitel/call_center/discovery"
+	"github.com/webitel/engine/discovery"
 )
 
 type cluster struct {
