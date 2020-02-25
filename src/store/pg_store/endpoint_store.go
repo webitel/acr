@@ -92,16 +92,16 @@ func (s SqlEndpointStore) Get(domainId int64, callerName, callerNumber string, e
     select t.*
     from jsonb_array_elements(:Request::jsonb) with ordinality as t (endpoint, idx)
 )
-select e.idx, coalesce(e.endpoint->>'type', '') as type_name, res.dnd, res.destination, coalesce(res.variables, '{}') as variables 
+select e.idx, coalesce(e.endpoint->>'type', '') as type_name, res.dnd, res.destination, coalesce(res.variables, '{}')::text[] as variables 
 from endpoints e
  left join lateral (
-     select u.dnd, u.username as destination, array[
+     select u.dnd, u.extension as destination, array[
             'sip_h_X-Webitel-Direction=internal',
             'sip_h_X-Webitel-User-Id=' || u.id,
             'sip_h_X-Webitel-Domain-Id=' || u.dc,
 
             E'effective_callee_id_name=' || coalesce(u.name, u.username) || '',
-            E'effective_callee_id_number=' || u.extension || ''
+            E'effective_callee_id_number=' || coalesce(u.extension, '') || ''
 
 			--E'origination_caller_id_name="' || :CallerName || '"',
             --E'origination_caller_id_number="' || :CallerNumber || '"'
