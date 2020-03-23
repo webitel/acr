@@ -5,6 +5,7 @@
 package call
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -16,7 +17,7 @@ func CallbackQueue(c *Call, args interface{}) error {
 
 	if props, ok = args.(map[string]interface{}); ok {
 		number = c.ParseString(getStringValueFromMap("number", props, "${caller_id_number}"))
-		result := <-c.router.app.Store.CallbackQueue().CreateMember(
+		member, err := c.router.app.CreateCallbackMember(
 			c.Domain(),
 			c.ParseString(getStringValueFromMap("queue", props, "")),
 			number,
@@ -24,18 +25,36 @@ func CallbackQueue(c *Call, args interface{}) error {
 		)
 		setVar = getStringValueFromMap("setVar", props, "")
 
-		if result.Err != nil {
-			c.LogError("callback", props, result.Err.Error())
+		if err != nil {
+			c.LogError("callback", props, err.Error())
 			if setVar != "" {
-				return SetVar(c, setVar+"='"+result.Err.Error()+"'")
+				return SetVar(c, setVar+"='"+err.Error()+"'")
 			}
 			return nil
 		} else {
-			c.LogDebug("callback", map[string]interface{}{"Id": result.Data}, "successful")
+			c.LogDebug("callback", map[string]interface{}{"Id": member.Id}, "successful")
+			m := map[string]interface{}{
+				"webitel_hook_retries": 0,
+				"Event-Name":           "CUSTOM",
+				"Event-Subclass":       "engine::callback_member_add",
+				"domain":               c.Domain(),
+				"variable_domain_name": c.Domain(),
+				"id":                   member.Id,
+				"number":               member.Number,
+				"queue_id":             member.QueueId,
+				"queue_name":           member.QueueName,
+				"widget_id":            member.WidgetId,
+				"widget_name":          member.WidgetName,
+				"created_on":           member.CreatedOn,
+			}
+
+			if body, e := json.Marshal(m); e == nil {
+				c.router.app.FireRPCEventToHook(body)
+			}
+
 			comment = getStringValueFromMap("comment", props, "")
 			if comment != "" {
-				memberId := result.Data.(int64)
-				result = <-c.router.app.Store.CallbackQueue().CreateMemberComment(memberId, c.Domain(), "ACR", c.ParseString(comment))
+				result := <-c.router.app.Store.CallbackQueue().CreateMemberComment(member.Id, c.Domain(), "ACR", c.ParseString(comment))
 				if result.Err != nil {
 					c.LogError("callback", args, result.Err.Error())
 				}
@@ -44,7 +63,7 @@ func CallbackQueue(c *Call, args interface{}) error {
 				if i == 0 {
 					c.LogError("callback_comment", args, "no insert callback comment")
 				} else {
-					c.LogDebug("callback_comment", args, fmt.Sprintf("store new comment %d for member %d", i, memberId))
+					c.LogDebug("callback_comment", args, fmt.Sprintf("store new comment %d for member %d", i, member.Id))
 				}
 			}
 			if setVar != "" {

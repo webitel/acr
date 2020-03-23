@@ -145,6 +145,24 @@ func (rpc *RPC) initExchange() error {
 	return nil
 }
 
+func (rpc *RPC) Hook(data []byte) error {
+	return rpc.channel.Publish(
+		"HOOK-DELAY",
+		"hook",
+		false,
+		false,
+		amqp.Publishing{
+			DeliveryMode: amqp.Persistent,
+			Timestamp:    time.Now(),
+			ContentType:  "text/json",
+			Body:         data,
+			Headers: amqp.Table{
+				"x-delay": "100",
+			},
+		},
+	)
+}
+
 func (rpc *RPC) Fire(exchangeName string, rk string, options PublishingOption) error {
 	wlog.Debug(fmt.Sprintf("send to %s %s %d bytes %s", exchangeName, rk, len(options.Body), options.Body))
 	return rpc.channel.Publish(

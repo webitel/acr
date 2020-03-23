@@ -56,16 +56,22 @@ where q.name = :QueueName
 
 func (self SqlCallbackQueueStore) CreateMember(domain, queue, number, widgetName string) store.StoreChannel {
 	return store.Do(func(result *store.StoreResult) {
-		var id int64
-		err := self.GetMaster().SelectOne(&id, `INSERT INTO callback_members (domain, queue_id, number, widget_id)
-VALUES (:Domain, (SELECT id FROM callback_queue WHERE name = :Queue AND domain = :Domain LIMIT 1), :Number, (SELECT id
-																					 FROM widget WHERE name = :Widget AND domain = :Domain LIMIT 1) )
-returning id`, map[string]interface{}{"Domain": domain, "Queue": queue, "Number": number, "Widget": widgetName})
+		var member *model.CallbackMember
+		err := self.GetMaster().SelectOne(&member, `with m as (
+    INSERT INTO callback_members (domain, queue_id, number, widget_id)
+    VALUES (:Domain, (SELECT id FROM callback_queue WHERE name = :Queue AND domain = :Domain LIMIT 1), :Number, (SELECT id
+                                                                                         FROM widget WHERE name = :Widget AND domain = :Domain LIMIT 1) )
+    returning *
+)
+select m.id, m.created_on, m.number, m.queue_id, cq.name as queue_name, m.widget_id, w.name as widget_name
+from  m
+    inner join callback_queue cq on m.queue_id = cq.id
+    left join widget w on m.widget_id = w.id`, map[string]interface{}{"Domain": domain, "Queue": queue, "Number": number, "Widget": widgetName})
 
 		if err != nil {
 			result.Err = err
 		} else {
-			result.Data = id
+			result.Data = member
 		}
 	})
 }
