@@ -6,14 +6,15 @@ type OutboundIVRCallFlow struct {
 }
 
 type OutboundQueueMember struct {
-	CreatedOn      int64                              `json:"createdOn" bson:"createdOn"`
-	Name           string                             `json:"name"`
-	Dialer         string                             `json:"dialer"`
-	Domain         string                             `json:"domain"`
-	Priority       int                                `json:"priority"`
-	Expire         int                                `json:"expire"`
-	Variables      map[string]interface{}             `json:"variables"`
-	Communications []OutboundQueueMemberCommunication `json:"communications"`
+	CreatedOn        int64                              `json:"createdOn" bson:"createdOn"`
+	Name             string                             `json:"name"`
+	Dialer           string                             `json:"dialer"`
+	Domain           string                             `json:"domain"`
+	Priority         int                                `json:"priority"`
+	Expire           int                                `json:"expire"`
+	NextCallAfterSec *int64                             `json:"_nextTryTime,omitempty" bson:"_nextTryTime,omitempty"`
+	Variables        map[string]interface{}             `json:"variables"`
+	Communications   []OutboundQueueMemberCommunication `json:"communications"`
 }
 
 type OutboundQueueMemberCommunication struct {

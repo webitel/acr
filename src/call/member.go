@@ -51,6 +51,12 @@ func Member(c *Call, args interface{}) error {
 			c.LogError("member", m, "dialer is required")
 			return nil
 		}
+
+		if nextCallSec := getIntValueFromMap("callAfterSec", props, 0); nextCallSec > 0 {
+			var nextCall = model.GetMillis() + int64(nextCallSec*1000)
+			m.NextCallAfterSec = &nextCall
+		}
+
 		result := <-c.router.app.Store.OutboundQueue().CreateMember(m)
 		if result.Err != nil {
 			c.LogError("member", m, result.Err.Error())
