@@ -61,7 +61,7 @@ func ttsDefault(c *Call, props map[string]interface{}, text string) error {
 		}
 	}
 
-	return ttsToPlayback(c, props, query, "default")
+	return ttsToPlayback(c, props, query, "default", nil)
 }
 
 func ttsMicrosoft(c *Call, props map[string]interface{}, text string) error {
@@ -89,13 +89,18 @@ func ttsMicrosoft(c *Call, props map[string]interface{}, text string) error {
 		query += "&region=" + tmp
 	}
 
-	return ttsToPlayback(c, props, query, "microsoft")
+	return ttsToPlayback(c, props, query, "microsoft", nil)
 }
+
+var mp3Mod = ".mp3"
+var wavMod = ".wav"
 
 func ttsGoogle(c *Call, props map[string]interface{}, text string) error {
 	query := "text=" + text
 	var ok bool
 	var tmp string
+
+	var format *string
 
 	if _, ok = props["voice"]; ok {
 		if _, ok = props["voice"].(map[string]interface{}); ok {
@@ -113,6 +118,13 @@ func ttsGoogle(c *Call, props map[string]interface{}, text string) error {
 
 			if tmp = getStringValueFromMap("audioEncoding", voice, ""); tmp != "" {
 				query += "&audioEncoding=" + tmp
+
+				switch tmp {
+				case "OGG_OPUS", "MP3":
+					format = &mp3Mod
+				default:
+					format = &wavMod
+				}
 			}
 			if tmp = getStringValueFromMap("sampleRateHertz", voice, ""); tmp != "" {
 				query += "&sampleRateHertz=" + tmp
@@ -137,7 +149,7 @@ func ttsGoogle(c *Call, props map[string]interface{}, text string) error {
 		query += "&textType=" + tmp
 	}
 
-	return ttsToPlayback(c, props, query, "google")
+	return ttsToPlayback(c, props, query, "google", format)
 }
 
 func ttsPolly(c *Call, props map[string]interface{}, text string) error {
@@ -152,12 +164,17 @@ func ttsPolly(c *Call, props map[string]interface{}, text string) error {
 		query += "&textType=" + tmp
 	}
 
-	return ttsToPlayback(c, props, query, "polly")
+	return ttsToPlayback(c, props, query, "polly", nil)
 }
 
-func ttsGetCodecSettings(writeRateVar string) (rate string, format string) {
+func ttsGetCodecSettings(writeRateVar string, defFormat *string) (rate string, format string) {
 	rate = "8000"
 	format = "mp3"
+
+	if defFormat != nil {
+		format = *defFormat
+		return
+	}
 
 	if writeRateVar != "" {
 		if i, err := strconv.Atoi(writeRateVar); err == nil {
@@ -179,10 +196,10 @@ func ttsAddCredential(key, token string) string {
 	return ""
 }
 
-func ttsToPlayback(c *Call, props map[string]interface{}, query, provider string) error {
+func ttsToPlayback(c *Call, props map[string]interface{}, query, provider string, defFormat *string) error {
 	var tmp string
 	var ok bool
-	rate, format := ttsGetCodecSettings(c.GetVariable("write_rate"))
+	rate, format := ttsGetCodecSettings(c.GetVariable("write_rate"), defFormat)
 
 	if format == "mp3" {
 		tmp = "shout"
