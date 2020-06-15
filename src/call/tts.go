@@ -110,6 +110,26 @@ func ttsGoogle(c *Call, props map[string]interface{}, text string) error {
 			if tmp = getStringValueFromMap("name", voice, ""); tmp != "" {
 				query += "&name=" + tmp
 			}
+
+			if tmp = getStringValueFromMap("audioEncoding", voice, ""); tmp != "" {
+				query += "&audioEncoding=" + tmp
+			}
+			if tmp = getStringValueFromMap("sampleRateHertz", voice, ""); tmp != "" {
+				query += "&sampleRateHertz=" + tmp
+			}
+			if tmp = getStringValueFromMap("speakingRate", voice, ""); tmp != "" {
+				query += "&speakingRate=" + tmp
+			}
+			if tmp = getStringValueFromMap("pitch", voice, ""); tmp != "" {
+				query += "&pitch=" + tmp
+			}
+			if tmp = getStringValueFromMap("volumeGainDb", voice, ""); tmp != "" {
+				query += "&volumeGainDb=" + tmp
+			}
+			if tmp = getStringValueFromMap("effectsProfileId", voice, ""); tmp != "" {
+				query += "&effectsProfileId=" + tmp
+			}
+
 		}
 	}
 
