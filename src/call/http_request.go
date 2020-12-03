@@ -6,6 +6,7 @@ package call
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -40,6 +41,15 @@ func HttpRequest(c *Call, args interface{}) error {
 	client := &http.Client{
 		Timeout: time.Duration(getIntValueFromMap("timeout", props, 1000)) * time.Millisecond,
 	}
+
+	if getStringValueFromMap("insecureSkipVerify", props, "") == "true" {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+	}
+
 	res, err = client.Do(req)
 	if err != nil {
 		c.LogError("httpRequest", props, err.Error())

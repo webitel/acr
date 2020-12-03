@@ -1,6 +1,7 @@
 package call
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/webitel/acr/src/model"
@@ -33,6 +34,14 @@ func HttpApi(c *Call, args interface{}) error {
 	client := &http.Client{
 		Timeout: time.Duration(getIntValueFromMap("timeout", props, 1000)) * time.Millisecond,
 	}
+	if getStringValueFromMap("insecureSkipVerify", props, "") == "true" {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+	}
+
 	res, err = client.Do(req)
 	if err != nil {
 		c.LogError("httpRequest", props, err.Error())
