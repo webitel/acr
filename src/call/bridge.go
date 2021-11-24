@@ -113,6 +113,10 @@ func bridgeChannel(c *Call, props map[string]interface{}) error {
 		dialString += ",absolute_codec_string='" + strings.Join(tmpArr, ",") + "'"
 	}
 
+	if comm := getStringValueFromMap("sendOnAnswer", props, ""); comm != "" {
+		dialString += ",execute_on_answer='" + "send_dtmf " + strings.Replace(comm, "'", "", -1) + "'"
+	}
+
 	if comm := c.GetVariable("wbt_transfer_comment"); comm != "" {
 		dialString += ",wbt_transfer_comment='" + comm + "'"
 	}
